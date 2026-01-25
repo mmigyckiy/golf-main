@@ -192,7 +192,9 @@ const state = {
   },
   tempo: {
     holding: false,
-    released: false
+    released: false,
+    angleDeg: 0,
+    lockedAngleDeg: null
   },
   lastFlights: [],
   longestToday: { date: null, best: 0 },
@@ -511,6 +513,10 @@ function polarToCartesian(cx, cy, r, angleRad){
   };
 }
 
+function degToRad(deg){
+  return deg * Math.PI / 180;
+}
+
 const ALIGN_RING = {
   cx: 60,
   cy: 60,
@@ -541,22 +547,23 @@ function updateAlignmentRingUI(value, sweetCenter, sweetWidth){
   const sweetStart = clamp(centerAngle - sweetHalf, arcStart, arcEnd);
   const sweetEnd = clamp(centerAngle + sweetHalf, arcStart, arcEnd);
   ui.alignmentSweet.setAttribute("d", describeArc(cx, cy, r, sweetStart, sweetEnd));
-  const runnerValue = clamp(value, 0, 1);
-  const leftX = cx - r * 0.78;
-  const rightX = cx + r * 0.78;
-  const pos = {
-    x: lerp(leftX, rightX, runnerValue),
-    y: cy + r * 0.72
-  };
+  const angleDeg = state.tempo.lockedAngleDeg ?? state.tempo.angleDeg ?? 0;
+  const runnerAngleRad = degToRad(angleDeg);
+  const pos = { x: cx + r * Math.cos(runnerAngleRad), y: cy + r * Math.sin(runnerAngleRad) };
   ui.alignmentRunner.setAttribute("cx", pos.x.toFixed(2));
   ui.alignmentRunner.setAttribute("cy", pos.y.toFixed(2));
 }
 
 function initAlignmentRing(){
-  const baseSpeed = 0.55 + (Math.random() - 0.5) * 0.08;
-  state.alignment.value = Math.random();
-  state.alignment.dir = Math.random() < 0.5 ? -1 : 1;
-  state.alignment.speed = baseSpeed;
+  const motionStart = TEMPO_ARC.motionStart;
+  const motionEnd = TEMPO_ARC.motionEnd;
+  const minA = Math.min(motionStart, motionEnd);
+  const maxA = Math.max(motionStart, motionEnd);
+  const angleDeg = Number.isFinite(state.tempo?.angleDeg) ? state.tempo.angleDeg : motionStart;
+  state.tempo.angleDeg = angleDeg;
+  state.alignment.value = clamp01((angleDeg - minA) / Math.max(0.001, maxA - minA));
+  state.alignment.dir = Number.isFinite(state.alignment.dir) ? state.alignment.dir : 1;
+  state.alignment.speedDeg = Number.isFinite(state.alignment.speedDeg) ? state.alignment.speedDeg : 90;
   state.alignment.active = true;
   state.alignment.frozenValue = 0;
   state.alignment.hit = false;
@@ -567,20 +574,28 @@ function initAlignmentRing(){
 
 function updateAlignmentRing(ts, dtMs){
   if(!state.alignment.active) return;
-  const dt = Math.max(0.001, dtMs / 1000);
-  const t = ((ts || performance.now()) - (state.timestamps.holdStartMs || ts)) * 0.001;
-  const fatigueBoost = 1 + clamp01(state.fatigue.level) * 0.25;
-  const wobble = 1 + 0.05 * Math.sin(t * 1.3);
-  const speed = state.alignment.speed * fatigueBoost * wobble;
-  let next = state.alignment.value + state.alignment.dir * speed * dt;
-  if(next >= 1){
-    next = 1;
-    state.alignment.dir = -1;
-  }else if(next <= 0){
-    next = 0;
-    state.alignment.dir = 1;
+  const dt = Math.max(0.001, (dtMs || 16) / 1000);
+  const motionStart = TEMPO_ARC.motionStart;
+  const motionEnd = TEMPO_ARC.motionEnd;
+  const minA = Math.min(motionStart, motionEnd);
+  const maxA = Math.max(motionStart, motionEnd);
+  let angle = Number.isFinite(state.tempo?.angleDeg) ? state.tempo.angleDeg : motionStart;
+  let dir = Number.isFinite(state.alignment.dir) ? state.alignment.dir : 1;
+  const speedDeg = Number.isFinite(state.alignment.speedDeg) ? state.alignment.speedDeg : 90;
+
+  angle += speedDeg * dir * dt;
+  if(angle >= maxA){
+    angle = maxA;
+    dir = -1;
+  }else if(angle <= minA){
+    angle = minA;
+    dir = 1;
   }
-  state.alignment.value = next;
+
+  state.tempo.angleDeg = angle;
+  state.alignment.dir = dir;
+  state.alignment.value = clamp01((angle - minA) / Math.max(0.001, maxA - minA));
+
   updateAlignmentRingUI(state.alignment.value, state.alignment.sweetCenter, state.alignment.sweetWidth);
 }
 function computeMatchScore(tempoHit, faceHit){
@@ -652,6 +667,7 @@ function resetRoundState(reason = "manual"){
   state.alignment.value = 0;
   state.alignment.dir = 1;
   state.alignment.speed = 0;
+  state.alignment.speedDeg = 0;
   state.alignment.active = false;
   state.alignment.sweetCenter = 0;
   state.alignment.hit = false;
@@ -677,6 +693,8 @@ function resetRoundState(reason = "manual"){
   state.tempo = state.tempo || {};
   state.tempo.holding = false;
   state.tempo.released = false;
+  state.tempo.angleDeg = 0;
+  state.tempo.lockedAngleDeg = null;
   state.ui = state.ui || {};
   state.ui.canStart = true;
   if(typeof SwingTempo !== "undefined" && SwingTempo.resetRound){
@@ -1485,6 +1503,11 @@ function beginHold(ts){
   state.tempo.holding = true;
   state.tempo.released = false;
   state.controls.tempoRelease = null;
+  state.alignment.active = true;
+  state.tempo.angleDeg = TEMPO_ARC.motionStart;
+  state.tempo.lockedAngleDeg = null;
+  state.alignment.dir = 1;
+  state.alignment.speedDeg = Number.isFinite(state.alignment.speedDeg) ? state.alignment.speedDeg : 90;
   state.alignment.hit = false;
   state.alignment.frozenValue = 0;
   state.round.faceAlignedAtRelease = false;
@@ -2111,6 +2134,7 @@ function resetPlayer(){
   state.alignment.value = 0;
   state.alignment.dir = 1;
   state.alignment.speed = 0;
+  state.alignment.speedDeg = 0;
   state.alignment.active = false;
   state.alignment.sweetCenter = 0;
   state.alignment.hit = false;
