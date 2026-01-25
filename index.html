@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en" data-theme="night">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Drivix — DISTANCE • TIMING • CONTROL</title>
+  <meta name="application-name" content="Drivix" />
+  <meta property="og:title" content="Drivix — DISTANCE • TIMING • CONTROL" />
+  <meta name="description" content="Drivix is a premium long drive challenge inspired by golf's most powerful swing." />
+
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <div class="gc-ambient gc-ambient--one" aria-hidden="true"></div>
+  <div class="gc-ambient gc-ambient--two" aria-hidden="true"></div>
+  <div class="gc-ambient gc-ambient--grain" aria-hidden="true"></div>
+  <div class="gc-shell">
+    <!-- Top Club Header -->
+    <header class="gc-topbar gc-panel gc-panel--hero" aria-label="Drivix top bar">
+      <div id="memberBackdrop" class="gc-backdrop gc-hidden" aria-hidden="true"></div>
+      <div class="top-banner-inner">
+        <div class="top-left">
+          <div class="gc-brand">
+            <div class="drivix-brand">
+              <svg class="drivix-mark" viewBox="0 0 72 72" aria-hidden="true" focusable="false">
+                <path d="M20 40c12-18 34-24 50-13 3 2 4 6 2 9l-7 14c-2 5-6 8-12 8H26c-11 0-16-10-10-18z"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                <path d="M20 26L8 2"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+              </svg>
+              <div class="gc-brand__text">
+                <div class="gc-brand__title">DRIVIX</div>
+                <div class="gc-brand__sub">DISTANCE • TIMING • CONTROL</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="top-center">
+          <div class="topbar-profile compact" id="topbarProfile">
+            <div class="tp-row">
+              <div class="tp-left">
+                <div class="tp-kicker">PLAYER PROFILE</div>
+                <div class="tp-name-row">
+                  <div class="tp-name" id="memberNameTop">Guest</div>
+                  <button class="tp-edit" id="memberEditBtnTop" aria-label="Edit name" title="Edit name">✎</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="top-right"></div>
+      </div>
+      <div id="gc-popovers">
+        <div id="memberPopover" class="gc-popover gc-hidden" role="dialog" aria-modal="true" aria-label="Edit member name">
+          <div class="gc-popover__title">MEMBER</div>
+          <div class="gc-popover__row">
+            <input id="memberPopoverInput" type="text" maxlength="16" autocomplete="off" />
+          </div>
+          <div class="gc-popover__actions">
+            <button id="memberPopoverCancel" class="gc-popover__btn" type="button">Cancel</button>
+            <button id="memberPopoverSave" class="gc-popover__btn gc-popover__btn--primary" type="button">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="gc-identity gc-hide-duplicate-stats" aria-label="Member identity">
+        <div class="gc-identity__item">
+          <span class="gc-identity__label">MEMBER<span class="info-i" data-tip="Your player profile. Fatigue/pressure from recent swings can increase risk." data-tooltip="Your player profile. Fatigue/pressure from recent swings can increase risk.">i</span></span>
+          <span class="gc-identity__value" id="playerNameLabel">—</span>
+        </div>
+        <div class="gc-identity__item">
+          <span class="gc-identity__label">HANDICAP<span class="info-i" data-tip="Handicap shows how many yards you are behind the reference distance. Lower is better." data-tooltip="Handicap shows how many yards you are behind the reference distance. Lower is better.">i</span></span>
+          <span class="gc-identity__value"><span id="handicapValue">—</span> yd</span>
+        </div>
+        <div class="gc-identity__item">
+          <span class="gc-identity__label">PB<span class="info-i" data-tip="Your longest drive ever." data-tooltip="Your longest drive ever.">i</span></span>
+          <span class="gc-identity__value"><span id="pbValue">—</span> yd</span>
+        </div>
+        <div class="gc-identity__item">
+          <span class="gc-identity__label">BEST 3 AVG<span class="info-i" data-tip="Average distance of your 3 best drives from the last 20 attempts. This value determines your handicap." data-tooltip="Average distance of your 3 best drives from the last 20 attempts. This value determines your handicap.">i</span></span>
+          <span class="gc-identity__value"><span id="best3AvgValue">—</span> yd</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="gc-layout">
+      <!-- Main layout -->
+      <main class="gc-main">
+        <!-- Left column: Tee Shot / Field / Controls -->
+        <section class="gc-card gc-card--primary gc-panel gc-panel--hero">
+          <div class="gc-card__head">
+            <div>
+              <div class="gc-eyebrow">LONG DRIVE • TEE SHOT</div>
+              <h1 class="gc-h1">Power Window</h1>
+              <div id="subline" class="gc-muted gc-subline">
+                Precision, timing, and power — one confident swing.
+              </div>
+            </div>
+          </div>
+
+          <div class="gc-power gc-panel gc-panel--soft gc-hidden-legacy">
+            <div class="gc-power__label">POWER WINDOW</div>
+            <div id="coef" class="gc-power__value">×1.00</div>
+            <div class="gc-power__meta">
+              <span class="gc-pillStat"><span id="uiDistanceYd">0</span> yd</span>
+              <span class="gc-pillStat gc-pillStat--muted">Best: <span id="uiBestYd">0</span> yd</span>
+            </div>
+          </div>
+
+          <!-- Field -->
+          <div class="gc-field gc-panel gc-panel--soft" aria-label="Flight view">
+            <div class="gc-flightHud" aria-hidden="true">
+              <div class="gc-flightHud__left">
+                <div class="gc-flightHud__label">POWER</div>
+                <div class="gc-flightHud__x" id="hudX">x1.00</div>
+              </div>
+              <div class="gc-flightHud__right">
+                <div class="gc-flightHud__stat distText"><span class="k">DIST</span><span class="v" id="hudDist">0</span><span class="u">yd</span></div>
+                <div id="statusBadge" class="gc-statusBadge gc-hidden" aria-live="polite"></div>
+              </div>
+            </div>
+            <div class="wind-hud" id="windHUD" aria-hidden="true">
+              <span class="wind-hud__label">WIND</span>
+              <span class="wind-hud__arrow" id="windArrow">▲</span>
+              <span class="wind-hud__val" id="windValue">0 mph</span>
+            </div>
+            <canvas id="flight3dCanvas" class="gc-field__canvas"></canvas>
+          </div>
+
+          <!-- Controls -->
+          <div class="gc-controls">
+            <div class="gc-controls__row gc-controls__row--segmented">
+              <div class="gc-segmented" role="group" aria-label="Risk selection">
+                <button type="button" class="gc-segmented__btn gc-segmented__btn--active" data-risk="calm">Calm</button>
+                <button type="button" class="gc-segmented__btn" data-risk="aggressive">Aggressive</button>
+              </div>
+            </div>
+            <div class="gc-controls__row gc-controls__row--buttons gc-controls__row--primary">
+              <div class="gc-swingControl">
+                <div class="gc-powerLabel swing-tempo-label">SWING TEMPO</div>
+                <div class="swing-tempo" id="swingTempoControl" role="button" aria-label="Swing tempo timing" tabindex="0">
+                  <div class="swing-tempo__track">
+                    <div class="swing-tempo__window" id="swingTempoWindow" aria-hidden="true"></div>
+                    <div class="swing-tempo__head" id="swingTempoHead" aria-hidden="true"></div>
+                  </div>
+                </div>
+                <div class="swing-tempo-helper">HOLD • RELEASE</div>
+                <div class="alignment-ring" id="alignmentRing" aria-label="Alignment ring">
+                  <div class="alignment-ring__label">ALIGNMENT</div>
+                  <svg class="alignment-ring__svg" id="alignmentSvg" viewBox="0 0 120 120" aria-hidden="true">
+                    <defs>
+                      <linearGradient id="alignmentRingGradient" x1="0" y1="10" x2="0" y2="110" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="rgba(255,255,255,0.10)"></stop>
+                        <stop offset="100%" stop-color="rgba(0,0,0,0.30)"></stop>
+                      </linearGradient>
+                    </defs>
+                    <path class="alignment-ring__base" id="alignmentBase" d=""></path>
+                    <path class="alignment-ring__sweet" id="alignmentSweet" d=""></path>
+                    <circle class="alignment-ring__runner" id="alignmentRunner" cx="60" cy="12" r="5"></circle>
+                  </svg>
+                  <div class="align-target-tick" aria-hidden="true"></div>
+                </div>
+              </div>
+            </div>
+            <div class="gc-controls__row gc-controls__row--meta">
+              <div id="perfectWindowLabel" class="gc-mutedSmall">SWEET SPOT: —</div>
+              <div class="swing-wind" id="swingWind">
+                <span class="swing-wind__label">WIND</span>
+                <span class="swing-wind__arrow" id="swingWindArrow">→</span>
+                <span class="swing-wind__val" id="swingWindValue">0</span>
+              </div>
+            </div>
+          </div>
+
+          <footer class="gc-footer">
+            <span>Drivix — Designed for Distance</span>
+          </footer>
+        </section>
+      </main>
+
+      <aside class="gc-sidepanel" aria-label="Club Panel">
+        <div class="gc-card gc-sidecard">
+          <div class="gc-card__kicker">DAILY CHALLENGE</div>
+          <div class="gc-card__title">Fairway Precision</div>
+          <div class="gc-card__text">Land a drive within the long-drive zone (≥ 260 yd) without crashing.</div>
+          <div class="gc-badges">
+            <span class="gc-badge">Today</span>
+            <span class="gc-badge gc-badge--gold">260+ yd</span>
+          </div>
+        </div>
+
+        <div class="gc-card gc-sidecard">
+          <div class="gc-card__kicker">LEADERBOARD TODAY</div>
+          <ol class="gc-leaderboard">
+            <li><span class="name">E. Morgan</span><span class="val">318 yd</span></li>
+            <li><span class="name">A. Sinclair</span><span class="val">304 yd</span></li>
+            <li><span class="name">J. Bennett</span><span class="val">298 yd</span></li>
+            <li><span class="name">K. Wallace</span><span class="val">289 yd</span></li>
+            <li><span class="name">S. Hughes</span><span class="val">281 yd</span></li>
+          </ol>
+          <div class="gc-minirow">
+            <span class="muted">You</span>
+            <span class="val" id="youBestInline">—</span>
+          </div>
+        </div>
+      </aside>
+      </div>
+    </div>
+    <div id="memberBackdrop" class="gc-hidden" aria-hidden="true"></div>
+    <div id="memberPopover" class="gc-hidden" role="dialog" aria-modal="true" aria-labelledby="memberModalTitle">
+      <div class="member-modal-card" role="document">
+        <div class="member-modal-title" id="memberModalTitle">Set Member Name</div>
+        <div class="member-modal-sub">This name is stored locally on this device.</div>
+        <input id="memberNameInput" type="text" maxlength="16" autocomplete="off" />
+        <div class="member-modal-actions">
+          <button id="memberCancelBtn" class="gc-btn-secondary" type="button">Cancel</button>
+          <button id="memberSaveBtn" class="gc-btn-primary" type="button">Save</button>
+        </div>
+      </div>
+    </div>
+
+  <!-- Scripts (keep paths consistent with your project) -->
+  <script src="js/flight_aviatorlike.js"></script>
+  <script src="js/stats.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
