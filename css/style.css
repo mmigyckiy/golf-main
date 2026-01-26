@@ -1433,6 +1433,10 @@ hr,
   gap:10px;
   width: min(220px, 100%);
   position: relative;
+  pointer-events: none;
+}
+.alignment-ring *{
+  pointer-events: none;
 }
 .alignment-ring::before{
   content: "";
