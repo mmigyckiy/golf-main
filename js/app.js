@@ -517,6 +517,11 @@ function degToRad(deg){
   return deg * Math.PI / 180;
 }
 
+function polarFromDeg(cx, cy, r, deg){
+  const a = (deg - 90) * Math.PI / 180;
+  return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+}
+
 const ALIGN_RING = {
   cx: 60,
   cy: 60,
@@ -547,9 +552,14 @@ function updateAlignmentRingUI(value, sweetCenter, sweetWidth){
   const sweetStart = clamp(centerAngle - sweetHalf, arcStart, arcEnd);
   const sweetEnd = clamp(centerAngle + sweetHalf, arcStart, arcEnd);
   ui.alignmentSweet.setAttribute("d", describeArc(cx, cy, r, sweetStart, sweetEnd));
-  const angleDeg = state.tempo.lockedAngleDeg ?? state.tempo.angleDeg ?? 0;
-  const runnerAngleRad = degToRad(angleDeg);
-  const pos = { x: cx + r * Math.cos(runnerAngleRad), y: cy + r * Math.sin(runnerAngleRad) };
+  const motionStart = TEMPO_ARC.motionStart; // degrees
+  const motionEnd = TEMPO_ARC.motionEnd; // degrees
+  const span = motionEnd - motionStart;
+  const norm = Number.isFinite(state.tempo?.lockedHeadPos)
+    ? clamp01(state.tempo.lockedHeadPos)
+    : clamp01(state.alignment?.value ?? 0);
+  const runnerDeg = motionStart + span * norm;
+  const pos = polarFromDeg(cx, cy, r, runnerDeg);
   ui.alignmentRunner.setAttribute("cx", pos.x.toFixed(2));
   ui.alignmentRunner.setAttribute("cy", pos.y.toFixed(2));
 }
