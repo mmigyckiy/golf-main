@@ -1586,14 +1586,16 @@ function releaseSwing(ts, power = 0){
 
 function tick(ts){
   const dtMs = state.lastTs ? (ts - state.lastTs) : 16;
+  const isHold = state.phase === RoundPhase.ARMING;
   const running = state.phase === RoundPhase.SWING || state.phase === RoundPhase.FLIGHT;
   state.running = running;
-  SwingTempo.update(dtMs, { roundActive: running });
+  SwingTempo.update(dtMs, { roundActive: running || isHold });
   if(state.phase === RoundPhase.ARMING){
     state.lastTs = ts;
     updateRoundWind(ts);
     updateWindHUD();
     updateAlignmentRing(ts, dtMs);
+    updatePerfectLabel();
     sendFlightHUD();
     syncRendererState();
     return;
