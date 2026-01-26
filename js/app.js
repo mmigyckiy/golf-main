@@ -962,12 +962,22 @@ const SwingTempo = (() => {
     const dtSec = Math.max(0.001, (dtMs || 0) / 1000);
     applyFatigueDecay(dtSec, now);
     maybeUpdateWind(now);
-    const shouldBeActive = state.holding || !!opts.roundActive;
+    if(opts?.holdActive && !state.holding){
+      const holdStart = window.__drivixState?.timestamps?.holdStartMs;
+      state.holding = true;
+      state.startMs = Number.isFinite(holdStart) ? holdStart : now;
+      state.targetPos = state.targetPos || 0;
+      state.headVel = 0;
+    }
+    const shouldBeActive = state.holding || !!opts.roundActive || !!opts.holdActive;
     setActiveClass(shouldBeActive);
     if(state.holding){
       state.targetPos = computeProgress(now);
     }
     applyInertia(dtSec);
+    if(opts?.holdActive){
+      console.log("[TEMPO] update", { hold: opts?.holdActive, dtMs, head: state.headPos });
+    }
   }
 
   function startHold(){
@@ -1498,7 +1508,18 @@ function beginHold(ts){
   if(state.phase !== RoundPhase.IDLE && state.phase !== RoundPhase.END) return false;
   resetRound("beginHold");
   state.phase = RoundPhase.ARMING;
-  state.timestamps.holdStartMs = now;
+  state.timestamps.holdStartMs = Number.isFinite(ts) ? ts : performance.now();
+  state.tempo = state.tempo || {};
+  state.tempo.active = true;
+  state.tempo.locked = false;
+  state.tempo.lockedHeadPos = null;
+  state.tempo.lockedX = null;
+  if(typeof SwingTempo?.beginHold === "function"){
+    SwingTempo.beginHold(state.timestamps.holdStartMs);
+  }else if(typeof SwingTempo?.reset === "function"){
+    SwingTempo.reset();
+  }
+  console.log("[HOLD] beginHold", { ts: state.timestamps.holdStartMs, phase: state.phase });
   state.ui.canStart = false;
   state.tempo.holding = true;
   state.tempo.released = false;
@@ -1587,9 +1608,9 @@ function releaseSwing(ts, power = 0){
 function tick(ts){
   const dtMs = state.lastTs ? (ts - state.lastTs) : 16;
   const isHold = state.phase === RoundPhase.ARMING;
-  const running = state.phase === RoundPhase.SWING || state.phase === RoundPhase.FLIGHT;
-  state.running = running;
-  SwingTempo.update(dtMs, { roundActive: running || isHold });
+  const isRunning = state.phase === RoundPhase.SWING || state.phase === RoundPhase.FLIGHT;
+  state.running = isRunning;
+  SwingTempo.update(dtMs, { roundActive: isRunning, holdActive: isHold });
   if(state.phase === RoundPhase.ARMING){
     state.lastTs = ts;
     updateRoundWind(ts);
