@@ -547,11 +547,10 @@ function updateAlignmentRingUI(value, sweetCenter, sweetWidth){
   const sweetStart = clamp(centerAngle - sweetHalf, arcStart, arcEnd);
   const sweetEnd = clamp(centerAngle + sweetHalf, arcStart, arcEnd);
   ui.alignmentSweet.setAttribute("d", describeArc(cx, cy, r, sweetStart, sweetEnd));
-  const angleDeg = state.tempo.lockedAngleDeg ?? state.tempo.angleDeg ?? 0;
-  const runnerAngleRad = degToRad(angleDeg);
-  const pos = { x: cx + r * Math.cos(runnerAngleRad), y: cy + r * Math.sin(runnerAngleRad) };
-  ui.alignmentRunner.setAttribute("cx", pos.x.toFixed(2));
-  ui.alignmentRunner.setAttribute("cy", pos.y.toFixed(2));
+  const deg = Number.isFinite(state.alignment?.runnerDeg) ? state.alignment.runnerDeg : TEMPO_ARC.bottomDeg;
+  const p = polarToCartesian(cx, cy, r, degToRad(deg));
+  ui.alignmentRunner.setAttribute("cx", p.x.toFixed(2));
+  ui.alignmentRunner.setAttribute("cy", p.y.toFixed(2));
 }
 
 function initAlignmentRing(){
@@ -575,17 +574,21 @@ function initAlignmentRing(){
 function updateAlignmentRing(ts, dtMs){
   if(!state.alignment.active) return;
   const headPos = (typeof SwingTempo?.getHeadPos === "function") ? SwingTempo.getHeadPos() : null;
-  if(Number.isFinite(headPos)){
-    const normalized = clamp01(headPos);
-    const motionStart = TEMPO_ARC.motionStart;
-    const motionEnd = TEMPO_ARC.motionEnd;
-    const span = motionEnd - motionStart;
-    state.alignment.value = normalized;
-    state.tempo.angleDeg = motionStart + span * normalized;
-    updateAlignmentRingUI(state.alignment.value, state.alignment.sweetCenter, state.alignment.sweetWidth);
-    return;
+  const u = Number.isFinite(headPos) ? clamp01(headPos) : clamp01(state.alignment.value ?? 0);
+  const leftEnd = TEMPO_ARC.arcStartDeg;
+  const rightEnd = TEMPO_ARC.arcEndDeg;
+  const bottom = TEMPO_ARC.bottomDeg;
+  let runnerDeg;
+  if(u <= 0.5){
+    const t = u / 0.5;
+    runnerDeg = lerp(leftEnd, bottom, t);
+  }else{
+    const t = (u - 0.5) / 0.5;
+    runnerDeg = lerp(bottom, rightEnd, t);
   }
-  updateAlignmentRingUI(state.alignment.value ?? 0, state.alignment.sweetCenter, state.alignment.sweetWidth);
+  state.alignment.value = u;
+  state.alignment.runnerDeg = runnerDeg;
+  updateAlignmentRingUI(state.alignment.value, state.alignment.sweetCenter, state.alignment.sweetWidth);
 }
 function computeMatchScore(tempoHit, faceHit){
   if(tempoHit && faceHit) return 1;
