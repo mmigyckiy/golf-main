@@ -517,11 +517,6 @@ function degToRad(deg){
   return deg * Math.PI / 180;
 }
 
-function polarFromDeg(cx, cy, r, deg){
-  const a = (deg - 90) * Math.PI / 180;
-  return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
-}
-
 const ALIGN_RING = {
   cx: 60,
   cy: 60,
@@ -552,14 +547,9 @@ function updateAlignmentRingUI(value, sweetCenter, sweetWidth){
   const sweetStart = clamp(centerAngle - sweetHalf, arcStart, arcEnd);
   const sweetEnd = clamp(centerAngle + sweetHalf, arcStart, arcEnd);
   ui.alignmentSweet.setAttribute("d", describeArc(cx, cy, r, sweetStart, sweetEnd));
-  const motionStart = TEMPO_ARC.motionStart; // degrees
-  const motionEnd = TEMPO_ARC.motionEnd; // degrees
-  const span = motionEnd - motionStart;
-  const norm = Number.isFinite(state.tempo?.lockedHeadPos)
-    ? clamp01(state.tempo.lockedHeadPos)
-    : clamp01(state.alignment?.value ?? 0);
-  const runnerDeg = motionStart + span * norm;
-  const pos = polarFromDeg(cx, cy, r, runnerDeg);
+  const angleDeg = state.tempo.lockedAngleDeg ?? state.tempo.angleDeg ?? 0;
+  const runnerAngleRad = degToRad(angleDeg);
+  const pos = { x: cx + r * Math.cos(runnerAngleRad), y: cy + r * Math.sin(runnerAngleRad) };
   ui.alignmentRunner.setAttribute("cx", pos.x.toFixed(2));
   ui.alignmentRunner.setAttribute("cy", pos.y.toFixed(2));
 }
@@ -584,29 +574,18 @@ function initAlignmentRing(){
 
 function updateAlignmentRing(ts, dtMs){
   if(!state.alignment.active) return;
-  const dt = Math.max(0.001, (dtMs || 16) / 1000);
-  const motionStart = TEMPO_ARC.motionStart;
-  const motionEnd = TEMPO_ARC.motionEnd;
-  const minA = Math.min(motionStart, motionEnd);
-  const maxA = Math.max(motionStart, motionEnd);
-  let angle = Number.isFinite(state.tempo?.angleDeg) ? state.tempo.angleDeg : motionStart;
-  let dir = Number.isFinite(state.alignment.dir) ? state.alignment.dir : 1;
-  const speedDeg = Number.isFinite(state.alignment.speedDeg) ? state.alignment.speedDeg : 90;
-
-  angle += speedDeg * dir * dt;
-  if(angle >= maxA){
-    angle = maxA;
-    dir = -1;
-  }else if(angle <= minA){
-    angle = minA;
-    dir = 1;
+  const headPos = (typeof SwingTempo?.getHeadPos === "function") ? SwingTempo.getHeadPos() : null;
+  if(Number.isFinite(headPos)){
+    const normalized = clamp01(headPos);
+    const motionStart = TEMPO_ARC.motionStart;
+    const motionEnd = TEMPO_ARC.motionEnd;
+    const span = motionEnd - motionStart;
+    state.alignment.value = normalized;
+    state.tempo.angleDeg = motionStart + span * normalized;
+    updateAlignmentRingUI(state.alignment.value, state.alignment.sweetCenter, state.alignment.sweetWidth);
+    return;
   }
-
-  state.tempo.angleDeg = angle;
-  state.alignment.dir = dir;
-  state.alignment.value = clamp01((angle - minA) / Math.max(0.001, maxA - minA));
-
-  updateAlignmentRingUI(state.alignment.value, state.alignment.sweetCenter, state.alignment.sweetWidth);
+  updateAlignmentRingUI(state.alignment.value ?? 0, state.alignment.sweetCenter, state.alignment.sweetWidth);
 }
 function computeMatchScore(tempoHit, faceHit){
   if(tempoHit && faceHit) return 1;
@@ -985,9 +964,6 @@ const SwingTempo = (() => {
       state.targetPos = computeProgress(now);
     }
     applyInertia(dtSec);
-    if(opts?.holdActive){
-      console.log("[TEMPO] update", { hold: opts?.holdActive, dtMs, head: state.headPos });
-    }
   }
 
   function startHold(){
@@ -1062,6 +1038,7 @@ const SwingTempo = (() => {
     startHold,
     endHold,
     update,
+    getHeadPos: () => state.headPos,
     getPower: computePower,
     getScore,
     getReleaseScore: () => state.lastReleaseScore || 0,
@@ -1529,11 +1506,11 @@ function beginHold(ts){
   }else if(typeof SwingTempo?.reset === "function"){
     SwingTempo.reset();
   }
-  console.log("[HOLD] beginHold", { ts: state.timestamps.holdStartMs, phase: state.phase });
   state.ui.canStart = false;
   state.tempo.holding = true;
   state.tempo.released = false;
   state.controls.tempoRelease = null;
+  state.alignment = state.alignment || {};
   state.alignment.active = true;
   state.tempo.angleDeg = TEMPO_ARC.motionStart;
   state.tempo.lockedAngleDeg = null;
@@ -1631,7 +1608,7 @@ function tick(ts){
     syncRendererState();
     return;
   }
-  if(!running){
+  if(!isRunning){
     state.lastTs = ts;
     sendFlightHUD();
     syncRendererState();
