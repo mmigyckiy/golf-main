@@ -1529,6 +1529,11 @@ hr,
   stroke-linecap: round;
   opacity: 0.7;
 }
+.alignment-ring__ball{
+  fill: rgba(232,236,241,0.9);
+  opacity: 0.9;
+  filter: drop-shadow(0 1px 6px rgba(0,0,0,0.35));
+}
 .alignment-ring__notch{
   stroke: rgba(255,255,255,0.35);
   stroke-width: 2;
@@ -1546,6 +1551,9 @@ hr,
 .alignment-ring__runner{
   fill: rgba(232,236,241,0.85);
   filter: drop-shadow(0 2px 8px rgba(0,0,0,0.35));
+}
+.alignment-ring.is-holding .alignment-ring__runner{
+  filter: drop-shadow(0 2px 10px rgba(216,200,166,0.28));
 }
 .alignment-ring.is-hit .alignment-ring__sweet{
   opacity: 0.95;

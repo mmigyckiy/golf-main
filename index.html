@@ -157,7 +157,7 @@
                 </div>
                 <div class="swing-tempo-helper">HOLD • RELEASE</div>
                 <div class="alignment-ring" id="alignmentRing" aria-label="Alignment ring">
-                  <div class="alignment-ring__label">ALIGNMENT</div>
+                  <div class="alignment-ring__label">SWING PATH</div>
                   <svg class="alignment-ring__svg" id="alignmentSvg" viewBox="0 0 120 120" aria-hidden="true">
                     <defs>
                       <linearGradient id="alignmentRingGradient" x1="0" y1="10" x2="0" y2="110" gradientUnits="userSpaceOnUse">
@@ -167,7 +167,8 @@
                     </defs>
                     <path class="alignment-ring__base" id="alignmentBase" d=""></path>
                     <path class="alignment-ring__sweet" id="alignmentSweet" d=""></path>
-                    <circle class="alignment-ring__runner" id="alignmentRunner" cx="60" cy="12" r="5"></circle>
+                    <circle class="alignment-ring__ball" id="alignmentBall" cx="60" cy="102" r="3"></circle>
+                    <circle class="alignment-ring__runner" id="alignmentRunner" cx="60" cy="12" r="4.2"></circle>
                   </svg>
                   <div class="align-target-tick" aria-hidden="true"></div>
                 </div>
@@ -217,22 +218,10 @@
       </aside>
       </div>
     </div>
-    <div id="memberBackdrop" class="gc-hidden" aria-hidden="true"></div>
-    <div id="memberPopover" class="gc-hidden" role="dialog" aria-modal="true" aria-labelledby="memberModalTitle">
-      <div class="member-modal-card" role="document">
-        <div class="member-modal-title" id="memberModalTitle">Set Member Name</div>
-        <div class="member-modal-sub">This name is stored locally on this device.</div>
-        <input id="memberNameInput" type="text" maxlength="16" autocomplete="off" />
-        <div class="member-modal-actions">
-          <button id="memberCancelBtn" class="gc-btn-secondary" type="button">Cancel</button>
-          <button id="memberSaveBtn" class="gc-btn-primary" type="button">Save</button>
-        </div>
-      </div>
-    </div>
-
   <!-- Scripts (keep paths consistent with your project) -->
   <script src="js/flight_aviatorlike.js"></script>
   <script src="js/stats.js"></script>
+  <script src="js/swing_path.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

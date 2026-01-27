@@ -1,3 +1,5 @@
+// DEAD-CODE CANDIDATES (not removed yet):
+// - none found
 (function(){
   "use strict";
 

@@ -1,3 +1,5 @@
+// DEAD-CODE CANDIDATES (not removed yet):
+// - none found
 (function(global){
   const REFERENCE_YD = 280;
   const MAX_ATTEMPTS = 100;

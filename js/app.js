@@ -5,6 +5,10 @@
 // - Target line evaluation (ON LINE / SHORT / LONG) at 300 yd
 // - Risk selector (Calm/Aggressive) influencing crash window
 // UI/game state focused on distance and cashout timing
+// DEAD-CODE CANDIDATES (removed in this cleanup):
+// - computeSweetSpot(): no references found
+// - computeEfficiency(): no references found
+// - getEnvWindFromSample(): no references found
 
 // == Config / Constants ==
 import { isWithinPerfectWindow, loadLongestToday, saveLongestToday, evaluateTarget, genCrashForRisk, getGrowthForRisk, showSignatureOverlay } from "./longdrive-extras.js";
@@ -14,6 +18,7 @@ import { computeLandingX } from "./logic/risk_engine.js";
 import { renderTopbar } from "./ui/topbar.js";
 import { loadPlayerMental, applyAttemptMental, applyRecoveryOnRoundEnd } from "./logic/player_state.js";
 import { initWind, sampleWind } from "./logic/wind.js";
+import { SwingControls } from "./swing_controls.js";
 
 const FLIGHT_MS_VISUAL = 2200;
 const STORAGE_KEY = "golfcentral.longdrive.v1";
@@ -24,6 +29,13 @@ const TARGET_DISTANCE = 300;
 const MAX_YD = 500;
 const LONG_DRIVE_UNLOCK_PROB = 0.12;
 const X_CAP = 9.99;
+const TEMPO_POWER = { min: 0.55, max: 1.05 };
+const X_TO_YARDS = 100;
+const RISK_K = 0.010;
+const RISK_P = 2.2;
+const DANGER_X_START = 2.2;
+const DANGER_X_FULL = 3.6;
+const DBG_PHYS = false;
 
 const FEATURES = {
   tempoInertia: true,
@@ -386,7 +398,7 @@ function lerp(a, b, t){ return a + (b - a) * t; }
 function round2(v){ return Math.round(v * 100) / 100; }
 
 function yardsFromX(x){
-  const val = Math.round((Number(x) || 0) * 100);
+  const val = Math.round((Number(x) || 0) * X_TO_YARDS);
   return clamp(val, 0, MAX_YD);
 }
 
@@ -425,36 +437,6 @@ function updateRoundWind(now){
   state.wind.dirDeg = dirDeg < 0 ? dirDeg + 360 : dirDeg;
 }
 
-
-function computeSweetSpot(currentX, wind, fatigue, mode){
-  const x = Math.max(1, Number(currentX) || 1);
-  const windMph = Math.max(0, Number(wind?.mph) || 0);
-  const gust = Math.max(0, Number(wind?.gust) || 0);
-  const baseWidth = clamp(x * 0.15, 0.22, 0.65);
-  const windEffect = clamp01((windMph + gust * 0.6) / 18);
-  const fatigueEffect = clamp01(fatigue);
-  const d = clamp01(0.55 * windEffect + 0.45 * fatigueEffect);
-  const center = x - lerp(0.00, 0.18, d);
-  const width = baseWidth * lerp(1.00, 0.72, d) * (1 - fatigueEffect * 0.25);
-  let minX = center - width / 2;
-  let maxX = center + width / 2;
-  minX = Math.max(1.05, minX);
-  maxX = Math.min(9.99, maxX);
-  if(maxX - minX < 0.08){
-    const mid = (minX + maxX) / 2;
-    minX = mid - 0.04;
-    maxX = mid + 0.04;
-    if(minX < 1.05){
-      minX = 1.05;
-      maxX = 1.13;
-    }
-    if(maxX > 9.99){
-      maxX = 9.99;
-      minX = 9.91;
-    }
-  }
-  return { minX: round2(minX), maxX: round2(maxX) };
-}
 
 function initSweetSpot(){
   const baseCenterX = state.riskMode === "aggressive" ? 3.05 : 2.7;
@@ -506,90 +488,6 @@ function updateSweetSpot(dtSec){
   state.perfectWindow = { start: minX, end: maxX };
 }
 
-function polarToCartesian(cx, cy, r, angleRad){
-  return {
-    x: cx + r * Math.sin(angleRad),
-    y: cy - r * Math.cos(angleRad)
-  };
-}
-
-function degToRad(deg){
-  return deg * Math.PI / 180;
-}
-
-const ALIGN_RING = {
-  cx: 60,
-  cy: 60,
-  r: 46,
-  gapRad: (Math.PI / 180) * 20
-};
-
-function describeArc(cx, cy, r, startAngle, endAngle){
-  const start = polarToCartesian(cx, cy, r, startAngle);
-  const end = polarToCartesian(cx, cy, r, endAngle);
-  const sweep = endAngle - startAngle;
-  const largeArc = Math.abs(sweep) > Math.PI ? 1 : 0;
-  const sweepFlag = sweep >= 0 ? 1 : 0;
-  return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${r} ${r} 0 ${largeArc} ${sweepFlag} ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
-}
-
-function updateAlignmentRingUI(value, sweetCenter, sweetWidth){
-  if(!ui.alignmentRing || !ui.alignmentSweet || !ui.alignmentRunner) return;
-  const { cx, cy, r, gapRad } = ALIGN_RING;
-  const arcStart = gapRad / 2;
-  const arcEnd = Math.PI * 2 - gapRad / 2;
-  if(ui.alignmentBase){
-    ui.alignmentBase.setAttribute("d", describeArc(cx, cy, r, arcStart, arcEnd));
-  }
-  const targetAngle = Math.PI;
-  const centerAngle = targetAngle + (sweetCenter || 0);
-  const sweetHalf = sweetWidth / 2;
-  const sweetStart = clamp(centerAngle - sweetHalf, arcStart, arcEnd);
-  const sweetEnd = clamp(centerAngle + sweetHalf, arcStart, arcEnd);
-  ui.alignmentSweet.setAttribute("d", describeArc(cx, cy, r, sweetStart, sweetEnd));
-  const deg = Number.isFinite(state.alignment?.runnerDeg) ? state.alignment.runnerDeg : TEMPO_ARC.bottomDeg;
-  const p = polarToCartesian(cx, cy, r, degToRad(deg));
-  ui.alignmentRunner.setAttribute("cx", p.x.toFixed(2));
-  ui.alignmentRunner.setAttribute("cy", p.y.toFixed(2));
-}
-
-function initAlignmentRing(){
-  const motionStart = TEMPO_ARC.motionStart;
-  const motionEnd = TEMPO_ARC.motionEnd;
-  const minA = Math.min(motionStart, motionEnd);
-  const maxA = Math.max(motionStart, motionEnd);
-  const angleDeg = Number.isFinite(state.tempo?.angleDeg) ? state.tempo.angleDeg : motionStart;
-  state.tempo.angleDeg = angleDeg;
-  state.alignment.value = clamp01((angleDeg - minA) / Math.max(0.001, maxA - minA));
-  state.alignment.dir = Number.isFinite(state.alignment.dir) ? state.alignment.dir : 1;
-  state.alignment.speedDeg = Number.isFinite(state.alignment.speedDeg) ? state.alignment.speedDeg : 90;
-  state.alignment.active = true;
-  state.alignment.frozenValue = 0;
-  state.alignment.hit = false;
-  state.alignment.sweetCenter = 0;
-  updateAlignmentRingUI(state.alignment.value, state.alignment.sweetCenter, state.alignment.sweetWidth);
-  if(ui.alignmentRing) ui.alignmentRing.classList.remove("is-hit");
-}
-
-function updateAlignmentRing(ts, dtMs){
-  if(!state.alignment.active) return;
-  const headPos = (typeof SwingTempo?.getHeadPos === "function") ? SwingTempo.getHeadPos() : null;
-  const u = Number.isFinite(headPos) ? clamp01(headPos) : clamp01(state.alignment.value ?? 0);
-  const leftEnd = TEMPO_ARC.arcStartDeg;
-  const rightEnd = TEMPO_ARC.arcEndDeg;
-  const bottom = TEMPO_ARC.bottomDeg;
-  let runnerDeg;
-  if(u <= 0.5){
-    const t = u / 0.5;
-    runnerDeg = lerp(leftEnd, bottom, t);
-  }else{
-    const t = (u - 0.5) / 0.5;
-    runnerDeg = lerp(bottom, rightEnd, t);
-  }
-  state.alignment.value = u;
-  state.alignment.runnerDeg = runnerDeg;
-  updateAlignmentRingUI(state.alignment.value, state.alignment.sweetCenter, state.alignment.sweetWidth);
-}
 function computeMatchScore(tempoHit, faceHit){
   if(tempoHit && faceHit) return 1;
   if(tempoHit || faceHit) return 0.6;
@@ -685,13 +583,10 @@ function resetRoundState(reason = "manual"){
   state.tempo = state.tempo || {};
   state.tempo.holding = false;
   state.tempo.released = false;
-  state.tempo.angleDeg = 0;
+  state.tempo.angle = 0;
   state.tempo.lockedAngleDeg = null;
   state.ui = state.ui || {};
   state.ui.canStart = true;
-  if(typeof SwingTempo !== "undefined" && SwingTempo.resetRound){
-    SwingTempo.resetRound();
-  }
   setButtons();
 }
 
@@ -747,12 +642,6 @@ function easeOutCubic(t){
   return 1 - inv * inv * inv;
 }
 
-function computeEfficiency(xLocked, crashed){
-  const x = Math.max(1, xLocked || 1);
-  const effBase = 0.92 + 0.18 * (1 - Math.exp(-0.9 * (x - 1)));
-  return crashed ? effBase * 0.78 : effBase;
-}
-
 function scoreNeedleInWindow(pos, start, end){
   const span = Math.max(0.001, end - start);
   const center = start + span / 2;
@@ -761,298 +650,39 @@ function scoreNeedleInWindow(pos, start, end){
   return clamp01(score);
 }
 
-const SwingTempo = (() => {
-  const cfg = {
-    loopMs: 1800,
-    minPower: 0.55,
-    maxPower: 1.05,
-    inertia: {
-      stiffness: 28,
-      damping: 0.82,
-      maxVel: 3.5
-    },
-    fatigue: {
-      decayPerSec: 0.03,
-      boost: 0.35,
-      bumpHi: 0.12,
-      threshold: 0.92,
-      idleResetSec: 10
-    },
-    wind: {
-      shiftMax: 0.1,
-      driftMin: 2000,
-      driftMax: 4000,
-      gustChance: 0.2,
-      gustAmp: 0.6,
-      gustDuration: 1400
-    }
-  };
+function computeTempoPower(headPos){
+  const start = Number.isFinite(state.tempo?.windowStart) ? state.tempo.windowStart : 0.6;
+  const end = Number.isFinite(state.tempo?.windowEnd) ? state.tempo.windowEnd : 0.8;
+  const center = (start + end) / 2;
+  const halfSpan = Math.max(0.001, (end - start) / 2);
+  const dist = Math.abs(headPos - center);
+  const accuracy = clamp01(1 - dist / halfSpan);
+  const weighted = Math.pow(accuracy, 1.1);
+  const power = TEMPO_POWER.min + weighted * (TEMPO_POWER.max - TEMPO_POWER.min);
+  return clamp(power, TEMPO_POWER.min, TEMPO_POWER.max);
+}
 
-  const els = {
-    control: null,
-    head: null,
-    window: null,
-    windArrow: null,
-    windValue: null
-  };
+function computeSwingStability(){
+  const tempoQuality = Number.isFinite(state.round?.tempoScore) ? clamp01(state.round.tempoScore) : 0.6;
+  const alignQuality = Number.isFinite(state.round?.faceAlignedQuality01) ? clamp01(state.round.faceAlignedQuality01) : (state.alignment?.hit ? 1 : 0.6);
+  const stability = clamp01(0.55 * tempoQuality + 0.45 * alignQuality);
+  state.swing = state.swing || {};
+  state.swing.stability = stability;
+  return stability;
+}
 
-  const state = {
-    initialized: false,
-    holding: false,
-    startMs: 0,
-    targetPos: 0,
-    headPos: 0,
-    headVel: 0,
-    winBase: { start: 0.6, end: 0.8 },
-    winShifted: { start: 0.6, end: 0.8 },
-    lastReleasePos: 0,
-    lastReleaseScore: 0,
-    externalWindow: false,
-    fatigue: 0,
-    lastReleaseMs: 0,
-    roundActive: false,
-    wind: { dir: 0, strength: 0, gusting: false },
-    windTimers: { nextDrift: 0, gustEnds: 0 },
-    windBaseStrength: 0.2
-  };
-
-  const clamp01Safe = (v) => clamp01(Number.isFinite(v) ? v : 0);
-  const easeInOutCubic = (t) => {
-    const x = clamp01Safe(t);
-    return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-  };
-  const randRange = (min, max) => min + Math.random() * (max - min);
-
-  function setWindowVisual(start01, end01){
-    if(!els.window) return;
-    const span = Math.max(0.02, end01 - start01);
-    els.window.style.left = `${start01 * 100}%`;
-    els.window.style.width = `${span * 100}%`;
+function syncSwingUI(){
+  SwingControls.syncFromState(state);
+  if(window.SwingPath){
+    const headPos = SwingControls.getTempoHeadPos();
+    window.SwingPath.update({
+      phase: state.phase,
+      headPos01: Number.isFinite(headPos) ? headPos : 0,
+      sweetCenter: state.alignment?.sweetCenter ?? 0,
+      sweetWidthDeg: 18
+    });
   }
-
-  function updateHeadVisual(){
-    if(!els.head) return;
-    els.head.style.left = `${clamp01Safe(state.headPos) * 100}%`;
-  }
-
-  function getWindShift(){
-    if(!FEATURES.wind) return 0;
-    if(state.externalWindow) return 0;
-    return clamp(state.wind.dir * state.wind.strength * cfg.wind.shiftMax, -0.4, 0.4);
-  }
-
-  function refreshWindow(){
-    const span = Math.max(0.02, state.winBase.end - state.winBase.start);
-    let center = state.winBase.start + span / 2 + getWindShift();
-    const bounds = { min: span / 2, max: 1 - span / 2 };
-    center = clamp(center, bounds.min, bounds.max);
-    state.winShifted.start = clamp01Safe(center - span / 2);
-    state.winShifted.end = clamp01Safe(center + span / 2);
-    setWindowVisual(state.winShifted.start, state.winShifted.end);
-  }
-
-  function setWindow(start01, end01){
-    state.winBase = {
-      start: clamp01Safe(start01),
-      end: clamp01Safe(end01)
-    };
-    state.externalWindow = true;
-    refreshWindow();
-  }
-
-  function applyFatigueDecay(dtSec, now){
-    if(!FEATURES.fatigue) return;
-    state.fatigue = clamp01Safe(state.fatigue - cfg.fatigue.decayPerSec * dtSec);
-    if(!state.holding && state.lastReleaseMs && (now - state.lastReleaseMs) > cfg.fatigue.idleResetSec * 1000){
-      state.fatigue = 0;
-    }
-  }
-
-  function maybeUpdateWind(now){
-    if(!FEATURES.wind || !els.window) return;
-    if(!state.windTimers.nextDrift) state.windTimers.nextDrift = now + randRange(cfg.wind.driftMin, cfg.wind.driftMax);
-    if(now >= state.windTimers.nextDrift){
-      state.wind.dir = clamp(randRange(-1, 1), -1, 1);
-      state.windBaseStrength = clamp(randRange(0.15, 0.7), 0, 1);
-      state.windTimers.nextDrift = now + randRange(cfg.wind.driftMin, cfg.wind.driftMax);
-      if(Math.random() < cfg.wind.gustChance){
-        state.wind.gusting = true;
-        state.windTimers.gustEnds = now + cfg.wind.gustDuration;
-      }
-    }
-    if(state.wind.gusting){
-      const t = clamp01Safe(1 - (state.windTimers.gustEnds - now) / cfg.wind.gustDuration);
-      if(t >= 1){
-        state.wind.gusting = false;
-      }
-      const gustFactor = Math.sin(t * Math.PI);
-      state.wind.strength = clamp01Safe(state.windBaseStrength * (1 + cfg.wind.gustAmp * gustFactor));
-    }else{
-      state.wind.strength = state.windBaseStrength;
-    }
-    refreshWindow();
-    updateWindDisplay();
-  }
-
-  function updateWindDisplay(){
-    if(!els.windValue || !els.windArrow) return;
-    const dirArrow = state.wind.dir >= 0 ? "→" : "←";
-    els.windArrow.textContent = dirArrow;
-    const pct = Math.round(state.wind.strength * 100);
-    els.windValue.textContent = `${pct}%`;
-  }
-
-  function applyInertia(dtSec){
-    if(!FEATURES.tempoInertia){
-      state.headPos = state.targetPos;
-      updateHeadVisual();
-      return;
-    }
-    const stiffness = cfg.inertia.stiffness * dtSec;
-    state.headVel += (state.targetPos - state.headPos) * stiffness;
-    state.headVel = clamp(state.headVel, -cfg.inertia.maxVel, cfg.inertia.maxVel);
-    const dampingFactor = Math.pow(cfg.inertia.damping, dtSec * 60);
-    state.headVel *= dampingFactor;
-    state.headPos = clamp01Safe(state.headPos + state.headVel * dtSec);
-    updateHeadVisual();
-  }
-
-  function computeProgress(now){
-    const elapsed = Math.max(0, now - state.startMs);
-    const fatigueBoost = FEATURES.fatigue ? (1 + state.fatigue * cfg.fatigue.boost) : 1;
-    const globalFatigue = (typeof window !== "undefined" && window.__drivixState?.fatigue?.level) ? window.__drivixState.fatigue.level : 0;
-    const tempoBoost = 1 + globalFatigue * 0.15;
-    const speedMs = cfg.loopMs / (fatigueBoost * tempoBoost);
-    const p = ((elapsed % speedMs) / speedMs);
-    const eased = easeInOutCubic(p);
-    const risky = eased + 0.16 * p * p;
-    return clamp01Safe(risky);
-  }
-
-  function computePower(){
-    const center = (state.winShifted.start + state.winShifted.end) / 2;
-    const halfSpan = Math.max(0.001, (state.winShifted.end - state.winShifted.start) / 2);
-    const dist = Math.abs(state.headPos - center);
-    const accuracy = clamp01Safe(1 - dist / halfSpan);
-    const weighted = Math.pow(accuracy, 1.1);
-    const power = cfg.minPower + weighted * (cfg.maxPower - cfg.minPower);
-    return clamp(power, cfg.minPower, cfg.maxPower);
-  }
-
-  function getScore(){
-    return scoreNeedleInWindow(state.headPos, state.winShifted.start, state.winShifted.end);
-  }
-
-  function setActiveClass(active){
-    if(!els.control) return;
-    els.control.classList.toggle("gc-tempo--active", active && FEATURES.windowBreath);
-  }
-
-  function update(dtMs, opts = {}){
-    if(!state.initialized) return;
-    const now = performance.now();
-    const dtSec = Math.max(0.001, (dtMs || 0) / 1000);
-    applyFatigueDecay(dtSec, now);
-    maybeUpdateWind(now);
-    if(opts?.holdActive && !state.holding){
-      const holdStart = window.__drivixState?.timestamps?.holdStartMs;
-      state.holding = true;
-      state.startMs = Number.isFinite(holdStart) ? holdStart : now;
-      state.targetPos = state.targetPos || 0;
-      state.headVel = 0;
-    }
-    const shouldBeActive = state.holding || !!opts.roundActive || !!opts.holdActive;
-    setActiveClass(shouldBeActive);
-    if(state.holding){
-      state.targetPos = computeProgress(now);
-    }
-    applyInertia(dtSec);
-  }
-
-  function startHold(){
-    if(!state.initialized) return false;
-    state.holding = true;
-    state.startMs = performance.now();
-    state.targetPos = 0;
-    state.headVel = 0;
-    setActiveClass(true);
-    return true;
-  }
-
-  function endHold(){
-    if(!state.holding) return null;
-    state.lastReleasePos = state.headPos;
-    state.lastReleaseScore = scoreNeedleInWindow(state.lastReleasePos, state.winShifted.start, state.winShifted.end);
-    const power = computePower();
-    state.holding = false;
-    state.lastReleaseMs = performance.now();
-    if(FEATURES.fatigue && power >= cfg.fatigue.threshold){
-      const gain = cfg.fatigue.bumpHi * clamp01Safe((power - cfg.fatigue.threshold) / (cfg.maxPower - cfg.fatigue.threshold));
-      state.fatigue = clamp01Safe(state.fatigue + gain);
-    }
-    setActiveClass(false);
-    return power;
-  }
-
-  function resetRound(){
-    state.holding = false;
-    state.headVel = 0;
-    state.targetPos = 0;
-    state.externalWindow = false;
-    setActiveClass(false);
-    updateHeadVisual();
-  }
-
-  function setWind(input){
-    if(!FEATURES.wind || !input) return;
-    const dir = typeof input.dir === "string" ? input.dir : input.windDir || input.direction;
-    const strengthRaw = input.strength ?? input.speed ?? input.windSpeed ?? 0;
-    const dirSign = typeof dir === "string" && dir.toUpperCase().includes("W") ? -1 : 1;
-    state.wind.dir = clamp(dirSign, -1, 1);
-    state.windBaseStrength = clamp01Safe(Math.abs(strengthRaw) / 10 || 0.2);
-    state.windTimers.nextDrift = performance.now() + randRange(cfg.wind.driftMin, cfg.wind.driftMax);
-    refreshWindow();
-    updateWindDisplay();
-  }
-
-  function getWind(){
-    return { ...state.wind };
-  }
-
-  function isHolding(){
-    return !!state.holding;
-  }
-
-  function init({ control, head, windowEl, windArrow, windValue }){
-    els.control = control || null;
-    els.head = head || null;
-    els.window = windowEl || null;
-    els.windArrow = windArrow || null;
-    els.windValue = windValue || null;
-    if(!els.control || !els.head || !els.window) return;
-    state.initialized = true;
-    updateHeadVisual();
-    setWindow(state.winBase.start, state.winBase.end);
-    updateWindDisplay();
-  }
-
-  return {
-    init,
-    startHold,
-    endHold,
-    update,
-    getHeadPos: () => state.headPos,
-    getPower: computePower,
-    getScore,
-    getReleaseScore: () => state.lastReleaseScore || 0,
-    getReleasePos: () => state.lastReleasePos,
-    setWind,
-    getWind,
-    resetRound,
-    setWindow,
-    isHolding
-  };
-})();
+}
 
 function genShotSetup(power = 0){
   const base = createShotSetup();
@@ -1172,7 +802,7 @@ function endRound(reason = "STOP", ts){
   state.lastResult = { yards: finalDistance, x: state.currentX };
   state.ui.canStart = true;
   setButtons();
-  updatePerfectLabel();
+  syncSwingUI();
   if(ui.perfectLabel){
     ui.perfectLabel.classList.remove("gc-sweetspot--breathing");
     ui.perfectLabel.classList.remove("gc-sweetspot--pulse");
@@ -1303,36 +933,6 @@ function updateModeUI(){
   if(ui.longestTodayLabel) ui.longestTodayLabel.textContent = `${Math.max(0, Math.round(state.longestToday.best || 0))} yd`;
 }
 
-function getEnvWindFromSample(sample, windState){
-  const mph = Math.max(0, Number(sample?.speed ?? windState?.baseSpeed ?? 0) || 0);
-  const baseSpeed = Number(windState?.baseSpeed);
-  const gust = Number.isFinite(baseSpeed) ? Math.max(0, mph - baseSpeed) : (sample?.isGust ? Math.max(0, mph * 0.25) : 0);
-  const dirDeg = mapWindDirToDeg(sample?.dir || sample?.windDir || windState?.dir);
-  return { mph, dirDeg, gust };
-}
-
-function updatePerfectLabel(){
-  const running = state.round?.state === "RUNNING" && state.running;
-  const sweetSpot = running ? state.sweetSpot : (state.round?.sweetSpotFinal || state.sweetSpot);
-  if(ui.perfectLabel){
-    if(!sweetSpot){
-      ui.perfectLabel.textContent = "SWEET SPOT: —";
-    }else{
-      ui.perfectLabel.textContent = `SWEET SPOT: x${sweetSpot.minX.toFixed(2)} – x${sweetSpot.maxX.toFixed(2)}`;
-    }
-  }
-  if(sweetSpot){
-    const targetCenter = clamp01((sweetSpot.centerX - 1) / 4);
-    const targetWidth = clamp((sweetSpot.widthX || (sweetSpot.maxX - sweetSpot.minX)) / 4, 0.06, 0.18);
-    const start = clamp01(targetCenter - targetWidth / 2);
-    const end = clamp01(targetCenter + targetWidth / 2);
-    SwingTempo.setWindow(start, end);
-    if(typeof ui._setTempoWindow === "function"){
-      ui._setTempoWindow(start, end);
-    }
-  }
-}
-
 function updateTargetLine(){
   if(ui.targetDistanceLabel) ui.targetDistanceLabel.textContent = state.targetDistance;
   if(!ui.targetLine) return;
@@ -1392,7 +992,8 @@ function sendFlightHUD(){
   if(typeof window.setFlightHUD !== "function") return;
   const roundState = state.round?.state || "IDLE";
   const distance = getDistanceToShow();
-  const tempoPower = (typeof SwingTempo?.getPower === "function") ? SwingTempo.getPower() : (state.power ?? 0);
+  const tempoHead = SwingControls.getTempoHeadPos();
+  const tempoPower = Number.isFinite(tempoHead) ? computeTempoPower(tempoHead) : (state.power ?? 0);
   const tempoPct = Math.max(0, Math.round((tempoPower || 0) * 100));
   const windMph = Math.round(state.wind.mph || 0);
   const windDirDeg = Math.round(state.wind.dirDeg || 0);
@@ -1422,6 +1023,8 @@ function syncRendererState(){
   lastState.round.faceAngleNorm = faceNorm;
   lastState.round.faceAlignedAtRelease = !!state.round?.faceAlignedAtRelease;
   lastState.round.faceAlignedQuality01 = Number.isFinite(state.round?.faceAlignedQuality01) ? state.round.faceAlignedQuality01 : 0;
+  lastState.round.danger = Number.isFinite(state.round?.danger) ? state.round.danger : 0;
+  lastState.round.riskRate = Number.isFinite(state.round?.riskRate) ? state.round.riskRate : 0;
   window.lastState = lastState;
 }
 
@@ -1494,28 +1097,25 @@ function updateAnalytics(finalDistance, finalX){
 }
 
 function beginHold(ts){
+  console.log("[HOLD] beginHold fired", { ts, now: performance.now() });
   const now = Number.isFinite(ts) ? ts : performance.now();
   if(state.phase !== RoundPhase.IDLE && state.phase !== RoundPhase.END) return false;
   resetRound("beginHold");
   state.phase = RoundPhase.ARMING;
+  state.timestamps = state.timestamps || {};
   state.timestamps.holdStartMs = Number.isFinite(ts) ? ts : performance.now();
   state.tempo = state.tempo || {};
   state.tempo.active = true;
   state.tempo.locked = false;
   state.tempo.lockedHeadPos = null;
   state.tempo.lockedX = null;
-  if(typeof SwingTempo?.beginHold === "function"){
-    SwingTempo.beginHold(state.timestamps.holdStartMs);
-  }else if(typeof SwingTempo?.reset === "function"){
-    SwingTempo.reset();
-  }
+  SwingControls.beginHold(state.timestamps.holdStartMs, state);
   state.ui.canStart = false;
   state.tempo.holding = true;
   state.tempo.released = false;
   state.controls.tempoRelease = null;
   state.alignment = state.alignment || {};
   state.alignment.active = true;
-  state.tempo.angleDeg = TEMPO_ARC.motionStart;
   state.tempo.lockedAngleDeg = null;
   state.alignment.dir = 1;
   state.alignment.speedDeg = Number.isFinite(state.alignment.speedDeg) ? state.alignment.speedDeg : 90;
@@ -1530,12 +1130,17 @@ function beginHold(ts){
   state.round.windInitialized = true;
   updateRoundWind(now);
   updateWindHUD();
-  initAlignmentRing();
+  syncSwingUI();
   if(ui.perfectLabel){
     ui.perfectLabel.classList.add("gc-sweetspot--breathing");
     ui.perfectLabel.classList.remove("gc-sweetspot--pulse");
   }
+  state._tempoUiTest = state._tempoUiTest || { enabled: true, startedAt: 0, lastV: null, stableCount: 0 };
+  state._tempoUiTest.startedAt = state.timestamps.holdStartMs;
+  state._tempoUiTest.stableCount = 0;
+  state._tempoUiTest.lastV = null;
   setButtons();
+  console.log("[HOLD] beginHold", { ts: state.timestamps.holdStartMs, phase: state.phase });
   return true;
 }
 
@@ -1544,10 +1149,14 @@ function releaseSwing(ts, power = 0){
   if(state.phase !== RoundPhase.ARMING) return false;
   state.phase = RoundPhase.SWING;
   state.timestamps.releaseMs = now;
+  SwingControls.releaseSwing(now, state);
   state.tempo.holding = false;
   state.tempo.released = true;
-  const tempoRelease = (typeof SwingTempo?.getReleasePos === "function") ? SwingTempo.getReleasePos() : 0;
-  const tempoScore = (typeof SwingTempo?.getReleaseScore === "function") ? SwingTempo.getReleaseScore() : 0;
+  const tempoRelease = SwingControls.getTempoHeadPos();
+  const windowStart = Number.isFinite(state.tempo?.windowStart) ? state.tempo.windowStart : 0.6;
+  const windowEnd = Number.isFinite(state.tempo?.windowEnd) ? state.tempo.windowEnd : 0.8;
+  const tempoScore = scoreNeedleInWindow(tempoRelease, windowStart, windowEnd);
+  state.round.tempoScore = tempoScore;
   const tempoHit = tempoScore > 0;
   const targetValue = 0.5;
   const windowWidth = clamp(state.alignment.sweetWidth / (Math.PI * 2), 0.03, 0.18);
@@ -1561,7 +1170,7 @@ function releaseSwing(ts, power = 0){
   state.round.faceAngleNorm = 0;
   state.round.faceAlignedAtRelease = alignHit;
   state.round.faceAlignedQuality01 = alignHit ? 1 : 0;
-  updateAlignmentRingUI(state.alignment.frozenValue, state.alignment.sweetCenter, state.alignment.sweetWidth);
+  syncSwingUI();
   if(ui.alignmentRing){
     ui.alignmentRing.classList.toggle("is-hit", alignHit);
     if(alignHit){
@@ -1597,16 +1206,20 @@ function releaseSwing(ts, power = 0){
 
 function tick(ts){
   const dtMs = state.lastTs ? (ts - state.lastTs) : 16;
+  state._dbg = state._dbg || { t: 0 };
+  if(!state._dbg.t || ts - state._dbg.t > 800){
+    console.log("[TICK]", { phase: state.phase, ts, dtMs });
+    state._dbg.t = ts;
+  }
   const isHold = state.phase === RoundPhase.ARMING;
   const isRunning = state.phase === RoundPhase.SWING || state.phase === RoundPhase.FLIGHT;
   state.running = isRunning;
-  SwingTempo.update(dtMs, { roundActive: isRunning, holdActive: isHold });
+  SwingControls.update(ts, dtMs, state, { holdActive: isHold, running: isRunning });
   if(state.phase === RoundPhase.ARMING){
     state.lastTs = ts;
     updateRoundWind(ts);
     updateWindHUD();
-    updateAlignmentRing(ts, dtMs);
-    updatePerfectLabel();
+    syncSwingUI();
     sendFlightHUD();
     syncRendererState();
     return;
@@ -1632,7 +1245,7 @@ function tick(ts){
   state.player.fatigue = clamp01(state.mental.data?.fatigue ?? state.player.fatigue ?? 0);
   updateStability(dt);
   updateSweetSpot(dt);
-  updatePerfectLabel();
+  syncSwingUI();
   if(state.impactUntilTs && ts < state.impactUntilTs){
     state.currentX = state.impactStartX || 1;
     state.round.flightProgress = 0;
@@ -1684,18 +1297,34 @@ function tick(ts){
 
   const roundMax = getRoundMaxX();
   const landingTarget = Math.min(state.round.landingX || roundMax, roundMax);
-  const windPenalty = clamp01((state.wind.mph || 0) / 20) * 0.1;
-  const fatiguePenalty = clamp01(state.fatigue.level || 0) * 0.25;
-  const highPower = (state.power || 0) >= 0.9;
-  const baseCrashChance = highPower ? (windPenalty + fatiguePenalty) : 0;
-  const matchScore = Number.isFinite(state.round.matchScore) ? state.round.matchScore : 1;
-  const stabilityPenalty = clamp01(state.stability) * (1 - matchScore) * 0.12;
-  const crashChance = highPower ? clamp(baseCrashChance + stabilityPenalty, 0.01, 0.99) : 0;
-  const effectiveTarget = Math.max(1.05, landingTarget - crashChance);
-  if(state.currentX >= effectiveTarget){
-    const crashed = state.shotSetup ? effectiveTarget < state.shotSetup.expectedX * 0.75 : false;
-    state.currentX = effectiveTarget;
-    endRound(crashed ? "CRASH" : "STOP", ts);
+  if(state.round?.state === "RUNNING"){
+    const windN = clamp01((state.wind.mph || 0) / 20);
+    const fatigueN = clamp01(state.mental.data?.fatigue ?? state.player.fatigue ?? 0);
+    const stabilityN = computeSwingStability();
+    const riskBase = RISK_K * Math.pow(Math.max(1, state.currentX), RISK_P);
+    const env = 1 + windN * 0.8 + fatigueN * 0.6;
+    const skill = 1.20 - stabilityN;
+    const riskRate = clamp(riskBase * env * skill, 0, 0.65);
+    const crashProb = 1 - Math.exp(-riskRate * dt);
+    const dangerX = clamp01((state.currentX - DANGER_X_START) / (DANGER_X_FULL - DANGER_X_START));
+    const danger = clamp01(dangerX * (1 + windN * 0.35 + fatigueN * 0.25) * (1.15 - stabilityN * 0.5));
+    state.round.riskRate = riskRate;
+    state.round.danger = danger;
+    if(DBG_PHYS){
+      state._physDbgAt = state._physDbgAt || 0;
+      if(!state._physDbgAt || (ts - state._physDbgAt) > 1000){
+        console.log("[PHYS]", { x: state.currentX, yards: yardsFromX(state.currentX), stabilityN, windN, fatigueN, riskRate, danger });
+        state._physDbgAt = ts;
+      }
+    }
+    if(Math.random() < crashProb){
+      endRound("CRASH", ts);
+      return;
+    }
+  }
+  if(state.currentX >= landingTarget){
+    state.currentX = landingTarget;
+    endRound("STOP", ts);
     return;
   }
 }
@@ -1714,7 +1343,6 @@ function startRound(power = 0, ts){
   console.log("[ROUND] start", { prev: prevState, power });
   const shot = genShotSetup(power);
   state.shotSetup = shot;
-  SwingTempo.setWind(shot.initialWind || shot.windSnapshot || shot.windState || {});
   state.power = power;
   state.round.setup = shot;
   state.round.wind = shot.windState;
@@ -1760,7 +1388,7 @@ function startRound(power = 0, ts){
   updateShotInfo();
   setStatus("LIVE");
   setStatusState("flying");
-  updatePerfectLabel();
+    syncSwingUI();
   updateTargetLine();
   setBallFly();
   setButtons();
@@ -2190,11 +1818,13 @@ function resetPlayer(){
   setStatusState("ready");
   setBallIdle();
   updateModeUI();
-  updatePerfectLabel();
+  syncSwingUI();
 }
 
 function initUI(){
   ensureAnim();
+  SwingControls.init(state);
+  window.SwingPath?.init?.();
   setStatus("READY");
   setStatusState("ready");
   setBallIdle();
@@ -2204,12 +1834,11 @@ function initUI(){
   updatePlayerUI();
   updateModeUI();
   updateTargetLine();
-  updatePerfectLabel();
-  updateAlignmentRingUI(state.alignment.value, state.alignment.sweetCenter, state.alignment.sweetWidth);
+  syncSwingUI();
   setButtons();
   updateShotInfo();
 
-  wireHoldToSwing();
+  bindSwingTempoInput();
   wireModal();
   wireInfoTooltips();
   wireGcInfoTooltips();
@@ -2234,60 +1863,46 @@ function initUI(){
   window.__drivixState = state;
 }
 
-function wireHoldToSwing(){
+function bindSwingTempoInput(){
   const control = ui.tempoControl;
   const head = ui.tempoHead;
   const windowEl = ui.tempoWindow;
   if(!control || !head || !windowEl) return;
 
-  SwingTempo.init({
-    control,
-    head,
-    windowEl,
-    windArrow: ui.swingWindArrow,
-    windValue: ui.swingWindValue
-  });
-
   const beginTempo = (e) => {
     if(state.phase !== RoundPhase.IDLE && state.phase !== RoundPhase.END) return;
+    if(e?.button !== undefined && e.button !== 0) return;
     e?.preventDefault?.();
-    console.log("[START CLICK] btn.disabled=", control?.disabled, "eventTarget=", e?.target);
-    console.log("[START CLICK] dump=", window.DRIVIX_DUMP?.());
+    e?.stopPropagation?.();
+    try{ control.setPointerCapture?.(e.pointerId); }catch(_){}
     if(!beginHold(performance.now())) return;
-    SwingTempo.startHold();
   };
 
-  const launchSwing = () => {
-    const power = SwingTempo.endHold();
-    if(power === null || power === undefined) return;
+  const launchSwing = (e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    const headPos = SwingControls.getTempoHeadPos();
+    const power = computeTempoPower(headPos);
     releaseSwing(performance.now(), power);
   };
 
-  control.addEventListener("pointerdown", (e) => {
-    control.setPointerCapture?.(e.pointerId);
-    beginTempo(e);
-  });
-  ["pointerup", "pointercancel", "pointerleave"].forEach((ev) => {
-    control.addEventListener(ev, (e) => {
-      if(!SwingTempo.isHolding()) return;
-      e.preventDefault();
-      launchSwing();
-    });
-  });
+  control.addEventListener("pointerdown", beginTempo, { passive: false });
+  control.addEventListener("pointerup", launchSwing, { passive: false });
+  control.addEventListener("pointercancel", launchSwing, { passive: false });
   control.addEventListener("keydown", (e) => {
-    if(e.key === "Enter" || e.key === " "){
+    if(e.repeat) return;
+    if(e.key === " " || e.key === "Enter"){
       e.preventDefault();
-      if(state.phase !== RoundPhase.IDLE && state.phase !== RoundPhase.END) return;
-      if(!SwingTempo.isHolding()){
-        beginTempo(e);
-        setTimeout(launchSwing, 200);
-      }else{
-        launchSwing();
-      }
+      beginTempo(e);
+    }
+  });
+  control.addEventListener("keyup", (e) => {
+    if(e.key === " " || e.key === "Enter"){
+      e.preventDefault();
+      launchSwing(e);
     }
   });
 
-  ui._setTempoWindow = SwingTempo.setWindow;
 }
 
 const flight = {
