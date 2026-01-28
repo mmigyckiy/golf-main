@@ -1,4 +1,5 @@
 import { clamp, clamp01, randInt } from "./rng.js";
+import { WIND, GUST, WIND_DIRECTION_SIGNED } from "../constants.js";
 
 function smoothstep(u){
   const x = clamp01(u);
@@ -8,9 +9,9 @@ function smoothstep(u){
 export function initWind(baseSpeed, dir){
   const now = performance.now();
   const seed = Math.random();
-  const nextDelay = 2500 + Math.random() * 3000;
+  const nextDelay = GUST.DELAY_MIN_MS + Math.random() * GUST.DELAY_RANGE_MS;
   return {
-    baseSpeed: Math.max(0, Math.min(18, Math.round(baseSpeed))),
+    baseSpeed: clamp(Math.round(baseSpeed), WIND.MIN_SPEED, WIND.MAX_SPEED),
     dir,
     nextGustAt: now + nextDelay,
     gustStart: 0,
@@ -22,7 +23,7 @@ export function initWind(baseSpeed, dir){
 }
 
 function scheduleNext(state, now){
-  const delay = 2500 + Math.random() * 3000;
+  const delay = GUST.DELAY_MIN_MS + Math.random() * GUST.DELAY_RANGE_MS;
   state.nextGustAt = now + delay;
 }
 
@@ -32,37 +33,35 @@ export function sampleWind(state, nowMs){
   }
   const now = nowMs || performance.now();
 
+  // Activate gust if scheduled
   if(!state.gustActive && now >= state.nextGustAt){
     state.gustActive = true;
     state.gustStart = now;
-    const dur = 600 + Math.random() * 800;
+    const dur = GUST.DURATION_MIN_MS + Math.random() * GUST.DURATION_RANGE_MS;
     state.gustEnd = now + dur;
-    state.gustPeak = -1 + Math.random() * 2; // -1..1
+    state.gustPeak = GUST.PEAK_MIN + Math.random() * (GUST.PEAK_MAX - GUST.PEAK_MIN + 1);
   }
 
+  // Deactivate gust if ended
   if(state.gustActive && now > state.gustEnd){
     state.gustActive = false;
     state.gustPeak = 0;
     scheduleNext(state, now);
   }
 
+  // Calculate gust delta
   let gustDelta = 0;
   if(state.gustActive){
     const u = (now - state.gustStart) / (state.gustEnd - state.gustStart);
     const env = smoothstep(u);
-    gustDelta = state.gustPeak * env * 6; // mph swing up to ~6
+    gustDelta = state.gustPeak * env * GUST.DELTA_MULTIPLIER;
   }
 
-  const speed = clamp(state.baseSpeed + gustDelta, 0, 22);
-  const factor = clamp01(speed / 18);
+  const speed = clamp(state.baseSpeed + gustDelta, WIND.MIN_SPEED, WIND.MAX_WITH_GUST);
+  const factor = clamp01(speed / WIND.FACTOR_DIVISOR);
 
   const dir = state.dir || "E";
-  const signed =
-    dir === "E" ? 0.35 :
-    dir === "W" ? -0.35 :
-    dir === "NE" || dir === "SE" ? 0.25 :
-    dir === "NW" || dir === "SW" ? -0.25 :
-    0;
+  const signed = WIND_DIRECTION_SIGNED[dir] || 0;
 
   return {
     speed,

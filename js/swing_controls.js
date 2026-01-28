@@ -1,39 +1,19 @@
-// DEAD-CODE CANDIDATES (not removed yet):
-// - none found
-const TEMPO_ARC = {
-  arcStart: Math.PI * 0.85,
-  arcEnd: Math.PI * 2.15,
-  motionStart: Math.PI * 1.05,
-  motionEnd: Math.PI * 1.95,
-  targetAngle: Math.PI * 1.5
-};
+/**
+ * Swing Controls - Tempo and Alignment UI
+ * Uses shared utilities and constants
+ */
+import { clamp, safeClamp01, polarToCartesianRad, describeArcRad } from './utils/math.js';
+import { TEMPO_ARC_RAD, ALIGNMENT_RING } from './constants.js';
+
+// Use imported constants
+const TEMPO_ARC = TEMPO_ARC_RAD;
 
 const ALIGN_RING_DEFAULTS = {
-  cx: 60,
-  cy: 60,
-  r: 46,
-  gapRad: (Math.PI / 180) * 20
+  cx: ALIGNMENT_RING.cx,
+  cy: ALIGNMENT_RING.cy,
+  r: ALIGNMENT_RING.r,
+  gapRad: ALIGNMENT_RING.gapRad
 };
-
-const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
-const clamp01 = (v) => clamp(Number.isFinite(v) ? v : 0, 0, 1);
-const lerp = (a, b, t) => a + (b - a) * t;
-
-function polarToCartesian(cx, cy, r, angleRad){
-  return {
-    x: cx + r * Math.cos(angleRad),
-    y: cy + r * Math.sin(angleRad)
-  };
-}
-
-function describeArc(cx, cy, r, startAngle, endAngle){
-  const start = polarToCartesian(cx, cy, r, startAngle);
-  const end = polarToCartesian(cx, cy, r, endAngle);
-  const sweep = endAngle - startAngle;
-  const largeArc = Math.abs(sweep) > Math.PI ? 1 : 0;
-  const sweepFlag = sweep >= 0 ? 1 : 0;
-  return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${r} ${r} 0 ${largeArc} ${sweepFlag} ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
-}
 
 function getRingGeometry(els){
   const svg = els.alignmentRing;
@@ -72,7 +52,9 @@ const tempoState = {
   noisePhase: 0,
   headPos: 0,
   angle: TEMPO_ARC.targetAngle,
-  holdStartMs: 0
+  holdStartMs: 0,
+  locked: false,
+  lockedHeadPos: 0
 };
 
 let warnedNaN = false;
@@ -114,7 +96,7 @@ function ensureTempoDOM(){
 function updateSwingTempoUI(headPos01){
   const dom = ensureTempoDOM();
   if(!dom) return;
-  const v = clamp01(headPos01);
+  const v = safeClamp01(headPos01);
   const trackRect = dom.track.getBoundingClientRect();
   const headRect = dom.head.getBoundingClientRect();
   const travel = Math.max(0, trackRect.width - headRect.width);
@@ -146,14 +128,14 @@ function updateAlignmentRingUI(state){
   const arcStart = gapRad / 2;
   const arcEnd = Math.PI * 2 - gapRad / 2;
   if(ui.alignmentBase){
-    ui.alignmentBase.setAttribute("d", describeArc(safeCx, safeCy, safeRadius, arcStart, arcEnd));
+    ui.alignmentBase.setAttribute("d", describeArcRad(safeCx, safeCy, safeRadius, arcStart, arcEnd));
   }
   const targetAngle = TEMPO_ARC.targetAngle;
   const centerAngle = targetAngle + (state.alignment?.sweetCenter || 0);
   const sweetHalf = (state.alignment?.sweetWidth || 0) / 2;
   const sweetStart = clamp(centerAngle - sweetHalf, arcStart, arcEnd);
   const sweetEnd = clamp(centerAngle + sweetHalf, arcStart, arcEnd);
-  ui.alignmentSweet.setAttribute("d", describeArc(safeCx, safeCy, safeRadius, sweetStart, sweetEnd));
+  ui.alignmentSweet.setAttribute("d", describeArcRad(safeCx, safeCy, safeRadius, sweetStart, sweetEnd));
   const rawAngle = (state?.tempo?.lockedAngle ?? state?.tempo?.angle);
   const runnerAngle = Number.isFinite(rawAngle) ? rawAngle : TEMPO_ARC.targetAngle;
   const pos = {
@@ -182,10 +164,10 @@ function syncPerfectLabel(state){
     }
   }
   if(sweetSpot){
-    const targetCenter = clamp01((sweetSpot.centerX - 1) / 4);
+    const targetCenter = safeClamp01((sweetSpot.centerX - 1) / 4);
     const targetWidth = clamp((sweetSpot.widthX || (sweetSpot.maxX - sweetSpot.minX)) / 4, 0.06, 0.18);
-    const start = clamp01(targetCenter - targetWidth / 2);
-    const end = clamp01(targetCenter + targetWidth / 2);
+    const start = safeClamp01(targetCenter - targetWidth / 2);
+    const end = safeClamp01(targetCenter + targetWidth / 2);
     state.tempo = state.tempo || {};
     state.tempo.windowStart = start;
     state.tempo.windowEnd = end;
@@ -252,7 +234,7 @@ function update(ts, dtMs, state, phaseFlags){
     state.tempo.angle = tempoState.angle;
     safe(() => {
       updateSwingTempoUI(tempoState.headPos);
-      const normalized = clamp01(tempoState.headPos);
+      const normalized = safeClamp01(tempoState.headPos);
       state.alignment = state.alignment || {};
       state.alignment.value = normalized;
       updateAlignmentRingUI(state);
@@ -268,7 +250,32 @@ function syncFromState(state){
 }
 
 function getTempoHeadPos(){
-  return clamp01(tempoState.headPos);
+  // Return locked value if locked, otherwise current
+  if(tempoState.locked && Number.isFinite(tempoState.lockedHeadPos)){
+    return safeClamp01(tempoState.lockedHeadPos);
+  }
+  return safeClamp01(tempoState.headPos);
+}
+
+function lockTempo(){
+  tempoState.locked = true;
+  tempoState.lockedHeadPos = tempoState.headPos;
+  tempoState.active = false;
+}
+
+function resetTempo(){
+  tempoState.active = false;
+  tempoState.locked = false;
+  tempoState.lockedHeadPos = 0;
+  tempoState.headPos = 0;
+  tempoState.t = 0;
+  tempoState.noisePhase = 0;
+  tempoState.angle = TEMPO_ARC.targetAngle;
+  safe(() => updateSwingTempoUI(0), "resetTempo");
+}
+
+function isTempoLocked(){
+  return tempoState.locked;
 }
 
 export const SwingControls = {
@@ -277,5 +284,8 @@ export const SwingControls = {
   releaseSwing,
   update,
   syncFromState,
-  getTempoHeadPos
+  getTempoHeadPos,
+  lockTempo,
+  resetTempo,
+  isTempoLocked
 };

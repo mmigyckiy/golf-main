@@ -19,6 +19,16 @@ import { renderTopbar } from "./ui/topbar.js";
 import { loadPlayerMental, applyAttemptMental, applyRecoveryOnRoundEnd } from "./logic/player_state.js";
 import { initWind, sampleWind } from "./logic/wind.js";
 import { SwingControls } from "./swing_controls.js";
+import { SwingPath } from "./swing_path.js";
+import { 
+  initAttackAnglePlane, 
+  updateAttackAnglePlane, 
+  lockAttackAnglePlane, 
+  resetAttackAnglePlane, 
+  getAttackAngleValue,
+  isInsideAttackWindow,
+  renderAttackAnglePlane 
+} from "./attack_angle_plane.js";
 
 const FLIGHT_MS_VISUAL = 2200;
 const STORAGE_KEY = "golfcentral.longdrive.v1";
@@ -64,8 +74,11 @@ const $ = (...ids) => {
 // == UI Refs ==
 const ui = {
   tempoControl: $("swingTempoControl"),
-  tempoHead: $("swingTempoHead"),
-  tempoWindow: $("swingTempoWindow"),
+  tempoHead: $("swingTempoRunner", "swingTempoHead"),
+  tempoWindow: $("swingTempoFill", "swingTempoWindow"),
+  tempoFill: $("swingTempoFill"),
+  tempoRunner: $("swingTempoRunner"),
+  tempoPct: $("swingTempoPct"),
   swingWind: $("swingWind"),
   swingWindArrow: $("swingWindArrow"),
   swingWindValue: $("swingWindValue"),
@@ -74,9 +87,15 @@ const ui = {
   alignmentSweet: $("alignmentSweet"),
   alignmentMarker: $("alignmentMarker"),
   alignmentRunner: $("alignmentRunner"),
+  attackAngle: $("attackAngle"),
+  attackAngleMeter: $("attackAngleMeter"),
+  attackAngleSweet: $("attackAngleSweet"),
+  attackAngleRunner: $("attackAngleRunner"),
+  attackAngleReadout: $("attackAngleReadout"),
   status: $("roundStatus", "status"),
   coef: $("coef"),
   lastFlights: $("lastFlightsList"),
+  impactReadout: $("impactReadout"),
   nameLabel: $("playerNameLabel", "playerNameChip", "playerName"),
   nameSecondary: $("playerName"),
   handicap: $("handicapValue", "playerHcpChip", "playerHcp"),
@@ -169,6 +188,16 @@ const state = {
     frozenValue: 0,
     hit: false
   },
+  attackAngle: {
+    active: false,
+    value01: 0,
+    deg: 0,
+    locked: false,
+    lockedDeg: null,
+    affectsGameplay: false,
+    sweetCenterDeg: 3.0,
+    sweetWidthDeg: 2.0
+  },
   stability: 0,
   sweetSpot: {
     baseCenterX: 2.7,
@@ -207,6 +236,21 @@ const state = {
     released: false,
     angleDeg: 0,
     lockedAngleDeg: null
+  },
+  impact: {
+    live: 0,
+    locked: null,
+    isPerfect: false,
+    swingScore: 0,
+    attackScore: 0
+  },
+  shot: {
+    tempo01: 0,
+    path01: 0,
+    attackDeg: 0,
+    locked: false,
+    score01: 0,
+    components: { tempo: 0, path: 0, attack: 0 }
   },
   lastFlights: [],
   longestToday: { date: null, best: 0 },
@@ -562,6 +606,7 @@ function resetRoundState(reason = "manual"){
   state.alignment.sweetCenter = 0;
   state.alignment.hit = false;
   state.alignment.frozenValue = 0;
+  resetAttackAnglePlane();
   state.sweetSpot = {
     baseCenterX: 2.7,
     baseWidthX: 0.55,
@@ -585,6 +630,12 @@ function resetRoundState(reason = "manual"){
   state.tempo.released = false;
   state.tempo.angle = 0;
   state.tempo.lockedAngleDeg = null;
+  resetSwingTempoMeter();
+  state.impact.live = 0;
+  state.impact.locked = null;
+  state.impact.isPerfect = false;
+  state.impact.swingScore = 0;
+  state.impact.attackScore = 0;
   state.ui = state.ui || {};
   state.ui.canStart = true;
   setButtons();
@@ -605,11 +656,32 @@ function resetRound(reason = "manual"){
   state.impactUntilTs = 0;
   state.impactStartX = 1;
   state.stability = 0;
+  state.impact.live = 0;
+  state.impact.locked = null;
+  state.impact.isPerfect = false;
+  state.impact.swingScore = 0;
+  state.impact.attackScore = 0;
   initSweetSpot();
+  resetSwingTempoMeter();
   if(ui.perfectLabel){
     ui.perfectLabel.classList.remove("gc-sweetspot--breathing");
     ui.perfectLabel.classList.remove("gc-sweetspot--pulse");
   }
+  
+  // Reset all 3 widgets
+  SwingControls.resetTempo();
+  SwingPath.resetPath();
+  resetAttackAnglePlane();
+  
+  // Reset shot state
+  state.shot = {
+    tempo01: 0,
+    path01: 0,
+    attackDeg: 0,
+    locked: false,
+    score01: 0,
+    components: { tempo: 0, path: 0, attack: 0 }
+  };
 }
 
 function updateMultiplierState(){
@@ -662,6 +734,36 @@ function computeTempoPower(headPos){
   return clamp(power, TEMPO_POWER.min, TEMPO_POWER.max);
 }
 
+function pFromDeg(d){ return clamp01((d + 5) / 10); }
+
+function renderSwingTempo(headPos){
+  const p = clamp01(Number.isFinite(headPos) ? headPos : (state.tempo?.headPos ?? 0));
+  state.tempo = state.tempo || {};
+  state.tempo.headPos = p;
+  const fill = document.getElementById("swingTempoFill");
+  if(fill) fill.style.height = `${(p * 100).toFixed(2)}%`;
+  const runner = document.getElementById("swingTempoRunner");
+  if(runner){
+    const tube = document.getElementById("swingTempoTube");
+    if(tube){
+      const pad = 8;
+      const tubeH = tube.clientHeight || 0;
+      const runnerH = runner.offsetHeight || 0;
+      const travel = Math.max(0, tubeH - runnerH - pad * 2);
+      const bottomPx = pad + travel * p;
+      runner.style.bottom = `${bottomPx}px`;
+    }else{
+      runner.style.bottom = `calc(${(p * 100).toFixed(2)}% + 8px)`;
+    }
+  }
+  const pct = document.getElementById("swingTempoPct");
+  if(pct) pct.textContent = `${Math.round(p * 100)}%`;
+}
+
+function resetSwingTempoMeter(){
+  renderSwingTempo(0);
+}
+
 function computeSwingStability(){
   const tempoQuality = Number.isFinite(state.round?.tempoScore) ? clamp01(state.round.tempoScore) : 0.6;
   const alignQuality = Number.isFinite(state.round?.faceAlignedQuality01) ? clamp01(state.round.faceAlignedQuality01) : (state.alignment?.hit ? 1 : 0.6);
@@ -671,10 +773,103 @@ function computeSwingStability(){
   return stability;
 }
 
+function gaussianScore(delta, sigma){
+  const s = Math.max(1e-6, sigma);
+  return Math.exp(-(delta * delta) / (2 * s * s));
+}
+
+function scoreFromSweet(value01, sweetCenter01, sweetWidth01){
+  const v = clamp01(value01);
+  const c = Number.isFinite(sweetCenter01) ? clamp01(sweetCenter01) : 0.5;
+  const w = Number.isFinite(sweetWidth01) ? Math.max(0.02, Math.min(1, sweetWidth01)) : 0.20;
+  const half = Math.max(1e-4, w / 2);
+  const delta = (v - c) / half;
+  return clamp01(gaussianScore(delta, 1.0));
+}
+
+function getSwingPathValue01(){
+  const v = state?.alignment?.value;
+  if(Number.isFinite(v)) return clamp01(v);
+  const tempoHead = state?.tempo?.headPos ?? state?.tempo?.value;
+  return Number.isFinite(tempoHead) ? clamp01(tempoHead) : 0.5;
+}
+
+function getSwingPathSweet(){
+  const c = state?.alignment?.sweetCenter ?? state?.tempo?.sweetCenter ?? state?.timing?.sweetCenter;
+  const w = state?.alignment?.sweetWidth ?? state?.tempo?.sweetWidth ?? state?.timing?.sweetWidth;
+  return { center: Number.isFinite(c) ? clamp01(c) : 0.5, width: Number.isFinite(w) ? w : 0.20 };
+}
+
+function getAttackAngleValue01(){
+  if(!state.attackAngle?.affectsGameplay) return 0.5;
+  const v = state?.attack?.value ?? state?.attackAngle?.value01 ?? state?.attackAngle?.value;
+  return Number.isFinite(v) ? clamp01(v) : 0.5;
+}
+
+function getAttackAngleSweet(){
+  if(!state.attackAngle?.affectsGameplay) return { center: 0.5, width: 0.20 };
+  const cDeg = state?.attackAngle?.sweetCenterDeg;
+  const wDeg = state?.attackAngle?.sweetWidthDeg;
+  const c = Number.isFinite(cDeg) ? pFromDeg(cDeg) : (state?.attack?.sweetCenter ?? state?.attackAngle?.sweetCenter);
+  const w = Number.isFinite(wDeg) ? clamp01(wDeg / 10) : (state?.attack?.sweetWidth ?? state?.attackAngle?.sweetWidth);
+  return { center: Number.isFinite(c) ? clamp01(c) : 0.5, width: Number.isFinite(w) ? w : 0.20 };
+}
+
+function updateImpactQuality(){
+  const swingV = getSwingPathValue01();
+  const swingSweet = getSwingPathSweet();
+  const attackV = getAttackAngleValue01();
+  const attackSweet = getAttackAngleSweet();
+
+  const swingScore = scoreFromSweet(swingV, swingSweet.center, swingSweet.width);
+  const attackScore = scoreFromSweet(attackV, attackSweet.center, attackSweet.width);
+  const impact = Math.sqrt(Math.max(0, swingScore * attackScore));
+  state.impact.swingScore = swingScore;
+  state.impact.attackScore = attackScore;
+  state.impact.live = clamp01(impact);
+  state.impact.isPerfect = (swingScore > 0.92 && attackScore > 0.92);
+}
+
+function applyImpactToYards(yards){
+  const q = (state.impact.locked ?? state.impact.live ?? 0);
+  const mult = lerp(0.94, 1.08, clamp01(q));
+  return clamp(Math.round(yards * mult), 0, MAX_YD);
+}
+
+function impactRiskMultiplier(){
+  const q = (state.impact.locked ?? state.impact.live ?? 0);
+  return lerp(1.12, 0.88, clamp01(q));
+}
+
+function ensureImpactReadout(){
+  if(ui.impactReadout) return;
+  const host = document.querySelector(".gc-controls__row--meta") || document.getElementById("swingWind")?.parentElement;
+  if(!host) return;
+  const el = document.createElement("div");
+  el.id = "impactReadout";
+  el.className = "gc-mutedSmall";
+  el.style.marginRight = "10px";
+  el.textContent = "IMPACT: —";
+  host.insertBefore(el, host.firstChild);
+  ui.impactReadout = el;
+}
+
+function renderImpactReadout(){
+  if(!ui.impactReadout) return;
+  const q = (state.impact.locked ?? state.impact.live);
+  if(!Number.isFinite(q)){
+    ui.impactReadout.textContent = "IMPACT: —";
+    return;
+  }
+  const pct = Math.round(clamp01(q) * 100);
+  ui.impactReadout.textContent = state.impact.isPerfect ? `IMPACT: ${pct}% • PURE` : `IMPACT: ${pct}%`;
+}
+
 function syncSwingUI(){
   SwingControls.syncFromState(state);
+  const headPos = SwingControls.getTempoHeadPos();
+  renderSwingTempo(Number.isFinite(headPos) ? headPos : (state.tempo?.headPos ?? 0));
   if(window.SwingPath){
-    const headPos = SwingControls.getTempoHeadPos();
     window.SwingPath.update({
       phase: state.phase,
       headPos01: Number.isFinite(headPos) ? headPos : 0,
@@ -682,6 +877,50 @@ function syncSwingUI(){
       sweetWidthDeg: 18
     });
   }
+  renderImpactReadout();
+}
+
+/**
+ * Evaluate shot quality based on tempo, path, and attack angle
+ * @param {number} tempo01 - Tempo head position (0..1)
+ * @param {number} path01 - Path runner position (0..1)
+ * @param {number} attackDeg - Attack angle in degrees
+ * @returns {{ score01: number, components: { tempo: number, path: number, attack: number }}}
+ */
+function evalShot(tempo01, path01, attackDeg){
+  const K = 6; // Falloff steepness
+  
+  // Tempo: sweet window from state
+  const tempoStart = state.tempo?.windowStart ?? 0.6;
+  const tempoEnd = state.tempo?.windowEnd ?? 0.8;
+  const tempoCenter = (tempoStart + tempoEnd) / 2;
+  const tempoHalfWidth = (tempoEnd - tempoStart) / 2 || 0.1;
+  const tempoDist = Math.abs(tempo01 - tempoCenter) / tempoHalfWidth;
+  const tempoComp = tempoDist <= 1 ? 1 : Math.exp(-K * (tempoDist - 1) * (tempoDist - 1));
+  
+  // Path: sweet center is 0.5 (middle of arc), window ~0.1 wide
+  const pathCenter = 0.5;
+  const pathHalfWidth = 0.15;
+  const pathDist = Math.abs(path01 - pathCenter) / pathHalfWidth;
+  const pathComp = pathDist <= 1 ? 1 : Math.exp(-K * (pathDist - 1) * (pathDist - 1));
+  
+  // Attack: sweet window from attackAngle state
+  const attackCenter = (state.attackAngle?.windowMinDeg + state.attackAngle?.windowMaxDeg) / 2 || 1.5;
+  const attackHalfWidth = ((state.attackAngle?.windowMaxDeg - state.attackAngle?.windowMinDeg) / 2) || 1.5;
+  const attackDist = Math.abs(attackDeg - attackCenter) / attackHalfWidth;
+  const attackComp = attackDist <= 1 ? 1 : Math.exp(-K * (attackDist - 1) * (attackDist - 1));
+  
+  // Weighted combination
+  const score01 = clamp01(0.45 * tempoComp + 0.35 * pathComp + 0.20 * attackComp);
+  
+  return {
+    score01,
+    components: {
+      tempo: clamp01(tempoComp),
+      path: clamp01(pathComp),
+      attack: clamp01(attackComp)
+    }
+  };
 }
 
 function genShotSetup(power = 0){
@@ -1152,6 +1391,8 @@ function releaseSwing(ts, power = 0){
   SwingControls.releaseSwing(now, state);
   state.tempo.holding = false;
   state.tempo.released = true;
+  updateImpactQuality();
+  state.impact.locked = state.impact.live;
   const tempoRelease = SwingControls.getTempoHeadPos();
   const windowStart = Number.isFinite(state.tempo?.windowStart) ? state.tempo.windowStart : 0.6;
   const windowEnd = Number.isFinite(state.tempo?.windowEnd) ? state.tempo.windowEnd : 0.8;
@@ -1166,11 +1407,50 @@ function releaseSwing(ts, power = 0){
   state.alignment.hit = alignHit;
   state.alignment.frozenValue = alignValue;
   state.alignment.active = false;
+  
+  // LOCK ALL 3 WIDGETS
+  SwingControls.lockTempo();
+  SwingPath.lockPath();
+  lockAttackAnglePlane();
+  
+  // Capture final values
+  state.shot.tempo01 = SwingControls.getTempoHeadPos();
+  state.shot.path01 = SwingPath.getPathPos01();
+  state.shot.attackDeg = getAttackAngleValue();
+  state.shot.locked = true;
+  
+  // Compute unified shot score
+  const shotResult = evalShot(state.shot.tempo01, state.shot.path01, state.shot.attackDeg);
+  state.shot.score01 = shotResult.score01;
+  state.shot.components = shotResult.components;
+  
+  // Log shot data
+  console.log("[SHOT]", {
+    tempo01: state.shot.tempo01.toFixed(3),
+    path01: state.shot.path01.toFixed(3),
+    attackDeg: state.shot.attackDeg.toFixed(1),
+    score01: state.shot.score01.toFixed(3),
+    components: {
+      tempo: state.shot.components.tempo.toFixed(2),
+      path: state.shot.components.path.toFixed(2),
+      attack: state.shot.components.attack.toFixed(2)
+    }
+  });
+  
+  // Update UI feedback using existing perfectWindowLabel
+  if(ui.perfectLabel){
+    const t = state.shot.components.tempo.toFixed(2);
+    const p = state.shot.components.path.toFixed(2);
+    const a = state.shot.components.attack.toFixed(2);
+    ui.perfectLabel.textContent = `SHOT: T ${t} • P ${p} • A ${a}`;
+  }
+  
   state.controls.tempoRelease = tempoRelease;
   state.round.faceAngleNorm = 0;
   state.round.faceAlignedAtRelease = alignHit;
   state.round.faceAlignedQuality01 = alignHit ? 1 : 0;
   syncSwingUI();
+  renderAttackAnglePlane();
   if(ui.alignmentRing){
     ui.alignmentRing.classList.toggle("is-hit", alignHit);
     if(alignHit){
@@ -1219,6 +1499,16 @@ function tick(ts){
     state.lastTs = ts;
     updateRoundWind(ts);
     updateWindHUD();
+    updateAttackAnglePlane(ts, dtMs);
+    updateImpactQuality();
+    
+    // Live read all 3 widget values while not locked
+    if(!state.shot.locked){
+      state.shot.tempo01 = SwingControls.getTempoHeadPos();
+      state.shot.path01 = SwingPath.getPathPos01();
+      state.shot.attackDeg = getAttackAngleValue();
+    }
+    
     syncSwingUI();
     sendFlightHUD();
     syncRendererState();
@@ -1249,7 +1539,7 @@ function tick(ts){
   if(state.impactUntilTs && ts < state.impactUntilTs){
     state.currentX = state.impactStartX || 1;
     state.round.flightProgress = 0;
-    const liveYards = yardsFromX(state.currentX);
+    const liveYards = applyImpactToYards(yardsFromX(state.currentX));
     state.round.distanceLiveYards = liveYards;
     state.liveDistanceYd = liveYards;
     setDistanceUI(getDistanceToShow());
@@ -1284,7 +1574,7 @@ function tick(ts){
 
   const elapsed = ts - state.round.startTsMs;
   const p = Math.max(0, Math.min(1, elapsed / FLIGHT_MS_VISUAL));
-  const liveYards = yardsFromX(state.currentX);
+  const liveYards = applyImpactToYards(yardsFromX(state.currentX));
   state.round.elapsedMs = elapsed;
   state.round.baseDistanceYardsLive = liveYards;
   state.round.distanceLiveYards = liveYards;
@@ -1304,7 +1594,8 @@ function tick(ts){
     const riskBase = RISK_K * Math.pow(Math.max(1, state.currentX), RISK_P);
     const env = 1 + windN * 0.8 + fatigueN * 0.6;
     const skill = 1.20 - stabilityN;
-    const riskRate = clamp(riskBase * env * skill, 0, 0.65);
+    let riskRate = clamp(riskBase * env * skill, 0, 0.65);
+    riskRate = clamp(riskRate * impactRiskMultiplier(), 0, 0.65);
     const crashProb = 1 - Math.exp(-riskRate * dt);
     const dangerX = clamp01((state.currentX - DANGER_X_START) / (DANGER_X_FULL - DANGER_X_START));
     const danger = clamp01(dangerX * (1 + windN * 0.35 + fatigueN * 0.25) * (1.15 - stabilityN * 0.5));
@@ -1835,8 +2126,12 @@ function initUI(){
   updateModeUI();
   updateTargetLine();
   syncSwingUI();
+  initAttackAnglePlane(() => state, { isArming: (s) => s.phase === RoundPhase.ARMING });
+  renderAttackAnglePlane();
+  resetSwingTempoMeter();
   setButtons();
   updateShotInfo();
+  ensureImpactReadout();
 
   bindSwingTempoInput();
   wireModal();

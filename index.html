@@ -148,29 +148,62 @@
             </div>
             <div class="gc-controls__row gc-controls__row--buttons gc-controls__row--primary">
               <div class="gc-swingControl">
-                <div class="gc-powerLabel swing-tempo-label">SWING TEMPO</div>
-                <div class="swing-tempo" id="swingTempoControl" role="button" aria-label="Swing tempo timing" tabindex="0">
-                  <div class="swing-tempo__track">
-                    <div class="swing-tempo__window" id="swingTempoWindow" aria-hidden="true"></div>
-                    <div class="swing-tempo__head" id="swingTempoHead" aria-hidden="true"></div>
+                <div class="swing-metrics-row" id="swingMetricsRow">
+                  <div class="swing-metric swing-metric--tempo">
+                    <div class="swing-metric__title">SWING TEMPO</div>
+                    <div class="swing-metric__body">
+                      <div class="tempo-meter" id="swingTempoControl" role="button" aria-label="Swing tempo" tabindex="0">
+                        <div class="tempo-meter__tube" id="swingTempoTube">
+                          <div class="tempo-meter__fill" id="swingTempoFill" aria-hidden="true"></div>
+                          <div class="tempo-meter__runner" id="swingTempoRunner" aria-hidden="true"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="swing-metric__footer">
+                      <div class="swing-metric__value" id="tempoValueLabel"><span id="swingTempoPct">0%</span></div>
+                      <div class="swing-metric__hint">HOLD • RELEASE</div>
+                    </div>
                   </div>
-                </div>
-                <div class="swing-tempo-helper">HOLD • RELEASE</div>
-                <div class="alignment-ring" id="alignmentRing" aria-label="Alignment ring">
-                  <div class="alignment-ring__label">SWING PATH</div>
-                  <svg class="alignment-ring__svg" id="alignmentSvg" viewBox="0 0 120 120" aria-hidden="true">
-                    <defs>
-                      <linearGradient id="alignmentRingGradient" x1="0" y1="10" x2="0" y2="110" gradientUnits="userSpaceOnUse">
-                        <stop offset="0%" stop-color="rgba(255,255,255,0.10)"></stop>
-                        <stop offset="100%" stop-color="rgba(0,0,0,0.30)"></stop>
-                      </linearGradient>
-                    </defs>
-                    <path class="alignment-ring__base" id="alignmentBase" d=""></path>
-                    <path class="alignment-ring__sweet" id="alignmentSweet" d=""></path>
-                    <circle class="alignment-ring__ball" id="alignmentBall" cx="60" cy="102" r="3"></circle>
-                    <circle class="alignment-ring__runner" id="alignmentRunner" cx="60" cy="12" r="4.2"></circle>
-                  </svg>
-                  <div class="align-target-tick" aria-hidden="true"></div>
+                  <div class="swing-metric swing-metric--path">
+                    <div class="swing-metric__title">SWING PATH</div>
+                    <div class="swing-metric__body">
+                      <div class="alignment-ring" id="alignmentRing" aria-label="Alignment ring">
+                        <svg class="alignment-ring__svg" id="alignmentSvg" viewBox="0 0 120 120" aria-hidden="true">
+                          <defs>
+                            <linearGradient id="alignmentRingGradient" x1="0" y1="10" x2="0" y2="110" gradientUnits="userSpaceOnUse">
+                              <stop offset="0%" stop-color="rgba(255,255,255,0.10)"></stop>
+                              <stop offset="100%" stop-color="rgba(0,0,0,0.30)"></stop>
+                            </linearGradient>
+                          </defs>
+                          <path class="alignment-ring__base" id="alignmentBase" d=""></path>
+                          <path class="alignment-ring__sweet" id="alignmentSweet" d=""></path>
+                          <circle class="alignment-ring__ball" id="alignmentBall" cx="60" cy="102" r="3"></circle>
+                          <circle class="alignment-ring__runner" id="alignmentRunner" cx="60" cy="12" r="4.2"></circle>
+                        </svg>
+                        <div class="align-target-tick" aria-hidden="true"></div>
+                      </div>
+                    </div>
+                    <div class="swing-metric__footer">
+                      <div class="swing-metric__value swing-metric__value--muted"> </div>
+                      <div class="swing-metric__hint"> </div>
+                    </div>
+                  </div>
+                  <div class="swing-metric swing-metric--attack">
+                    <div class="swing-metric__title">ATTACK ANGLE</div>
+                    <div class="swing-metric__body">
+                      <div class="attack-angle" id="attackAngle" aria-label="Attack angle">
+                        <div class="attack-angle__meter" id="attackAngleMeter" aria-hidden="true">
+                          <div class="attack-angle__track"></div>
+                          <div class="attack-angle__sweet" id="attackAngleSweet"></div>
+                          <div class="attack-angle__runner" id="attackAngleRunner"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="swing-metric__footer">
+                      <div class="swing-metric__value" id="attackAngleValueLabel"><span id="attackAngleReadout">+0.0°</span></div>
+                      <div class="swing-metric__hint"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -221,7 +254,8 @@
   <!-- Scripts (keep paths consistent with your project) -->
   <script src="js/flight_aviatorlike.js"></script>
   <script src="js/stats.js"></script>
-  <script src="js/swing_path.js"></script>
+  <script type="module" src="js/swing_path.js"></script>
+  <script type="module" src="js/attack_angle.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>
