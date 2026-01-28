@@ -62,6 +62,18 @@ const RoundPhase = Object.freeze({
   END: "END"
 });
 
+// UI phase attribute for CSS-driven widget emphasis
+function setUiPhaseAttr(phase){
+  const map = {
+    [RoundPhase.IDLE]: "idle",
+    [RoundPhase.ARMING]: "hold",
+    [RoundPhase.SWING]: "flight",
+    [RoundPhase.FLIGHT]: "flight",
+    [RoundPhase.END]: "end"
+  };
+  document.body.dataset.uiPhase = map[phase] || "idle";
+}
+
 const $ = (...ids) => {
   for (const id of ids) {
     if (!id) continue;
@@ -644,6 +656,7 @@ function resetRoundState(reason = "manual"){
 function resetRound(reason = "manual"){
   resetRoundState(reason);
   state.phase = RoundPhase.IDLE;
+  setUiPhaseAttr(state.phase);
   state.timestamps.holdStartMs = 0;
   state.timestamps.releaseMs = 0;
   state.timestamps.endMs = 0;
@@ -734,7 +747,8 @@ function computeTempoPower(headPos){
   return clamp(power, TEMPO_POWER.min, TEMPO_POWER.max);
 }
 
-function pFromDeg(d){ return clamp01((d + 5) / 10); }
+// Convert degrees to 0-1 range matching attack_angle_plane.js (-6 to +6)
+function pFromDeg(d){ return clamp01((d + 6) / 12); }
 
 function renderSwingTempo(headPos){
   const p = clamp01(Number.isFinite(headPos) ? headPos : (state.tempo?.headPos ?? 0));
@@ -811,7 +825,8 @@ function getAttackAngleSweet(){
   const cDeg = state?.attackAngle?.sweetCenterDeg;
   const wDeg = state?.attackAngle?.sweetWidthDeg;
   const c = Number.isFinite(cDeg) ? pFromDeg(cDeg) : (state?.attack?.sweetCenter ?? state?.attackAngle?.sweetCenter);
-  const w = Number.isFinite(wDeg) ? clamp01(wDeg / 10) : (state?.attack?.sweetWidth ?? state?.attackAngle?.sweetWidth);
+  // Use 12 to match -6 to +6 degree range in attack_angle_plane.js
+  const w = Number.isFinite(wDeg) ? clamp01(wDeg / 12) : (state?.attack?.sweetWidth ?? state?.attackAngle?.sweetWidth);
   return { center: Number.isFinite(c) ? clamp01(c) : 0.5, width: Number.isFinite(w) ? w : 0.20 };
 }
 
@@ -988,6 +1003,7 @@ function endRound(reason = "STOP", ts){
   const now = Number.isFinite(ts) ? ts : performance.now();
   const crashed = reason === "CRASH";
   state.phase = RoundPhase.END;
+  setUiPhaseAttr(state.phase);
   state.timestamps.endMs = now;
   state.flags.crashed = crashed;
   state.running = false;
@@ -1341,6 +1357,7 @@ function beginHold(ts){
   if(state.phase !== RoundPhase.IDLE && state.phase !== RoundPhase.END) return false;
   resetRound("beginHold");
   state.phase = RoundPhase.ARMING;
+  setUiPhaseAttr(state.phase);
   state.timestamps = state.timestamps || {};
   state.timestamps.holdStartMs = Number.isFinite(ts) ? ts : performance.now();
   state.tempo = state.tempo || {};
@@ -1387,6 +1404,7 @@ function releaseSwing(ts, power = 0){
   const now = Number.isFinite(ts) ? ts : performance.now();
   if(state.phase !== RoundPhase.ARMING) return false;
   state.phase = RoundPhase.SWING;
+  setUiPhaseAttr(state.phase);
   state.timestamps.releaseMs = now;
   SwingControls.releaseSwing(now, state);
   state.tempo.holding = false;
@@ -1522,6 +1540,7 @@ function tick(ts){
   }
   if(state.phase === RoundPhase.SWING){
     state.phase = RoundPhase.FLIGHT;
+    setUiPhaseAttr(state.phase);
   }
   const dt = Math.max(0.001, dtMs / 1000);
   state.lastTs = ts;
@@ -2013,6 +2032,7 @@ function setupMemberInlineEdit(){
 
 function resetPlayer(){
   state.phase = RoundPhase.IDLE;
+  setUiPhaseAttr(state.phase);
   state.timestamps.holdStartMs = 0;
   state.timestamps.releaseMs = 0;
   state.timestamps.endMs = 0;

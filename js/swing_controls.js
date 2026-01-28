@@ -83,13 +83,14 @@ function safe(fn, label){
 
 function ensureTempoDOM(){
   const control = ui.tempoControl || document.getElementById("swingTempoControl");
-  const head = ui.tempoHead || document.getElementById("swingTempoHead");
+  const head = ui.tempoHead || document.getElementById("swingTempoRunner") || document.getElementById("swingTempoHead");
   if(!control || !head) return null;
-  const track = control.querySelector(".swing-tempo__track") || control;
+  // For vertical meter, track is the tube element
+  const track = control.querySelector(".tempo-meter__tube") || control.querySelector(".swing-tempo__track") || control;
   const trackStyle = getComputedStyle(track);
   if(trackStyle.position === "static") track.style.position = "relative";
   head.style.position = "absolute";
-  head.style.top = head.style.top || "50%";
+  // Vertical meter: don't set top, let CSS handle positioning
   return { control, track, head };
 }
 
@@ -99,10 +100,12 @@ function updateSwingTempoUI(headPos01){
   const v = safeClamp01(headPos01);
   const trackRect = dom.track.getBoundingClientRect();
   const headRect = dom.head.getBoundingClientRect();
-  const travel = Math.max(0, trackRect.width - headRect.width);
-  const x = travel * v;
-  dom.head.style.left = `${x.toFixed(2)}px`;
-  dom.head.style.transform = "translateY(-50%)";
+  // Vertical meter: use bottom positioning, keep left/right from CSS for centering
+  const travel = Math.max(0, trackRect.height - headRect.height - 16); // 16px = top/bottom padding
+  const y = 8 + travel * v; // 8px bottom padding
+  dom.head.style.bottom = `${y.toFixed(2)}px`;
+  dom.head.style.left = ""; // Clear any left override, let CSS handle horizontal centering
+  dom.head.style.transform = ""; // Remove horizontal transform
 }
 
 function updateSwingTempoWindowUI(start01, end01){

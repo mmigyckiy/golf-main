@@ -1505,6 +1505,51 @@ hr,
   justify-items: center;
   padding: 12px 10px;
 }
+
+/* Phase-based widget emphasis */
+.swing-metric--tempo,
+.swing-metric--path,
+.swing-metric--attack{
+  opacity: 0.72;
+  transform: scale(1);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+/* HOLD phase: Tempo primary */
+body[data-ui-phase="hold"] .swing-metric--tempo{
+  opacity: 1;
+  transform: scale(1.02);
+}
+body[data-ui-phase="hold"] .swing-metric--path{
+  opacity: 0.75;
+}
+body[data-ui-phase="hold"] .swing-metric--attack{
+  opacity: 0.58;
+}
+
+/* FLIGHT phase: Path primary */
+body[data-ui-phase="flight"] .swing-metric--path{
+  opacity: 1;
+  transform: scale(1.02);
+}
+body[data-ui-phase="flight"] .swing-metric--attack{
+  opacity: 0.85;
+}
+body[data-ui-phase="flight"] .swing-metric--tempo{
+  opacity: 0.70;
+}
+
+/* END/IDLE phase: neutral */
+body[data-ui-phase="end"] .swing-metric--tempo,
+body[data-ui-phase="end"] .swing-metric--path,
+body[data-ui-phase="end"] .swing-metric--attack,
+body[data-ui-phase="idle"] .swing-metric--tempo,
+body[data-ui-phase="idle"] .swing-metric--path,
+body[data-ui-phase="idle"] .swing-metric--attack{
+  opacity: 0.72;
+  transform: scale(1);
+}
+
 .swing-metric-title,
 .swing-metric__title{
   display: block;
