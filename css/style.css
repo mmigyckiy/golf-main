@@ -1544,15 +1544,21 @@ hr,
 
 #swingMetricsRow{
   display: grid;
-  grid-template-columns: 0.95fr 1.55fr 0.95fr;
-  gap: 22px;
+  grid-template-columns: minmax(180px, 0.9fr) minmax(240px, 1.6fr) minmax(180px, 0.9fr);
+  column-gap: 48px;
+  row-gap: 24px;
+  padding: 0;
   align-items: start;
   justify-items: center;
   width: 100%;
-  max-width: 580px;
-  margin: 0 auto;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
   overflow: visible;
   position: relative;
+}
+#swingMetricsRow > *{
+  min-width: 0;
 }
 
 /* =============================================================
@@ -1878,9 +1884,11 @@ body[data-ui-phase="idle"] .swing-metric--attack{
     --attack-size: 80px;
   }
   #swingMetricsRow{
-    grid-template-columns: 0.9fr 1.4fr 0.9fr;
-    gap: 16px;
-    max-width: 520px;
+    grid-template-columns: minmax(140px, 0.9fr) minmax(200px, 1.4fr) minmax(140px, 0.9fr);
+    column-gap: 32px;
+    row-gap: 20px;
+    padding: 0;
+    max-width: 600px;
   }
   #swingMetricsRow > .swing-metric--path{
     max-width: 260px;
@@ -1900,7 +1908,8 @@ body[data-ui-phase="idle"] .swing-metric--attack{
   }
   #swingMetricsRow{
     grid-template-columns: 1fr;
-    gap: 18px;
+    row-gap: 24px;
+    padding-inline: 16px;
     max-width: 320px;
   }
   #swingMetricsRow > .swing-metric--path{
@@ -2919,7 +2928,8 @@ body[data-ui-phase="idle"] .swing-metric--attack{
   align-items:center;
   gap: 10px;
   width: 100%;
-  max-width: 520px;
+  max-width: 760px;
+  overflow-x: visible;
 }
 
 .gc-btn{
@@ -3707,6 +3717,114 @@ kbd{
 #swingMetricsRow .swing-metric--attack #attackAngleValueLabel{
   color: rgba(216,200,166,0.92) !important;
   text-shadow: 0 6px 22px rgba(0,0,0,0.40);
+}
+
+/* =========================================================
+   ATTACK ANGLE — RETICLE RESTYLE (single ring + crosshair)
+   ========================================================= */
+
+:root{
+  --aa-gold: rgba(216,200,166,0.85);
+  --aa-gold-soft: rgba(216,200,166,0.45);
+  --aa-line-dim: rgba(216,200,166,0.18);
+}
+
+#attackAngle.attack-angle{
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+#attackAngle .attack-angle__plane{
+  position: relative;
+  width: 180px;
+  height: 180px;
+  display: grid;
+  place-items: center;
+}
+
+#attackAngle .attack-angle__svg{
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 10px 24px rgba(0,0,0,0.28));
+}
+
+/* SINGLE ring (no double ring) */
+#attackAngle .aa-ring{
+  fill: none;
+  stroke: var(--aa-gold-soft);
+  stroke-width: 2.2;
+  opacity: 0.9;
+}
+
+#attackAngle .aa-cross{
+  stroke: var(--aa-line-dim);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+#attackAngle .aa-cross--v{ opacity: 0.55; }
+#attackAngle .aa-cross--h{ opacity: 0.75; }
+
+#attackAngle .aa-arrow{
+  fill: var(--aa-gold-soft);
+  opacity: 0.8;
+}
+
+#attackAngle .aa-glint path{
+  fill: var(--aa-gold);
+  opacity: 0.75;
+  filter: drop-shadow(0 0 8px rgba(216,200,166,0.35));
+}
+
+#attackAngle .aa-driver{
+  fill: rgba(216,200,166,0.12);
+  stroke: rgba(216,200,166,0.22);
+  stroke-width: 1.2;
+  opacity: 0.75;
+  filter: blur(0.15px);
+}
+
+#attackAngle .aa-center{
+  fill: rgba(216,200,166,0.9);
+  opacity: 0.85;
+}
+
+/* Moving indicator */
+#attackAngleRunner.aa-ball,
+#attackAngleBall.aa-ball{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transform: translate(-50%,-50%);
+  background: rgba(232,236,241,0.9);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.35), 0 0 18px rgba(216,200,166,0.18);
+}
+
+/* Soft "dust/light" feel */
+#attackAngle .attack-angle__plane::before{
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(216,200,166,0.08), transparent 45%),
+    radial-gradient(circle at 70% 80%, rgba(216,200,166,0.05), transparent 55%);
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+/* Disable old double-ring/track layers if present */
+#attackAngle .attack-angle__track,
+#attackAngle .attack-angle__ring-inner,
+#attackAngle .attack-plane__inner-ring,
+#attackAngle .plane-ring--inner,
+#attackAngle .attack-angle__meter{
+  opacity: 0 !important;
+  display: none !important;
 }
 
 /* =========================================================

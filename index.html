@@ -202,34 +202,33 @@
                     <div class="swing-metric__body">
                       <canvas id="attackPixi" class="pixi-widget-canvas" aria-hidden="true"></canvas>
                       <div class="attack-angle" id="attackAngle" aria-label="Attack angle">
-                        <div class="attack-angle__meter" id="attackAngleMeter" aria-hidden="true">
-                          <div class="attack-angle__track"></div>
-                          <div class="attack-impact-line" aria-hidden="true"></div>
-                          <div class="attack-angle__sweet" id="attackAngleSweet">
-                            <svg class="attack-driver" viewBox="0 0 120 120" aria-hidden="true">
-                              <!-- shaft -->
-                              <path class="attack-driver__shaft" d="M25 60 H78"/>
-                              <!-- hosel (small connector) -->
-                              <rect class="attack-driver__hosel" x="74" y="56" width="8" height="8" rx="3"/>
-                              <!-- driver head (clean silhouette) -->
-                              <path class="attack-driver__head"
-                                    d="M86 52
-                                       C98 52, 108 58, 108 66
-                                       C108 74, 99 80, 86 80
-                                       C80 80, 74 77, 72 73
-                                       C70 69, 70 63, 72 59
-                                       C74 55, 80 52, 86 52 Z"/>
-                              <!-- face bevel highlight -->
-                              <path class="attack-driver__bevel"
-                                    d="M86 55
-                                       C96 55, 104 60, 104 66
-                                       C104 72, 96 77, 86 77"/>
-                              <!-- subtle grooves -->
-                              <path class="attack-driver__groove" d="M80 63 H102"/>
-                              <path class="attack-driver__groove" d="M80 69 H100"/>
-                            </svg>
-                          </div>
-                          <div class="attack-angle__runner" id="attackAngleRunner"></div>
+                        <!-- Reticle plane: single ring + crosshair + driver silhouette -->
+                        <div class="attack-angle__plane" id="attackAnglePlane">
+                          <svg class="attack-angle__svg" viewBox="0 0 120 120" aria-hidden="true">
+                            <!-- Single outer ring -->
+                            <circle class="aa-ring" cx="60" cy="60" r="44"></circle>
+                            <!-- Crosshair -->
+                            <line class="aa-cross aa-cross--h" x1="16" y1="60" x2="104" y2="60"></line>
+                            <line class="aa-cross aa-cross--v" x1="60" y1="16" x2="60" y2="104"></line>
+                            <!-- Top arrow indicator -->
+                            <path class="aa-arrow" d="M60 10 L56 18 H64 Z"></path>
+                            <!-- Glint sparkle -->
+                            <g class="aa-glint" transform="translate(96 92)">
+                              <path d="M0 -6 L1.5 -1.5 L6 0 L1.5 1.5 L0 6 L-1.5 1.5 L-6 0 L-1.5 -1.5 Z"></path>
+                            </g>
+                            <!-- Subtle driver silhouette -->
+                            <path class="aa-driver"
+                              d="M78 26
+                                 C92 36, 96 52, 92 68
+                                 C88 82, 78 92, 66 94
+                                 C72 86, 78 76, 82 66
+                                 C86 52, 86 40, 80 30
+                                 C79 28, 79 27, 78 26 Z"></path>
+                            <!-- Center dot -->
+                            <circle class="aa-center" cx="60" cy="60" r="4"></circle>
+                          </svg>
+                          <!-- Moving indicator (JS uses this ID) -->
+                          <div id="attackAngleRunner" class="aa-ball" aria-hidden="true"></div>
                         </div>
                       </div>
                     </div>
