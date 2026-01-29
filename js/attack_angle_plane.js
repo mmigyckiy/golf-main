@@ -1,31 +1,33 @@
 /**
- * Attack Angle — Plane Window Variant
+ * Attack Angle — Realistic Vertical Motion
  * 
- * Visual metaphor:
- * - Ball fixed at center (impact point)
- * - Thin rotating line represents club attack angle
- * - Tilted rectangular "window" shows acceptable angle range
- * - Subtle 0° reference line
+ * Visual: club moves VERTICALLY (up = negative angle, down = positive)
+ * Pivot at hands (bottom), tiny rotation for angle indication
  * 
- * During ARMING: angle oscillates smoothly
- * On RELEASE: angle locks, evaluate if inside window
+ * State machine: IDLE → HOLD → LOCKED (no DOWNSWING animation)
+ * On RELEASE: HARD LOCK, no further updates
  */
 
-const PLANE_CONFIG = {
-  // Angle range for oscillation (degrees)
-  MIN_DEG: -6,
+const CONFIG = {
+  // Angle range (degrees) during HOLD oscillation
+  MIN_DEG: -4,
   MAX_DEG: 6,
   
-  // Default sweet window
-  WINDOW_CENTER_DEG: 1.5,
-  WINDOW_WIDTH_DEG: 3.0,
+  // Sweet window defaults
+  WINDOW_CENTER_DEG: 1.0,
+  WINDOW_WIDTH_DEG: 2.5,
   
-  // Oscillation speed (radians per second base)
-  OSC_SPEED_BASE: 1.4,
-  OSC_SPEED_FATIGUE_MULT: 0.35,
+  // Oscillation during HOLD (slow, heavy, physical)
+  OSC_SPEED: 1.2,           // base oscillation speed (rad/s) — slower
+  OSC_FATIGUE_MULT: 0.15,   // speed increase from fatigue — subtle
   
-  // Visual rotation multiplier (for more visible movement)
-  VISUAL_MULT: 6
+  // Visual mapping: vertical travel in pixels
+  // negative angle (steep) → clubhead lower (positive Y)
+  // positive angle (shallow) → clubhead higher (negative Y)
+  Y_RANGE_PX: 20,           // total vertical travel range
+  
+  // Jitter (wind/fatigue)
+  JITTER_AMP: 0.04          // amplitude of noise overlay — reduced
 };
 
 // Module state
@@ -37,20 +39,29 @@ let els = {
   container: null,
   meter: null,
   track: null,
-  line: null,      // rotating attack line (we'll create via CSS pseudo or reuse track::before)
-  window: null,    // the acceptable window (sweet)
-  ball: null,      // fixed ball (runner)
-  readout: null
+  window: null,
+  ball: null,
+  readout: null,
+  driver: null,
+  impactLine: null
 };
 
-// Internal state defaults
+// Simple state machine: IDLE | HOLD | LOCKED
+let mode = "IDLE";
+let value01 = 0;          // 0 = bottom (impact), 1 = top
+let currentDeg = 0;
+let lockedDeg = null;
+let locked01 = null;
+let holdStartTime = 0;
+
+// Internal state defaults for app state
 const DEFAULTS = {
   active: false,
   valueDeg: 0,
   locked: false,
   lockedDeg: null,
-  windowMinDeg: PLANE_CONFIG.WINDOW_CENTER_DEG - PLANE_CONFIG.WINDOW_WIDTH_DEG / 2,
-  windowMaxDeg: PLANE_CONFIG.WINDOW_CENTER_DEG + PLANE_CONFIG.WINDOW_WIDTH_DEG / 2
+  windowMinDeg: CONFIG.WINDOW_CENTER_DEG - CONFIG.WINDOW_WIDTH_DEG / 2,
+  windowMaxDeg: CONFIG.WINDOW_CENTER_DEG + CONFIG.WINDOW_WIDTH_DEG / 2
 };
 
 /**
@@ -106,6 +117,8 @@ function cacheElements() {
   els.ball = document.getElementById("attackAngleRunner")
     || document.querySelector(".attack-angle__runner");
   els.readout = document.getElementById("attackAngleReadout");
+  els.driver = document.querySelector(".attack-driver");
+  els.impactLine = document.querySelector(".attack-impact-line");
 }
 
 /**
@@ -115,40 +128,38 @@ function render() {
   const state = ensureState();
   if (!state) return;
   
-  const { track, window: windowEl, ball, readout } = els;
+  const { track, readout } = els;
   if (!track || !readout) return;
   
   const aa = state.attackAngle;
-  const deg = aa.locked ? aa.lockedDeg : aa.valueDeg;
+  
+  // Use locked values if locked, otherwise current
+  const displayDeg = mode === "LOCKED" ? lockedDeg : currentDeg;
+  const display01 = mode === "LOCKED" ? locked01 : value01;
   
   // Update readout
-  readout.textContent = formatDeg(deg);
+  readout.textContent = formatDeg(displayDeg ?? 0);
   
-  // Set CSS variable for rotating line (multiply for visual effect)
-  const visualDeg = clamp(deg, PLANE_CONFIG.MIN_DEG, PLANE_CONFIG.MAX_DEG) * PLANE_CONFIG.VISUAL_MULT;
-  track.style.setProperty("--attack-line-deg", `${visualDeg}deg`);
+  // Apply vertical position to driver SVG (no rotation)
+  // Mapping: negative angle (steep) → clubhead lower, positive angle (shallow) → clubhead higher
+  // Normalize deg to -1..1 range, then scale to pixels
+  if (els.driver) {
+    const degRange = CONFIG.MAX_DEG - CONFIG.MIN_DEG;
+    const normalized = ((displayDeg ?? 0) - CONFIG.MIN_DEG) / degRange; // 0..1
+    // Invert: 0 (negative/steep) = down, 1 (positive/shallow) = up
+    const yPx = (0.5 - normalized) * CONFIG.Y_RANGE_PX;
+    
+    els.driver.style.setProperty("--attack-y-px", `${yPx.toFixed(2)}px`);
+  }
   
   // Check if inside window and update highlight state
+  const deg = displayDeg ?? 0;
   const inside = deg >= aa.windowMinDeg && deg <= aa.windowMaxDeg;
   track.classList.toggle("attack-angle--inside", inside);
-  
-  // Position the window indicator (convert window center/width to visual rotation)
-  if (windowEl) {
-    const windowCenterDeg = (aa.windowMinDeg + aa.windowMaxDeg) / 2;
-    const windowWidthDeg = aa.windowMaxDeg - aa.windowMinDeg;
-    const visualCenter = windowCenterDeg * PLANE_CONFIG.VISUAL_MULT;
-    const visualWidth = windowWidthDeg * PLANE_CONFIG.VISUAL_MULT;
-    
-    windowEl.style.setProperty("--window-center-deg", `${visualCenter}deg`);
-    windowEl.style.setProperty("--window-width-deg", `${visualWidth}deg`);
-  }
 }
 
 /**
- * Initialize the Attack Angle Plane module
- * @param {Function} getStateFn - Function to get app state
- * @param {Object} opts - Options
- * @param {Function} opts.isArming - Function to check if in arming phase
+ * Initialize the Attack Angle module
  */
 export function initAttackAnglePlane(getState, opts = {}) {
   getStateFn = getState;
@@ -159,7 +170,7 @@ export function initAttackAnglePlane(getState, opts = {}) {
   cacheElements();
   ensureState();
   
-  // Add plane-window class to enable new styles
+  // Add plane-window class to enable styles
   if (els.meter) {
     els.meter.classList.add("attack-angle--plane");
   }
@@ -168,47 +179,80 @@ export function initAttackAnglePlane(getState, opts = {}) {
 }
 
 /**
- * Update attack angle during arming phase
+ * Update attack angle during arming phase (HOLD)
  * Called every frame while holding
- * @param {number} ts - Current timestamp
- * @param {number} dtMs - Delta time in ms
  */
 export function updateAttackAnglePlane(ts, dtMs) {
   const state = ensureState();
-  if (!state || !isArmingFn(state)) return;
+  if (!state) return;
+  
+  // HARD LOCK: if locked, do NOTHING
+  if (mode === "LOCKED") {
+    return;
+  }
   
   const now = Number.isFinite(ts) ? ts : performance.now();
-  const t0 = state.timestamps?.holdStartMs ?? now;
-  const elapsed = Math.max(0, (now - t0) * 0.001); // seconds
   
-  // Get fatigue for speed variation
+  // Check if we should be in HOLD mode
+  if (!isArmingFn(state)) {
+    return;
+  }
+  
+  // Enter HOLD mode if not already
+  if (mode !== "HOLD") {
+    mode = "HOLD";
+    holdStartTime = now;
+    value01 = 0;
+    currentDeg = 0;
+  }
+  
+  // Calculate elapsed time in seconds
+  const elapsed = (now - holdStartTime) * 0.001;
+  
+  // Get fatigue for speed variation (if available)
   const fatigue = clamp(state.fatigue?.level ?? 0, 0, 1);
-  const speed = PLANE_CONFIG.OSC_SPEED_BASE + fatigue * PLANE_CONFIG.OSC_SPEED_FATIGUE_MULT;
+  const speed = CONFIG.OSC_SPEED + fatigue * CONFIG.OSC_FATIGUE_MULT;
   
-  // Smooth oscillation using sine wave
+  // Smooth oscillation: sine wave mapped to 0..1
   const phase = elapsed * speed;
-  const normalized = 0.5 + 0.5 * Math.sin(phase); // 0 to 1
+  const rawOsc = 0.5 + 0.5 * Math.sin(phase);
   
-  // Map to degree range
-  const deg = PLANE_CONFIG.MIN_DEG + (PLANE_CONFIG.MAX_DEG - PLANE_CONFIG.MIN_DEG) * normalized;
+  // Add subtle jitter (wind/fatigue noise)
+  const jitter = Math.sin(elapsed * 7.3) * CONFIG.JITTER_AMP * (0.5 + fatigue * 0.5);
+  value01 = clamp(rawOsc + jitter, 0, 1);
   
+  // Map value01 to degrees: 0 = MIN_DEG (bottom), 1 = MAX_DEG (top)
+  currentDeg = CONFIG.MIN_DEG + value01 * (CONFIG.MAX_DEG - CONFIG.MIN_DEG);
+  
+  // Update app state
   state.attackAngle.active = true;
   state.attackAngle.locked = false;
-  state.attackAngle.valueDeg = deg;
+  state.attackAngle.valueDeg = currentDeg;
   
   render();
 }
 
 /**
- * Lock the current attack angle value
+ * Lock the current attack angle value - HARD LOCK
  * Called on release
  */
 export function lockAttackAnglePlane() {
   const state = ensureState();
   if (!state) return;
   
+  // Already locked? Do nothing
+  if (mode === "LOCKED") {
+    return;
+  }
+  
+  // HARD LOCK: capture current values
+  lockedDeg = currentDeg;
+  locked01 = value01;
+  mode = "LOCKED";
+  
+  // Update app state
   state.attackAngle.locked = true;
-  state.attackAngle.lockedDeg = state.attackAngle.valueDeg;
+  state.attackAngle.lockedDeg = lockedDeg;
   
   render();
 }
@@ -220,6 +264,15 @@ export function resetAttackAnglePlane() {
   const state = ensureState();
   if (!state) return;
   
+  // Reset state machine
+  mode = "IDLE";
+  value01 = 0;
+  currentDeg = 0;
+  lockedDeg = null;
+  locked01 = null;
+  holdStartTime = 0;
+  
+  // Reset app state
   state.attackAngle.active = false;
   state.attackAngle.valueDeg = 0;
   state.attackAngle.locked = false;
@@ -230,7 +283,6 @@ export function resetAttackAnglePlane() {
 
 /**
  * Get the current attack angle value in degrees
- * @returns {number} Current angle in degrees
  */
 export function getAttackAngleValue() {
   const state = ensureState();
@@ -243,7 +295,6 @@ export function getAttackAngleValue() {
 
 /**
  * Check if current angle is inside the acceptable window
- * @returns {boolean} True if inside window
  */
 export function isInsideAttackWindow() {
   const state = ensureState();
@@ -257,8 +308,6 @@ export function isInsideAttackWindow() {
 
 /**
  * Set custom window range
- * @param {number} centerDeg - Center of window in degrees
- * @param {number} widthDeg - Width of window in degrees
  */
 export function setAttackWindow(centerDeg, widthDeg) {
   const state = ensureState();
@@ -268,6 +317,13 @@ export function setAttackWindow(centerDeg, widthDeg) {
   state.attackAngle.windowMaxDeg = centerDeg + widthDeg / 2;
   
   render();
+}
+
+/**
+ * Get current mode (for debugging)
+ */
+export function getAttackMode() {
+  return mode;
 }
 
 // Re-export render for external use if needed

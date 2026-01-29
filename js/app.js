@@ -29,6 +29,11 @@ import {
   isInsideAttackWindow,
   renderAttackAnglePlane 
 } from "./attack_angle_plane.js";
+import {
+  initSwingMetricsPixi,
+  updateSwingMetricsPixi,
+  resizeSwingMetricsPixi
+} from "./swing_metrics_pixi.js";
 
 const FLIGHT_MS_VISUAL = 2200;
 const STORAGE_KEY = "golfcentral.longdrive.v1";
@@ -263,6 +268,14 @@ const state = {
     locked: false,
     score01: 0,
     components: { tempo: 0, path: 0, attack: 0 }
+  },
+  swingWidget: {
+    locked: false,
+    tempo01: 0,
+    path01: 0.5,
+    attackDeg: 0,
+    holdStartMs: 0,
+    prevPath01: 0.5
   },
   lastFlights: [],
   longestToday: { date: null, best: 0 },
@@ -574,6 +587,71 @@ function resetMultiplier(roundId){
   multiplierState.lastRoundId = roundId || null;
 }
 
+// === SPRING-DAMPER PHYSICS (Variant 2) ===
+
+function ensureSwingPhysState(){
+  state.swingPhys ||= { tPrev: null, pathAngle: 0, pathOmega: 0, attackAngle: 0, attackOmega: 0 };
+  state.shot ||= { tempo01: 0, path01: 0, attackDeg: 0, locked: false, score01: 0, components: { tempo: 0, path: 0, attack: 0 } };
+}
+
+function stepSwingPhysics(ts){
+  ensureSwingPhysState();
+  const phys = state.swingPhys;
+  
+  const now = ts ?? performance.now();
+  const dt = phys.tPrev ? clamp((now - phys.tPrev) / 1000, 0.001, 0.033) : 0.016;
+  phys.tPrev = now;
+  
+  // --- PATH spring-damper ---
+  const kPath = 26;
+  const cPath = 8.6;
+  const maxPathRad = 1.05; // ~60°
+  const windBias = clamp(((state.wind?.dir01 ?? 0.5) - 0.5), -0.5, 0.5);
+  const windMag = clamp((state.wind?.strength01 ?? 0), 0, 1);
+  const fatigue = clamp((state.fatigue?.level ?? 0), 0, 1);
+  const eqPath = (windBias * 0.20 * windMag) + (fatigue * 0.02);
+  
+  const aPath = (-kPath * (phys.pathAngle - eqPath)) - (cPath * phys.pathOmega);
+  phys.pathOmega += aPath * dt;
+  phys.pathAngle += phys.pathOmega * dt;
+  phys.pathAngle = clamp(phys.pathAngle, -maxPathRad, maxPathRad);
+  
+  const path01Live = clamp01(0.5 + (phys.pathAngle / maxPathRad) * 0.5);
+  
+  // --- ATTACK spring-damper ---
+  const kAtk = 22;
+  const cAtk = 7.8;
+  const maxAtkRad = 0.26; // ~15°
+  const eqAtk = (fatigue * 0.04) + (windMag * -0.05);
+  
+  const aAtk = (-kAtk * (phys.attackAngle - eqAtk)) - (cAtk * phys.attackOmega);
+  phys.attackOmega += aAtk * dt;
+  phys.attackAngle += phys.attackOmega * dt;
+  phys.attackAngle = clamp(phys.attackAngle, -maxAtkRad, maxAtkRad);
+  
+  const attackDegLive = phys.attackAngle * (180 / Math.PI);
+  
+  // Store as LIVE (locking happens elsewhere)
+  state.shot.path01 = path01Live;
+  state.shot.attackDeg = attackDegLive;
+  
+  return { path01Live, attackDegLive };
+}
+
+/**
+ * Get bounding rects for swing metric widgets (for Pixi overlay positioning)
+ */
+function getSwingMetricsLayout(){
+  const tempoEl = document.querySelector(".swing-metric--tempo .swing-metric__body");
+  const pathEl = document.querySelector(".swing-metric--path .swing-metric__body");
+  const attackEl = document.querySelector(".swing-metric--attack .swing-metric__body");
+  return {
+    tempo: tempoEl?.getBoundingClientRect() || null,
+    path: pathEl?.getBoundingClientRect() || null,
+    attack: attackEl?.getBoundingClientRect() || null
+  };
+}
+
 function resetRoundState(reason = "manual"){
   console.log("[ROUND] reset", { reason, prev: state.round?.state });
   state.running = false;
@@ -685,6 +763,44 @@ function resetRound(reason = "manual"){
   SwingControls.resetTempo();
   SwingPath.resetPath();
   resetAttackAnglePlane();
+  
+  // Clear impact flash state (Variant 1)
+  document.getElementById("swingMetricsRow")?.classList.remove("is-impact");
+  clearTimeout(state._impactFlashT);
+  
+  // Reset Pixi overlay (legacy)
+  updateSwingMetricsPixi({
+    phase: RoundPhase.IDLE,
+    tempo01: 0,
+    path01: 0,
+    attackDeg: 0,
+    locked: false
+  });
+  
+  // Reset unified SwingWidget
+  state.swingWidget = {
+    locked: false,
+    tempo01: 0,
+    path01: 0.5,
+    attackDeg: 0,
+    holdStartMs: 0,
+    prevPath01: 0.5
+  };
+  window.SwingWidget?.reset();
+  
+  // Reset spring-damper physics state
+  if(state.swingPhys){
+    state.swingPhys.tPrev = null;
+    state.swingPhys.pathAngle = 0;
+    state.swingPhys.pathOmega = 0;
+    state.swingPhys.attackAngle = 0;
+    state.swingPhys.attackOmega = 0;
+  }
+  
+  // Reset premium Pixi widgets
+  window._pixiTempo?.reset();
+  window._pixiPath?.reset();
+  window._pixiAttack?.reset();
   
   // Reset shot state
   state.shot = {
@@ -884,10 +1000,17 @@ function syncSwingUI(){
   SwingControls.syncFromState(state);
   const headPos = SwingControls.getTempoHeadPos();
   renderSwingTempo(Number.isFinite(headPos) ? headPos : (state.tempo?.headPos ?? 0));
+  
+  // === PHYSICS OVERRIDE: Path + Attack from state.shot (spring-damper physics) ===
+  // During ARMING/locked, use physics-driven values; otherwise fallback
+  const path01 = (state.phase === RoundPhase.ARMING || state.shot?.locked) 
+    ? (state.shot?.path01 ?? 0.5)
+    : (Number.isFinite(headPos) ? headPos : 0.5);
+  
   if(window.SwingPath){
     window.SwingPath.update({
       phase: state.phase,
-      headPos01: Number.isFinite(headPos) ? headPos : 0,
+      headPos01: path01,
       sweetCenter: state.alignment?.sweetCenter ?? 0,
       sweetWidthDeg: 18
     });
@@ -1395,6 +1518,26 @@ function beginHold(ts){
   state._tempoUiTest.startedAt = state.timestamps.holdStartMs;
   state._tempoUiTest.stableCount = 0;
   state._tempoUiTest.lastV = null;
+  
+  // Reset unified SwingWidget state
+  state.swingWidget = state.swingWidget || {};
+  state.swingWidget.locked = false;
+  state.swingWidget.holdStartMs = state.timestamps.holdStartMs;
+  state.swingWidget.tempo01 = 0;
+  state.swingWidget.path01 = 0.5;
+  state.swingWidget.attackDeg = 0;
+  state.swingWidget.prevPath01 = 0.5;
+  window.SwingWidget?.reset();
+  
+  // Initialize spring-damper physics with some initial velocity for "overshoot/settle" feel
+  ensureSwingPhysState();
+  state.swingPhys.tPrev = null;
+  state.swingPhys.pathAngle = 0;
+  state.swingPhys.pathOmega = (Math.random() - 0.5) * 3.5; // Random initial push
+  state.swingPhys.attackAngle = 0;
+  state.swingPhys.attackOmega = (Math.random() - 0.5) * 1.8; // Random initial push
+  state.shot.locked = false;
+  
   setButtons();
   console.log("[HOLD] beginHold", { ts: state.timestamps.holdStartMs, phase: state.phase });
   return true;
@@ -1432,10 +1575,51 @@ function releaseSwing(ts, power = 0){
   lockAttackAnglePlane();
   
   // Capture final values
+  // Tempo still comes from SwingControls (source of truth)
   state.shot.tempo01 = SwingControls.getTempoHeadPos();
-  state.shot.path01 = SwingPath.getPathPos01();
-  state.shot.attackDeg = getAttackAngleValue();
+  // Path and Attack: use physics-driven values (already in state.shot from tick)
+  // Don't overwrite with old widget values - they weren't updated during ARMING
+  // state.shot.path01 and state.shot.attackDeg are already set by stepSwingPhysics
   state.shot.locked = true;
+  
+  // Update Pixi with locked state (legacy)
+  updateSwingMetricsPixi({
+    phase: state.phase,
+    tempo01: state.shot.tempo01,
+    path01: state.shot.path01,
+    attackDeg: state.shot.attackDeg,
+    locked: true
+  });
+  
+  // Lock unified SwingWidget + physics
+  ensureSwingPhysState();
+  state.swingWidget.locked = true;
+  window.SwingWidget?.lock();
+  console.log("[SWING WIDGET]", {
+    tempo01: state.swingWidget.tempo01?.toFixed(3) ?? "0",
+    path01: state.swingWidget.path01?.toFixed(3) ?? "0.5",
+    attackDeg: state.swingWidget.attackDeg?.toFixed(2) ?? "0"
+  });
+  console.log("[SHOT LOCK]", { 
+    path01: state.shot.path01?.toFixed(3) ?? "0.5", 
+    attackDeg: state.shot.attackDeg?.toFixed(2) ?? "0"
+  });
+  
+  // Lock premium Pixi widgets
+  window._pixiTempo?.lock();
+  window._pixiPath?.lock();
+  window._pixiAttack?.lock();
+  console.log("[PIXIWIDGETS]", {
+    tempo01: state.shot.tempo01?.toFixed(3) ?? "0",
+    path01: state.shot.path01?.toFixed(3) ?? "0.5",
+    attackDeg: state.shot.attackDeg?.toFixed(2) ?? "0"
+  });
+  
+  // === IMPACT FLASH (Variant 1) ===
+  const impactRow = document.getElementById("swingMetricsRow");
+  impactRow?.classList.add("is-impact");
+  clearTimeout(state._impactFlashT);
+  state._impactFlashT = setTimeout(() => impactRow?.classList.remove("is-impact"), 280);
   
   // Compute unified shot score
   const shotResult = evalShot(state.shot.tempo01, state.shot.path01, state.shot.attackDeg);
@@ -1517,14 +1701,86 @@ function tick(ts){
     state.lastTs = ts;
     updateRoundWind(ts);
     updateWindHUD();
-    updateAttackAnglePlane(ts, dtMs);
     updateImpactQuality();
     
-    // Live read all 3 widget values while not locked
+    // === SPRING-DAMPER PHYSICS (Variant 2) ===
+    // Run physics FIRST so all visuals use current-frame values
+    if(!state.shot.locked){
+      // Step physics simulation — updates state.shot.path01 and state.shot.attackDeg
+      stepSwingPhysics(ts);
+      
+      // Compute tempo from path velocity
+      const sw = state.swingWidget;
+      const holdMs = ts - (sw.holdStartMs || ts);
+      const speed = Math.abs(state.shot.path01 - (sw.prevPath01 ?? 0.5)) / Math.max(0.001, dtMs / 1000);
+      const maxSpeed = 2.2;
+      const rawTempo = clamp01(speed / maxSpeed);
+      sw.tempo01 = (sw.tempo01 || 0) + (rawTempo - (sw.tempo01 || 0)) * 0.15;
+      sw.prevPath01 = state.shot.path01;
+      sw.path01 = state.shot.path01;
+      sw.attackDeg = state.shot.attackDeg;
+      
+      // Inject physics values into attackAngle state BEFORE rendering
+      // This ensures DOM attack driver shows the same values as scoring
+      if(state.attackAngle){
+        state.attackAngle.valueDeg = state.shot.attackDeg;
+        state.attackAngle.active = true;
+        state.attackAngle.locked = false;
+      }
+    }
+    
+    // Read tempo from SwingControls (source of truth for tempo)
     if(!state.shot.locked){
       state.shot.tempo01 = SwingControls.getTempoHeadPos();
-      state.shot.path01 = SwingPath.getPathPos01();
-      state.shot.attackDeg = getAttackAngleValue();
+    }
+    
+    // Now render attack angle DOM with physics-driven values (not its own oscillation)
+    // Skip updateAttackAnglePlane() to avoid overwriting physics values with sine-wave
+    renderAttackAnglePlane();
+    
+    // Update all visual overlays with current-frame physics values
+    updateSwingMetricsPixi({
+      phase: state.phase,
+      tempo01: state.shot.tempo01,
+      path01: state.shot.path01,
+      attackDeg: state.shot.attackDeg,
+      locked: state.shot.locked
+    });
+    
+    if(!state.shot.locked){
+      // Update SwingWidget visual
+      const sw = state.swingWidget;
+      const holdMs = ts - (sw.holdStartMs || ts);
+      window.SwingWidget?.update({
+        phase: "ARMING",
+        holdMs: holdMs,
+        tempo01: sw.tempo01,
+        path01: state.shot.path01,
+        attackDeg: state.shot.attackDeg,
+        locked: false,
+        sweet: { pathCenter01: 0.5, pathWidth01: 0.18 }
+      });
+      
+      // Update premium Pixi widget renderers (visual only)
+      window._pixiTempo?.update({
+        value01: state.shot.tempo01 ?? 0,
+        sweetStart01: state.tempo?.windowStart ?? 0.6,
+        sweetEnd01: state.tempo?.windowEnd ?? 0.8,
+        isHolding: true,
+        isLocked: false
+      });
+      window._pixiPath?.update({
+        value01: state.shot.path01 ?? 0.5,
+        sweetCenter01: 0.5,
+        sweetWidth01: 0.18,
+        isHolding: true,
+        isLocked: false
+      });
+      window._pixiAttack?.update({
+        attackDeg: state.shot.attackDeg ?? 0,
+        isHolding: true,
+        isLocked: false
+      });
     }
     
     syncSwingUI();
@@ -2148,6 +2404,13 @@ function initUI(){
   syncSwingUI();
   initAttackAnglePlane(() => state, { isArming: (s) => s.phase === RoundPhase.ARMING });
   renderAttackAnglePlane();
+  
+  // === PIXI OVERLAYS DISABLED — using DOM widgets only ===
+  // initSwingMetricsPixi, SwingWidget, PixiTempo, PixiSwingPath, PixiAttackAngle
+  // are all disabled to eliminate duplicate/ghosting visuals.
+  // CSS hides #swingMetricsPixi, #tempoPixi, #pathPixi, #attackPixi.
+  // To re-enable: uncomment below and remove CSS display:none rules.
+  
   resetSwingTempoMeter();
   setButtons();
   updateShotInfo();
@@ -2182,7 +2445,9 @@ function bindSwingTempoInput(){
   const control = ui.tempoControl;
   const head = ui.tempoHead;
   const windowEl = ui.tempoWindow;
-  if(!control || !head || !windowEl) return;
+  if(!control || !head || !windowEl){
+    return;
+  }
 
   const beginTempo = (e) => {
     if(state.phase !== RoundPhase.IDLE && state.phase !== RoundPhase.END) return;
@@ -2251,6 +2516,16 @@ window.addEventListener("DOMContentLoaded", () => {
     console.error("[LD] renderer init failed", err);
   }
   initUI();
+  
+  // Resize handler for Pixi overlays (throttled)
+  let resizeTimeout = null;
+  window.addEventListener("resize", () => {
+    if(resizeTimeout) clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      resizeSwingMetricsPixi();
+      window.SwingWidget?.resize();
+    }, 100);
+  });
 
   const bestSrc = document.querySelector("#uiBestYd, #bestValue, #bestDistance, [data-best-distance]");
   const youBest = document.querySelector("#youBestInline");

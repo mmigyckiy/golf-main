@@ -9,6 +9,8 @@
   <meta name="description" content="Drivix is a premium long drive challenge inspired by golf's most powerful swing." />
 
   <link rel="stylesheet" href="css/style.css" />
+  <!-- PixiJS for premium swing metrics overlay -->
+  <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.x/dist/pixi.min.js"></script>
 </head>
 
 <body>
@@ -148,10 +150,16 @@
             </div>
             <div class="gc-controls__row gc-controls__row--buttons gc-controls__row--primary">
               <div class="gc-swingControl">
+                <!-- Unified Pixi Swing Widget (Variant 2) — LEGACY, hidden -->
+                <div id="swingWidget" class="swing-widget is-hidden" data-legacy="true" aria-label="Swing Widget"></div>
+                <!-- Premium 3-widget row with Pixi canvases -->
                 <div class="swing-metrics-row" id="swingMetricsRow">
+                  <!-- Pixi overlay for premium B-style visuals -->
+                  <div id="swingMetricsPixi" class="swing-metrics-pixi" aria-hidden="true"></div>
                   <div class="swing-metric swing-metric--tempo">
                     <div class="swing-metric__title">SWING TEMPO</div>
                     <div class="swing-metric__body">
+                      <canvas id="tempoPixi" class="pixi-widget-canvas" aria-hidden="true"></canvas>
                       <div class="tempo-meter" id="swingTempoControl" role="button" aria-label="Swing tempo" tabindex="0">
                         <div class="tempo-meter__tube" id="swingTempoTube">
                           <div class="tempo-meter__fill" id="swingTempoFill" aria-hidden="true"></div>
@@ -167,6 +175,7 @@
                   <div class="swing-metric swing-metric--path">
                     <div class="swing-metric__title">SWING PATH</div>
                     <div class="swing-metric__body">
+                      <canvas id="pathPixi" class="pixi-widget-canvas" aria-hidden="true"></canvas>
                       <div class="alignment-ring" id="alignmentRing" aria-label="Alignment ring">
                         <svg class="alignment-ring__svg" id="alignmentSvg" viewBox="0 0 120 120" aria-hidden="true">
                           <defs>
@@ -191,10 +200,35 @@
                   <div class="swing-metric swing-metric--attack">
                     <div class="swing-metric__title">ATTACK ANGLE</div>
                     <div class="swing-metric__body">
+                      <canvas id="attackPixi" class="pixi-widget-canvas" aria-hidden="true"></canvas>
                       <div class="attack-angle" id="attackAngle" aria-label="Attack angle">
                         <div class="attack-angle__meter" id="attackAngleMeter" aria-hidden="true">
                           <div class="attack-angle__track"></div>
-                          <div class="attack-angle__sweet" id="attackAngleSweet"></div>
+                          <div class="attack-impact-line" aria-hidden="true"></div>
+                          <div class="attack-angle__sweet" id="attackAngleSweet">
+                            <svg class="attack-driver" viewBox="0 0 120 120" aria-hidden="true">
+                              <!-- shaft -->
+                              <path class="attack-driver__shaft" d="M25 60 H78"/>
+                              <!-- hosel (small connector) -->
+                              <rect class="attack-driver__hosel" x="74" y="56" width="8" height="8" rx="3"/>
+                              <!-- driver head (clean silhouette) -->
+                              <path class="attack-driver__head"
+                                    d="M86 52
+                                       C98 52, 108 58, 108 66
+                                       C108 74, 99 80, 86 80
+                                       C80 80, 74 77, 72 73
+                                       C70 69, 70 63, 72 59
+                                       C74 55, 80 52, 86 52 Z"/>
+                              <!-- face bevel highlight -->
+                              <path class="attack-driver__bevel"
+                                    d="M86 55
+                                       C96 55, 104 60, 104 66
+                                       C104 72, 96 77, 86 77"/>
+                              <!-- subtle grooves -->
+                              <path class="attack-driver__groove" d="M80 63 H102"/>
+                              <path class="attack-driver__groove" d="M80 69 H100"/>
+                            </svg>
+                          </div>
                           <div class="attack-angle__runner" id="attackAngleRunner"></div>
                         </div>
                       </div>
@@ -204,6 +238,30 @@
                       <div class="swing-metric__hint"></div>
                     </div>
                   </div>
+                </div>
+                <!-- PENDULUM STRIKE — LEGACY Visual Prototype, hidden -->
+                <div id="pendulumStrike" class="pendulum-strike" data-legacy="true" aria-label="Swing pendulum">
+                  <svg class="pendulum-strike__svg" viewBox="0 0 200 240" aria-hidden="true">
+                    <!-- Background arc (swing path) -->
+                    <path class="pendulum-arc__base" d="M 30 200 A 85 85 0 0 1 170 200" />
+                    <!-- Sweet spot segment on arc -->
+                    <path class="pendulum-arc__sweet" d="M 85 145 A 85 85 0 0 1 115 145" />
+                    <!-- Impact zone marker -->
+                    <line class="pendulum-impact__line" x1="100" y1="195" x2="100" y2="210" />
+                    <!-- Ball at impact point -->
+                    <circle class="pendulum-ball" cx="100" cy="205" r="5" />
+                    <!-- Pendulum group (rotates) -->
+                    <g class="pendulum-arm" transform="rotate(-12, 100, 45)">
+                      <!-- Pivot point -->
+                      <circle class="pendulum-pivot" cx="100" cy="45" r="4" />
+                      <!-- Shaft -->
+                      <line class="pendulum-shaft" x1="100" y1="49" x2="100" y2="175" />
+                      <!-- Clubhead -->
+                      <rect class="pendulum-head" x="92" y="172" width="16" height="8" rx="4" />
+                      <!-- Angle indicator on clubhead -->
+                      <line class="pendulum-angle" x1="100" y1="172" x2="100" y2="164" />
+                    </g>
+                  </svg>
                 </div>
               </div>
             </div>
@@ -256,6 +314,11 @@
   <script src="js/stats.js"></script>
   <script type="module" src="js/swing_path.js"></script>
   <script type="module" src="js/attack_angle.js"></script>
+  <script type="module" src="js/swing_metrics_pixi.js"></script>
+  <script src="js/swing_widget_pixi.js"></script>
+  <script src="js/pixi_tempo.js"></script>
+  <script src="js/pixi_swing_path.js"></script>
+  <script src="js/pixi_attack_angle.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>
