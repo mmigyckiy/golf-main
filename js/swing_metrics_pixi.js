@@ -69,19 +69,11 @@ let initialized = false;
  * Initialize the Pixi swing metrics overlay
  */
 export function initSwingMetricsPixi(opts = {}) {
-  const mountEl =
-    opts?.mountEl ||
-    document.getElementById("swingMetricsPixi") ||
-    document.getElementById("pathPixi") ||
-    document.getElementById("swingMetricsRow");
+  const mountEl = opts?.mountEl || document.getElementById("swingMetricsPixi");
   const { getLayout } = opts || {};
-  console.log("[SWING_METRICS_PIXI] init", {
-    hasOpts: !!opts,
-    mountFound: !!mountEl,
-    mountId: mountEl?.id || null
-  });
+  console.log("[SWING_METRICS_PIXI] mount", mountEl);
   if (!mountEl) {
-    console.warn("[SWING_METRICS_PIXI] mount element not found (#swingMetricsPixi/#pathPixi). abort init.");
+    console.warn("[SWING_METRICS_PIXI] mount missing");
     return null;
   }
   if (!window.PIXI) {

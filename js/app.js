@@ -2442,6 +2442,7 @@ function initUI(){
   // are all disabled to eliminate duplicate/ghosting visuals.
   // CSS hides #swingMetricsPixi, #tempoPixi, #attackPixi.
   if (typeof initSwingMetricsPixi === "function") {
+    console.log("[INIT] swingMetricsPixi exists?", !!document.getElementById("swingMetricsPixi"));
     console.log("[BOOT] initSwingMetricsPixi()");
     window.SwingMetricsPixi = initSwingMetricsPixi({
       mountEl: document.getElementById("swingMetricsPixi")
