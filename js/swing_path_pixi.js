@@ -119,6 +119,22 @@
     });
   }
 
+  function logHostCSS(tag, hostEl, view) {
+    if (!hostEl) return console.log("[SWING_PATH][HOST]", tag, "NO_HOST");
+    const cs = getComputedStyle(hostEl);
+    const r = hostEl.getBoundingClientRect();
+    const pcs = hostEl.parentElement ? getComputedStyle(hostEl.parentElement) : null;
+    const pr = hostEl.parentElement ? hostEl.parentElement.getBoundingClientRect() : null;
+    console.log("[SWING_PATH][HOST]", tag, {
+      hostRect: { w: r.width, h: r.height, x: r.x, y: r.y },
+      hostCSS: { display: cs.display, position: cs.position, opacity: cs.opacity, visibility: cs.visibility, zIndex: cs.zIndex, overflow: cs.overflow },
+      parentRect: pr ? { w: pr.width, h: pr.height } : null,
+      parentCSS: pcs ? { display: pcs.display, position: pcs.position, opacity: pcs.opacity, visibility: pcs.visibility, zIndex: pcs.zIndex, overflow: pcs.overflow } : null,
+      viewAttached: !!(view && view.parentNode),
+      viewParentId: view?.parentElement?.id || null
+    });
+  }
+
   /**
    * Mirror around widget center without moving offscreen
    */
@@ -266,7 +282,7 @@
         autoStart: false
       });
 
-      containerEl.innerHTML = "";
+      while (containerEl.firstChild) containerEl.removeChild(containerEl.firstChild);
       containerEl.appendChild(app.view);
       app.view.style.position = 'absolute';
       app.view.style.top = '0';
@@ -274,8 +290,10 @@
       app.view.style.width = '100%';
       app.view.style.height = '100%';
       app.view.style.display = 'block';
+      app.view.style.opacity = '1';
       app.view.style.pointerEvents = 'none';
       app.view.style.zIndex = '5';
+      logHostCSS("after-append", containerEl, app.view);
 
       // Create ONE root container for all graphics
       rootContainer = new PIXI.Container();
@@ -298,6 +316,7 @@
         layoutRoot();
         mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
         assertSwingPathVisible("after-resize", app, rootContainer, containerEl);
+        logHostCSS("after-resize", containerEl, app.view);
       });
 
       resizeObserver = new ResizeObserver(() => {
@@ -305,6 +324,7 @@
         layoutRoot();
         mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
         assertSwingPathVisible("ro-resize", app, rootContainer, containerEl);
+        logHostCSS("resize-observer", containerEl, app.view);
       });
       resizeObserver.observe(containerEl);
 

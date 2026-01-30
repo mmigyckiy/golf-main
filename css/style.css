@@ -1544,14 +1544,14 @@ hr,
 
 #swingMetricsRow{
   display: grid;
-  grid-template-columns: minmax(180px, 0.9fr) minmax(240px, 1.6fr) minmax(180px, 0.9fr);
-  column-gap: 48px;
+  grid-template-columns: 1fr 1.6fr 1fr;
+  column-gap: clamp(28px, 4vw, 56px);
   row-gap: 24px;
   padding: 0;
   align-items: start;
   justify-items: center;
   width: 100%;
-  max-width: 720px;
+  max-width: 760px;
   margin-left: auto;
   margin-right: auto;
   overflow: visible;
@@ -1559,6 +1559,9 @@ hr,
 }
 #swingMetricsRow > *{
   min-width: 0;
+  width: 100%;
+  display: grid;
+  justify-items: center;
 }
 
 /* =============================================================
@@ -1593,12 +1596,32 @@ hr,
 .swing-metrics-pixi,
 #swingMetricsPixi,
 #tempoPixi,
-#pathPixi,
-#attackPixi,
-.pixi-widget-canvas{
+#attackPixi{
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;
+}
+
+/* Swing Path Pixi Overlay — ENABLED (energy ribbon arc, scaled 1.35x + rotated 180°) */
+#pathPixi,
+.swing-metric--path .pixi-widget-canvas,
+.swing-metric--path canvas{
+  display: block !important;
+  visibility: visible !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none;
+  z-index: 2; /* Above body backdrop */
+  overflow: visible;
+}
+
+/* Hide DOM arc — Pixi is single source of truth */
+.swing-metric--path #alignmentRing{
+  opacity: 0;
+  pointer-events: none;
 }
 /* Hide old widget internals when Pixi overlay is active */
 .swing-metrics-row--pixi .tempo-meter__tube,
@@ -1717,15 +1740,43 @@ body[data-ui-phase="idle"] .swing-metric--attack{
 }
 .swing-metric__body{
   width: 100%;
+  height: 180px;
   display: grid;
   place-items: center;
-  min-height: 160px;
   position: relative;
   overflow: visible;
 }
-/* Path widget body — taller to accommodate hero size */
+/* Ensure SWING PATH pixi host can never collapse to 0 height */
 .swing-metric--path .swing-metric__body{
-  min-height: 220px;
+  position: relative;
+  min-height: 260px;
+  height: 100%;
+  overflow: visible;
+  z-index: 1;
+}
+
+/* Pixi host inside Swing Path cell */
+#pathPixi{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 260px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Make sure canvas is visible inside host */
+#pathPixi canvas{
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 1 !important;
+}
+
+/* If there is a glass-pocket overlay on bodies, keep it BELOW pixi */
+#swingMetricsRow .swing-metric__body::before{
+  z-index: 0;
 }
 /* Pixi widget canvas overlay — DISABLED (see rule above) */
 /* .pixi-widget-canvas moved to unified disable block */
@@ -1884,14 +1935,18 @@ body[data-ui-phase="idle"] .swing-metric--attack{
     --attack-size: 80px;
   }
   #swingMetricsRow{
-    grid-template-columns: minmax(140px, 0.9fr) minmax(200px, 1.4fr) minmax(140px, 0.9fr);
-    column-gap: 32px;
+    grid-template-columns: 1fr 1.4fr 1fr;
+    column-gap: 24px;
     row-gap: 20px;
     padding: 0;
     max-width: 600px;
   }
-  #swingMetricsRow > .swing-metric--path{
-    max-width: 260px;
+  .swing-metric__body{
+    height: 160px;
+  }
+  .swing-metric--path .swing-metric__body{
+    height: 180px;
+    min-height: 180px;
   }
 }
 @media (max-width: 640px){
@@ -3645,6 +3700,7 @@ kbd{
   ) !important;
   opacity: 0.85;
   filter: drop-shadow(0 6px 18px rgba(0,0,0,0.35));
+  height: 70%;
 }
 
 /* runner: looks like a puck */
@@ -3660,6 +3716,44 @@ kbd{
 #swingMetricsRow .swing-metric--tempo #tempoValueLabel{
   color: rgba(216,200,166,0.92) !important;
   text-shadow: 0 6px 22px rgba(0,0,0,0.40);
+}
+
+/* --- TEMPO SCALE: vertical 0-50-100 with ticks --- */
+.tempo-meter__scale{
+  position: absolute;
+  right: -28px;
+  top: 6px;
+  bottom: 6px;
+  width: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  pointer-events: none;
+  z-index: 1;
+}
+.tempo-meter__label{
+  font-family: var(--font-mono, 'SF Mono', 'Monaco', monospace);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: rgba(216,200,166,0.75);
+  text-shadow: 0 0 8px rgba(216,200,166,0.25);
+  line-height: 1;
+  padding-left: 4px;
+}
+.tempo-meter__tick{
+  width: 6px;
+  height: 1px;
+  background: rgba(216,200,166,0.25);
+  border-radius: 1px;
+  margin-right: 0;
+}
+.tempo-meter__tick--major{
+  width: 10px;
+  height: 1.5px;
+  background: rgba(216,200,166,0.45);
+  box-shadow: 0 0 4px rgba(216,200,166,0.20);
 }
 
 /* -----------------------
