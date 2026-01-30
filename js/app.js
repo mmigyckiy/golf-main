@@ -51,6 +51,7 @@ const RISK_P = 2.2;
 const DANGER_X_START = 2.2;
 const DANGER_X_FULL = 3.6;
 const DBG_PHYS = false;
+let swingPixiLogTs = 0;
 
 const FEATURES = {
   tempoInertia: true,
@@ -1798,6 +1799,15 @@ function tick(ts){
         intensity01: sw.tempo01 ?? 0.5,
         dtMs: dtMs
       });
+      
+      const head01 =
+        (typeof window.SwingPath?.getHeadPos01 === "function") ? window.SwingPath.getHeadPos01()
+        : (state?.shot?.path01 ?? state?.alignment?.value ?? 0);
+      window.SwingMetricsPixi?.update?.(head01);
+      if (ts - swingPixiLogTs > 1000) {
+        console.log("[SWING_PATH_PIXI] head01", head01);
+        swingPixiLogTs = ts;
+      }
     }
     
     syncSwingUI();
@@ -2433,7 +2443,9 @@ function initUI(){
   // CSS hides #swingMetricsPixi, #tempoPixi, #attackPixi.
   if (typeof initSwingMetricsPixi === "function") {
     console.log("[BOOT] initSwingMetricsPixi()");
-    initSwingMetricsPixi();
+    window.SwingMetricsPixi = initSwingMetricsPixi({
+      mountEl: document.getElementById("swingMetricsPixi")
+    });
   }
   
   // === SWING PATH PIXI OVERLAY (Variant A) — ENABLED ===

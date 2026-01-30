@@ -91,8 +91,14 @@ export function initSwingMetricsPixi(opts = {}) {
   
   getLayoutFn = getLayout;
   
+  const rect = mountEl.getBoundingClientRect();
+  const W = Math.max(240, Math.floor(rect.width || 0));
+  const H = Math.max(190, Math.floor(rect.height || 0));
+  
   // Create Pixi application with manual rendering
   app = new PIXI.Application({
+    width: W,
+    height: H,
     backgroundAlpha: 0,
     antialias: true,
     resolution: window.devicePixelRatio || 1,
@@ -100,17 +106,30 @@ export function initSwingMetricsPixi(opts = {}) {
     autoStart: false // Manual render only
   });
   
-  // Size to container
-  const rect = mountEl.getBoundingClientRect();
-  app.renderer.resize(rect.width, rect.height);
-  
   // Append canvas
   mountEl.innerHTML = "";
   mountEl.appendChild(app.view);
   app.view.style.cssText = "position:absolute;inset:0;width:100%;height:100%;pointer-events:none;";
-  console.log("[SWING_METRICS_PIXI] mounted", { parentId: mountEl.id });
+  app.view.style.width = "100%";
+  app.view.style.height = "100%";
+  app.view.style.display = "block";
+  
+  function resize() {
+    const r = mountEl.getBoundingClientRect();
+    const w = Math.max(240, Math.floor(r.width || 0));
+    const h = Math.max(190, Math.floor(r.height || 0));
+    app.renderer.resize(w, h);
+  }
+  window.addEventListener("resize", resize);
+  resize();
+  console.log("[SWING_METRICS_PIXI] mounted", { W, H, rect });
   
   stage = app.stage;
+  stage.visible = true;
+  stage.alpha = 1;
+  
+  const g = new PIXI.Graphics();
+  stage.addChild(g);
   
   // Create containers for each widget
   containers.tempo = new PIXI.Container();
@@ -131,10 +150,51 @@ export function initSwingMetricsPixi(opts = {}) {
   
   initialized = true;
   
-  // Initial render
+  function renderDemo(head01) {
+    const w = app.renderer.width;
+    const h = app.renderer.height;
+    g.clear();
+    
+    const cx = w * 0.50;
+    const cy = h * 0.58;
+    const radius = Math.min(w, h) * 0.38;
+    const a0 = (210 * Math.PI) / 180;
+    const a1 = (330 * Math.PI) / 180;
+    
+    g.lineStyle(6, 0xFFFFFF, 0.18);
+    g.arc(cx, cy, radius, a0, a1);
+    
+    const sweetCenter = (a0 + a1) * 0.5;
+    const sweetHalf = (10 * Math.PI) / 180;
+    g.lineStyle(8, 0xD8C8A6, 0.55);
+    g.arc(cx, cy, radius, sweetCenter - sweetHalf, sweetCenter + sweetHalf);
+    
+    const p = Math.min(1, Math.max(0, Number.isFinite(head01) ? head01 : 0));
+    const ang = a0 + (a1 - a0) * p;
+    const rx = cx + radius * Math.cos(ang);
+    const ry = cy + radius * Math.sin(ang);
+    
+    g.beginFill(0xE8ECF1, 0.90);
+    g.drawCircle(rx, ry, 6);
+    g.endFill();
+    
+    g.beginFill(0x000000, 0.25);
+    g.drawEllipse(rx, ry + 6, 10, 4);
+    g.endFill();
+  }
+  
+  renderDemo(0.0);
   app.render();
   
   console.log("[SwingMetricsPixi] Initialized");
+  
+  return {
+    app,
+    update(head01) {
+      renderDemo(head01);
+      app.render();
+    }
+  };
 }
 
 /**
