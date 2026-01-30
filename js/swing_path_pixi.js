@@ -662,7 +662,6 @@
     layoutRoot();
     mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
     assertSwingPathVisible("resize", app, rootContainer, app.view.parentElement);
-    mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
     
     // Redraw with last state
     drawSweet(0.41, 0.59);
