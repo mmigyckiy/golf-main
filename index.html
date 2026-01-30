@@ -161,6 +161,21 @@
                     <div class="swing-metric__body">
                       <canvas id="tempoPixi" class="pixi-widget-canvas" aria-hidden="true"></canvas>
                       <div class="tempo-meter" id="swingTempoControl" role="button" aria-label="Swing tempo" tabindex="0">
+                        <div class="tempo-meter__scale" aria-hidden="true">
+                          <span class="tempo-meter__label" data-value="100">100</span>
+                          <span class="tempo-meter__tick tempo-meter__tick--major"></span>
+                          <span class="tempo-meter__tick"></span>
+                          <span class="tempo-meter__tick"></span>
+                          <span class="tempo-meter__tick"></span>
+                          <span class="tempo-meter__tick"></span>
+                          <span class="tempo-meter__label" data-value="50">50</span>
+                          <span class="tempo-meter__tick tempo-meter__tick--major"></span>
+                          <span class="tempo-meter__tick"></span>
+                          <span class="tempo-meter__tick"></span>
+                          <span class="tempo-meter__tick"></span>
+                          <span class="tempo-meter__tick"></span>
+                          <span class="tempo-meter__label" data-value="0">0</span>
+                        </div>
                         <div class="tempo-meter__tube" id="swingTempoTube">
                           <div class="tempo-meter__fill" id="swingTempoFill" aria-hidden="true"></div>
                           <div class="tempo-meter__runner" id="swingTempoRunner" aria-hidden="true"></div>
@@ -175,7 +190,7 @@
                   <div class="swing-metric swing-metric--path">
                     <div class="swing-metric__title">SWING PATH</div>
                     <div class="swing-metric__body">
-                      <canvas id="pathPixi" class="pixi-widget-canvas" aria-hidden="true"></canvas>
+                      <div id="pathPixi" class="pixi-widget-canvas" aria-hidden="true"></div>
                       <div class="alignment-ring" id="alignmentRing" aria-label="Alignment ring">
                         <svg class="alignment-ring__svg" id="alignmentSvg" viewBox="0 0 120 120" aria-hidden="true">
                           <defs>
@@ -318,6 +333,7 @@
   <script src="js/pixi_tempo.js"></script>
   <script src="js/pixi_swing_path.js"></script>
   <script src="js/pixi_attack_angle.js"></script>
+  <script src="js/swing_path_pixi.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

@@ -801,6 +801,7 @@ function resetRound(reason = "manual"){
   window._pixiTempo?.reset();
   window._pixiPath?.reset();
   window._pixiAttack?.reset();
+  window.SwingPathPixi?.reset();
   
   // Reset shot state
   state.shot = {
@@ -1609,10 +1610,16 @@ function releaseSwing(ts, power = 0){
   window._pixiTempo?.lock();
   window._pixiPath?.lock();
   window._pixiAttack?.lock();
+  
+  // Swing Path Pixi — trigger impact pulse if in sweet zone
+  const pathSweet = Math.abs((state.shot.path01 ?? 0.5) - 0.5) < 0.09;
+  window.SwingPathPixi?.onRelease({ isSweet: pathSweet });
+  
   console.log("[PIXIWIDGETS]", {
     tempo01: state.shot.tempo01?.toFixed(3) ?? "0",
     path01: state.shot.path01?.toFixed(3) ?? "0.5",
-    attackDeg: state.shot.attackDeg?.toFixed(2) ?? "0"
+    attackDeg: state.shot.attackDeg?.toFixed(2) ?? "0",
+    pathSweet
   });
   
   // === IMPACT FLASH (Variant 1) ===
@@ -1780,6 +1787,16 @@ function tick(ts){
         attackDeg: state.shot.attackDeg ?? 0,
         isHolding: true,
         isLocked: false
+      });
+      
+      // === SWING PATH PIXI (Variant A) — golden trail + dust ===
+      window.SwingPathPixi?.update({
+        headPos01: state.shot.path01 ?? 0.5,
+        sweetStart01: 0.41,
+        sweetEnd01: 0.59,
+        locked: false,
+        intensity01: sw.tempo01 ?? 0.5,
+        dtMs: dtMs
       });
     }
     
@@ -2392,6 +2409,11 @@ function initUI(){
   ensureAnim();
   SwingControls.init(state);
   window.SwingPath?.init?.();
+  console.log("[BOOT] swing hosts", {
+    swingMetricsRow: !!document.getElementById("swingMetricsRow"),
+    pathPixi: !!document.getElementById("pathPixi"),
+    swingMetricsPixi: !!document.getElementById("swingMetricsPixi")
+  });
   setStatus("READY");
   setStatusState("ready");
   setBallIdle();
@@ -2408,8 +2430,17 @@ function initUI(){
   // === PIXI OVERLAYS DISABLED — using DOM widgets only ===
   // initSwingMetricsPixi, SwingWidget, PixiTempo, PixiSwingPath, PixiAttackAngle
   // are all disabled to eliminate duplicate/ghosting visuals.
-  // CSS hides #swingMetricsPixi, #tempoPixi, #pathPixi, #attackPixi.
-  // To re-enable: uncomment below and remove CSS display:none rules.
+  // CSS hides #swingMetricsPixi, #tempoPixi, #attackPixi.
+  if (typeof initSwingMetricsPixi === "function") {
+    console.log("[BOOT] initSwingMetricsPixi()");
+    initSwingMetricsPixi();
+  }
+  
+  // === SWING PATH PIXI OVERLAY (Variant A) — ENABLED ===
+  const pathHost = document.getElementById("pathPixi");
+  if(pathHost && window.SwingPathPixi){
+    window.SwingPathPixi.init({ containerEl: pathHost });
+  }
   
   resetSwingTempoMeter();
   setButtons();
@@ -2500,7 +2531,7 @@ const flight = {
 };
 
 window.addEventListener("DOMContentLoaded", () => {
-  console.log("APP INIT OK");
+  console.log("[BOOT] app.js loaded", { href: location.href, ts: performance.now() });
   document.documentElement.setAttribute("data-theme", "night");
   hydrateProfile();
   loadAnalyticsState();
@@ -2524,6 +2555,7 @@ window.addEventListener("DOMContentLoaded", () => {
     resizeTimeout = setTimeout(() => {
       resizeSwingMetricsPixi();
       window.SwingWidget?.resize();
+      window.SwingPathPixi?.resize();
     }, 100);
   });
 

@@ -256,8 +256,13 @@
    * Initialize the Pixi overlay
    */
   function init(opts = {}) {
-    const containerEl = opts.containerEl;
-    if (!containerEl || !window.PIXI) {
+    const hostEl = document.getElementById("pathPixi");
+    console.log("[SWING_PATH] init", { host: !!hostEl });
+    if (!hostEl) {
+      console.warn("[SWING_PATH] #pathPixi missing, abort");
+      return false;
+    }
+    if (!window.PIXI) {
       console.warn("[SwingPathPixi] Missing container or PIXI");
       return false;
     }
@@ -266,7 +271,7 @@
     if (app) destroy();
 
     // Get container dimensions (CSS pixels)
-    const rect = containerEl.getBoundingClientRect();
+    const rect = hostEl.getBoundingClientRect();
     const w = rect.width || 120;
     const h = rect.height || 120;
 
@@ -282,8 +287,8 @@
         autoStart: false
       });
 
-      while (containerEl.firstChild) containerEl.removeChild(containerEl.firstChild);
-      containerEl.appendChild(app.view);
+      while (hostEl.firstChild) hostEl.removeChild(hostEl.firstChild);
+      hostEl.appendChild(app.view);
       app.view.style.position = 'absolute';
       app.view.style.top = '0';
       app.view.style.left = '0';
@@ -293,7 +298,8 @@
       app.view.style.opacity = '1';
       app.view.style.pointerEvents = 'none';
       app.view.style.zIndex = '5';
-      logHostCSS("after-append", containerEl, app.view);
+      console.log("[SWING_PATH] appended", { canvas: app.view?.tagName, parentId: app.view?.parentElement?.id });
+      logHostCSS("after-append", hostEl, app.view);
 
       // Create ONE root container for all graphics
       rootContainer = new PIXI.Container();
@@ -312,27 +318,27 @@
       assertSwingPathVisible("after-append", app, rootContainer, containerEl);
 
       requestAnimationFrame(() => {
-        resizeSwingPath(app, rootContainer, containerEl);
+        resizeSwingPath(app, rootContainer, hostEl);
         layoutRoot();
         mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
-        assertSwingPathVisible("after-resize", app, rootContainer, containerEl);
-        logHostCSS("after-resize", containerEl, app.view);
+        assertSwingPathVisible("after-resize", app, rootContainer, hostEl);
+        logHostCSS("after-resize", hostEl, app.view);
       });
 
       resizeObserver = new ResizeObserver(() => {
-        resizeSwingPath(app, rootContainer, containerEl);
+        resizeSwingPath(app, rootContainer, hostEl);
         layoutRoot();
         mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
-        assertSwingPathVisible("ro-resize", app, rootContainer, containerEl);
-        logHostCSS("resize-observer", containerEl, app.view);
+        assertSwingPathVisible("ro-resize", app, rootContainer, hostEl);
+        logHostCSS("resize-observer", hostEl, app.view);
       });
-      resizeObserver.observe(containerEl);
+      resizeObserver.observe(hostEl);
 
       onWindowResize = () => {
-        resizeSwingPath(app, rootContainer, containerEl);
+        resizeSwingPath(app, rootContainer, hostEl);
         layoutRoot();
         mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
-        assertSwingPathVisible("window-resize", app, rootContainer, containerEl);
+        assertSwingPathVisible("window-resize", app, rootContainer, hostEl);
       };
       window.addEventListener('resize', onWindowResize);
 
