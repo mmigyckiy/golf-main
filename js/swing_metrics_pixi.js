@@ -77,11 +77,11 @@ export function initSwingMetricsPixi(opts = {}) {
   const { getLayout } = opts || {};
   console.log("[SWING_METRICS_PIXI] init", {
     hasOpts: !!opts,
-    mountEl: !!mountEl,
+    mountFound: !!mountEl,
     mountId: mountEl?.id || null
   });
   if (!mountEl) {
-    console.warn("[SWING_METRICS_PIXI] no mount element found (expected #swingMetricsPixi or #pathPixi). abort.");
+    console.warn("[SWING_METRICS_PIXI] mount element not found (#swingMetricsPixi/#pathPixi). abort init.");
     return null;
   }
   if (!window.PIXI) {
@@ -108,7 +108,7 @@ export function initSwingMetricsPixi(opts = {}) {
   mountEl.innerHTML = "";
   mountEl.appendChild(app.view);
   app.view.style.cssText = "position:absolute;inset:0;width:100%;height:100%;pointer-events:none;";
-  console.log("[SWING_METRICS_PIXI] appended", { parentId: app.view?.parentElement?.id });
+  console.log("[SWING_METRICS_PIXI] mounted", { parentId: mountEl.id });
   
   stage = app.stage;
   
