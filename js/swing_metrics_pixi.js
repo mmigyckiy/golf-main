@@ -68,10 +68,25 @@ let initialized = false;
 /**
  * Initialize the Pixi swing metrics overlay
  */
-export function initSwingMetricsPixi({ mountEl, getLayout }) {
-  if (!mountEl || !window.PIXI) {
+export function initSwingMetricsPixi(opts = {}) {
+  const mountEl =
+    opts?.mountEl ||
+    document.getElementById("swingMetricsPixi") ||
+    document.getElementById("pathPixi") ||
+    document.getElementById("swingMetricsRow");
+  const { getLayout } = opts || {};
+  console.log("[SWING_METRICS_PIXI] init", {
+    hasOpts: !!opts,
+    mountEl: !!mountEl,
+    mountId: mountEl?.id || null
+  });
+  if (!mountEl) {
+    console.warn("[SWING_METRICS_PIXI] no mount element found (expected #swingMetricsPixi or #pathPixi). abort.");
+    return null;
+  }
+  if (!window.PIXI) {
     console.warn("[SwingMetricsPixi] Missing mountEl or PIXI");
-    return;
+    return null;
   }
   
   getLayoutFn = getLayout;
@@ -90,8 +105,10 @@ export function initSwingMetricsPixi({ mountEl, getLayout }) {
   app.renderer.resize(rect.width, rect.height);
   
   // Append canvas
+  mountEl.innerHTML = "";
   mountEl.appendChild(app.view);
   app.view.style.cssText = "position:absolute;inset:0;width:100%;height:100%;pointer-events:none;";
+  console.log("[SWING_METRICS_PIXI] appended", { parentId: app.view?.parentElement?.id });
   
   stage = app.stage;
   
