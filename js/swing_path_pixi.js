@@ -70,6 +70,8 @@
   let arcRadius = 40;
   let lastState = { headPos01: 0.5, locked: false };
   let spinRafId = null;
+  let resizeObserver = null;
+  let onWindowResize = null;
   
   // Pulse state
   let pulseActive = false;
@@ -91,6 +93,33 @@
   }
 
   /**
+   * Assert Swing Path visibility/placement
+   */
+  function assertSwingPathVisible(tag, app, root, hostEl) {
+    const w = app?.renderer?.width;
+    const h = app?.renderer?.height;
+    const view = app?.view;
+    const attached = !!(view && view.parentNode);
+    const hostRect = hostEl?.getBoundingClientRect?.();
+    console.log("[SWING_PATH][ASSERT]", tag, {
+      hostExists: !!hostEl,
+      hostW: hostRect?.width,
+      hostH: hostRect?.height,
+      rendererW: w,
+      rendererH: h,
+      viewAttached: attached,
+      viewStyleDisplay: view ? getComputedStyle(view).display : null,
+      rootVisible: root?.visible,
+      rootAlpha: root?.alpha,
+      stageVisible: app?.stage?.visible,
+      stageAlpha: app?.stage?.alpha,
+      rootPos: root ? { x: root.x, y: root.y } : null,
+      rootScale: root ? { x: root.scale?.x, y: root.scale?.y } : null,
+      masked: !!root?.mask
+    });
+  }
+
+  /**
    * Mirror around widget center without moving offscreen
    */
   function mirrorXKeepInBounds(root, viewW, viewH) {
@@ -102,6 +131,25 @@
     root.scale.x = -Math.abs(root.scale.x || 1);
     root.visible = true;
     root.alpha = 1;
+  }
+
+  /**
+   * Resize renderer safely and keep root centered
+   */
+  function resizeSwingPath(app, root, hostEl) {
+    if (!app || !hostEl) return;
+    const r = hostEl.getBoundingClientRect();
+    const w = Math.max(1, Math.floor(r.width));
+    const h = Math.max(1, Math.floor(r.height));
+    app.renderer.resize(w, h);
+    
+    if (root) {
+      root.visible = true;
+      root.alpha = 1;
+      root.position.set(w * 0.5, h * 0.5);
+    }
+    app.stage.visible = true;
+    app.stage.alpha = 1;
   }
 
   /**
@@ -218,18 +266,24 @@
         autoStart: false
       });
 
+      containerEl.innerHTML = "";
       containerEl.appendChild(app.view);
       app.view.style.position = 'absolute';
       app.view.style.top = '0';
       app.view.style.left = '0';
       app.view.style.width = '100%';
       app.view.style.height = '100%';
+      app.view.style.display = 'block';
       app.view.style.pointerEvents = 'none';
       app.view.style.zIndex = '5';
 
       // Create ONE root container for all graphics
       rootContainer = new PIXI.Container();
       app.stage.addChild(rootContainer);
+      app.stage.visible = true;
+      app.stage.alpha = 1;
+      rootContainer.visible = true;
+      rootContainer.alpha = 1;
 
       // Build graphics layers
       buildLayers();
@@ -237,6 +291,30 @@
       // Layout root with correct position/transforms
       layoutRoot();
       mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
+      assertSwingPathVisible("after-append", app, rootContainer, containerEl);
+
+      requestAnimationFrame(() => {
+        resizeSwingPath(app, rootContainer, containerEl);
+        layoutRoot();
+        mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
+        assertSwingPathVisible("after-resize", app, rootContainer, containerEl);
+      });
+
+      resizeObserver = new ResizeObserver(() => {
+        resizeSwingPath(app, rootContainer, containerEl);
+        layoutRoot();
+        mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
+        assertSwingPathVisible("ro-resize", app, rootContainer, containerEl);
+      });
+      resizeObserver.observe(containerEl);
+
+      onWindowResize = () => {
+        resizeSwingPath(app, rootContainer, containerEl);
+        layoutRoot();
+        mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
+        assertSwingPathVisible("window-resize", app, rootContainer, containerEl);
+      };
+      window.addEventListener('resize', onWindowResize);
 
       mounted = true;
       
@@ -575,19 +653,15 @@
   function resize() {
     if (!app || !app.view.parentElement) return;
     
-    const rect = app.view.parentElement.getBoundingClientRect();
-    const w = rect.width || 120;
-    const h = rect.height || 120;
-    
-    // Resize renderer
-    app.renderer.resize(w, h);
-    
     // Rebuild layers
     rootContainer.removeChildren();
     buildLayers();
     
     // Re-layout root with new dimensions
+    resizeSwingPath(app, rootContainer, app.view.parentElement);
     layoutRoot();
+    mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
+    assertSwingPathVisible("resize", app, rootContainer, app.view.parentElement);
     mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
     
     // Redraw with last state
@@ -602,6 +676,14 @@
    * Destroy and cleanup
    */
   function destroy() {
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+      resizeObserver = null;
+    }
+    if (onWindowResize) {
+      window.removeEventListener('resize', onWindowResize);
+      onWindowResize = null;
+    }
     if (spinRafId) {
       cancelAnimationFrame(spinRafId);
       spinRafId = null;
