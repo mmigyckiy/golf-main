@@ -18,7 +18,7 @@
     // angleStart = 0.9π (162°), angleEnd = 0.1π (18°)
     arcStartRad: Math.PI * 0.9,   // Start on LEFT side
     arcEndRad: Math.PI * 0.1,     // End on RIGHT side
-    DIR_X: -1,                     // X direction flip for LEFT→RIGHT motion
+    DIR_X: 1,                      // Direction handled by container mirror
     
     // Energy ribbon
     TRAIL_POINTS: 56,
@@ -91,11 +91,17 @@
   }
 
   /**
-   * Center pivot to visual content bounds
+   * Mirror around widget center without moving offscreen
    */
-  function centerPivotToContent(container) {
-    const b = container.getLocalBounds(); // bounds in local coords
-    container.pivot.set(b.x + b.width / 2, b.y + b.height / 2);
+  function mirrorXKeepInBounds(root, viewW, viewH) {
+    const cx = viewW * 0.5;
+    const cy = viewH * 0.5;
+    
+    root.position.set(cx, cy);
+    root.pivot.set(cx, cy);
+    root.scale.x = -Math.abs(root.scale.x || 1);
+    root.visible = true;
+    root.alpha = 1;
   }
 
   /**
@@ -168,13 +174,11 @@
     const visualCenterOffsetY = arcRadius * 0.7 * fitScale;
     
     // Position container
-    // Pivot at visual center based on local bounds (graphics already built)
-    centerPivotToContent(rootContainer);
     rootContainer.position.set(cx, cy + visualCenterOffsetY);
     
     // Apply transforms AFTER position
     // Direction is handled by CONFIG.DIR_X at coordinate level
-    rootContainer.scale.set(-fitScale, fitScale);
+    rootContainer.scale.set(fitScale, fitScale);
     rootContainer.rotation = 0;
     
     // Ensure visibility
@@ -232,6 +236,7 @@
       
       // Layout root with correct position/transforms
       layoutRoot();
+      mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
 
       mounted = true;
       
@@ -583,6 +588,7 @@
     
     // Re-layout root with new dimensions
     layoutRoot();
+    mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
     
     // Redraw with last state
     drawSweet(0.41, 0.59);
