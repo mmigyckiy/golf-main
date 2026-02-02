@@ -2441,18 +2441,43 @@ function initUI(){
   // initSwingMetricsPixi, SwingWidget, PixiTempo, PixiSwingPath, PixiAttackAngle
   // are all disabled to eliminate duplicate/ghosting visuals.
   // CSS hides #swingMetricsPixi, #tempoPixi, #attackPixi.
+  function isMountUsable(el) {
+    if (!el) return false;
+    const cs = getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden") return false;
+    const r = el.getBoundingClientRect();
+    return (r.width > 2 && r.height > 2);
+  }
   if (typeof initSwingMetricsPixi === "function") {
-    console.log("[INIT] swingMetricsPixi exists?", !!document.getElementById("swingMetricsPixi"));
-    console.log("[BOOT] initSwingMetricsPixi()");
-    window.SwingMetricsPixi = initSwingMetricsPixi({
-      mountEl: document.getElementById("swingMetricsPixi")
-    });
+    const swingMetricsEl = document.getElementById("swingMetricsPixi");
+    console.log("[BOOT] initSwingMetricsPixi mount:", swingMetricsEl, "display:", swingMetricsEl ? getComputedStyle(swingMetricsEl).display : null, "rect:", swingMetricsEl ? swingMetricsEl.getBoundingClientRect() : null);
+    try {
+      if (isMountUsable(swingMetricsEl)) {
+        const enablePixi = document.getElementById("swingMetricsRow")?.classList.contains("swing-metrics-row--pixi");
+        window.SwingMetricsPixi = initSwingMetricsPixi({ mountEl: swingMetricsEl, enablePixi });
+      } else {
+        console.log("[PIXI] swingMetricsPixi mount unusable -> skip", swingMetricsEl);
+      }
+      console.log("[BOOT] swingMetricsPixi canvas:", swingMetricsEl ? swingMetricsEl.querySelector("canvas") : null);
+    } catch (e) {
+      console.error("[BOOT] initSwingMetricsPixi failed", e);
+    }
   }
   
   // === SWING PATH PIXI OVERLAY (Variant A) — ENABLED ===
-  const pathHost = document.getElementById("pathPixi");
-  if(pathHost && window.SwingPathPixi){
-    window.SwingPathPixi.init({ containerEl: pathHost });
+  const pathPixiEl = document.getElementById("pathPixi") || document.getElementById("swingMetricsPixi");
+  if (window.SwingPathPixi?.init) {
+    console.log("[BOOT] SwingPathPixi mount:", pathPixiEl, "display:", pathPixiEl ? getComputedStyle(pathPixiEl).display : null, "rect:", pathPixiEl ? pathPixiEl.getBoundingClientRect() : null);
+    try {
+      if (isMountUsable(pathPixiEl)) {
+        window.SwingPathPixiInstance = window.SwingPathPixi.init({ containerEl: pathPixiEl });
+      } else {
+        console.log("[PIXI] SwingPathPixi mount unusable or missing -> skip", pathPixiEl);
+      }
+      console.log("[BOOT] SwingPathPixi canvas:", pathPixiEl ? pathPixiEl.querySelector("canvas") : null);
+    } catch (e) {
+      console.error("[BOOT] SwingPathPixi init failed", e);
+    }
   }
   
   resetSwingTempoMeter();
