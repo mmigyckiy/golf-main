@@ -2453,8 +2453,11 @@ function initUI(){
     console.log("[BOOT] initSwingMetricsPixi mount:", swingMetricsEl, "display:", swingMetricsEl ? getComputedStyle(swingMetricsEl).display : null, "rect:", swingMetricsEl ? swingMetricsEl.getBoundingClientRect() : null);
     try {
       if (isMountUsable(swingMetricsEl)) {
-        const enablePixi = document.getElementById("swingMetricsRow")?.classList.contains("swing-metrics-row--pixi");
-        window.SwingMetricsPixi = initSwingMetricsPixi({ mountEl: swingMetricsEl, enablePixi });
+        window.SwingMetricsPixi = initSwingMetricsPixi({ mountEl: swingMetricsEl });
+        window.SwingMetricsPixi?.ready?.then(() => {
+          const el = document.getElementById("swingMetricsPixi");
+          console.log("[BOOT] swingMetricsPixi ready; canvas now:", el ? el.querySelector("canvas") : null);
+        });
       } else {
         console.log("[PIXI] swingMetricsPixi mount unusable -> skip", swingMetricsEl);
       }

@@ -79,14 +79,11 @@ let intersectionObserver = null;
  */
 export function initSwingMetricsPixi(opts = {}) {
   opts = opts ?? {};
-  if (opts.enablePixi !== true) {
-    console.warn("[SWING_METRICS_PIXI] enablePixi not set; skipping pixi init");
-    return null;
-  }
   if (initialized && app) {
     console.log("[SWING_METRICS_PIXI] already initialized");
     return {
       app,
+      ready: controller?.ready,
       update(head01) {
         if (typeof renderDemoFn === "function") {
           renderDemoFn(head01);
@@ -99,6 +96,7 @@ export function initSwingMetricsPixi(opts = {}) {
 
   controller = controller || {
     app: null,
+    ready: null,
     update() {},
     destroy() {}
   };
@@ -128,36 +126,55 @@ export function initSwingMetricsPixi(opts = {}) {
     return true;
   }
 
+  let pendingHead01 = null;
   function startInit() {
     if (initialized) return;
     const rect = mountEl.getBoundingClientRect();
     const W = Math.max(240, Math.floor(rect.width || 0));
     const H = Math.max(190, Math.floor(rect.height || 0));
-
-    app = new PIXI.Application({
-      width: W,
-      height: H,
-      backgroundAlpha: 0,
-      antialias: true,
-      resolution: window.devicePixelRatio || 1,
-      autoDensity: true,
-      autoStart: false
-    });
-
-    mountEl.innerHTML = "";
-    mountEl.appendChild(app.view);
-    app.view.style.cssText = "position:absolute;inset:0;width:100%;height:100%;pointer-events:none;";
-    app.view.style.width = "100%";
-    app.view.style.height = "100%";
-    app.view.style.display = "block";
-    console.log("[SWING_METRICS_PIXI] appended canvas?", !!mountEl.querySelector("canvas"));
+    const dpr = window.devicePixelRatio || 1;
+    app = new PIXI.Application();
+    const viewFromApp = (a) => a.canvas || a.view || a.renderer?.view || a.renderer?.canvas || null;
+    if (typeof app.init === "function") {
+      controller.ready = app.init({
+        width: W,
+        height: H,
+        backgroundAlpha: 0,
+        antialias: true,
+        resolution: dpr,
+        autoDensity: true
+      }).then(() => {
+        const view = viewFromApp(app);
+        mountEl.innerHTML = "";
+        if (view) mountEl.appendChild(view);
+        console.log("[SWING_METRICS_PIXI] mounted(v8)", { hasCanvas: !!mountEl.querySelector("canvas"), view });
+        return true;
+      }).catch((e) => {
+        console.error("[SWING_METRICS_PIXI] init(v8) failed", e);
+        return false;
+      });
+    } else {
+      app = new PIXI.Application({
+        width: W,
+        height: H,
+        backgroundAlpha: 0,
+        antialias: true,
+        resolution: dpr,
+        autoDensity: true
+      });
+      const view = viewFromApp(app);
+      mountEl.innerHTML = "";
+      if (view) mountEl.appendChild(view);
+      console.log("[SWING_METRICS_PIXI] mounted(v7)", { hasCanvas: !!mountEl.querySelector("canvas"), view });
+      controller.ready = Promise.resolve(true);
+    }
 
     function resize() {
       const r = mountEl.getBoundingClientRect();
       if (!r.width || !r.height) return;
       const w = Math.max(240, Math.floor(r.width));
       const h = Math.max(190, Math.floor(r.height));
-      app.renderer.resize(w, h);
+      app.renderer?.resize?.(w, h);
     }
     if (!windowResizeHandler) {
       windowResizeHandler = () => resize();
@@ -173,98 +190,100 @@ export function initSwingMetricsPixi(opts = {}) {
     });
     resizeObserver.observe(mountEl);
     resize();
-    console.log("[SWING_METRICS_PIXI] mounted", { W, H, rect });
+    controller.ready?.then((ok) => {
+      if (!ok) return;
+      stage = app.stage;
+      stage.visible = true;
+      stage.alpha = 1;
 
-    stage = app.stage;
-    stage.visible = true;
-    stage.alpha = 1;
+      const g = new PIXI.Graphics();
+      stage.addChild(g);
 
-    const g = new PIXI.Graphics();
-    stage.addChild(g);
+      containers.tempo = new PIXI.Container();
+      containers.path = new PIXI.Container();
+      containers.attack = new PIXI.Container();
 
-    containers.tempo = new PIXI.Container();
-    containers.path = new PIXI.Container();
-    containers.attack = new PIXI.Container();
+      stage.addChild(containers.tempo);
+      stage.addChild(containers.path);
+      stage.addChild(containers.attack);
 
-    stage.addChild(containers.tempo);
-    stage.addChild(containers.path);
-    stage.addChild(containers.attack);
+      buildTempoGraphics();
+      buildPathGraphics();
+      buildAttackGraphics();
 
-    buildTempoGraphics();
-    buildPathGraphics();
-    buildAttackGraphics();
+      updateLayout();
+      initialized = true;
+      initState = "ready";
 
-    updateLayout();
-    initialized = true;
-    initState = "ready";
+      function renderDemo(head01) {
+        lastDemoHead01 = Number.isFinite(head01) ? head01 : lastDemoHead01;
+        const w = app.renderer.width;
+        const h = app.renderer.height;
+        g.clear();
 
-    function renderDemo(head01) {
-      lastDemoHead01 = Number.isFinite(head01) ? head01 : 0;
-      const w = app.renderer.width;
-      const h = app.renderer.height;
-      g.clear();
+        const cx = w * 0.50;
+        const cy = h * 0.58;
+        const radius = Math.min(w, h) * 0.38;
+        const a0 = (210 * Math.PI) / 180;
+        const a1 = (330 * Math.PI) / 180;
 
-      const cx = w * 0.50;
-      const cy = h * 0.58;
-      const radius = Math.min(w, h) * 0.38;
-      const a0 = (210 * Math.PI) / 180;
-      const a1 = (330 * Math.PI) / 180;
+        g.lineStyle(6, 0xFFFFFF, 0.18);
+        g.arc(cx, cy, radius, a0, a1);
 
-      g.lineStyle(6, 0xFFFFFF, 0.18);
-      g.arc(cx, cy, radius, a0, a1);
+        const sweetCenter = (a0 + a1) * 0.5;
+        const sweetHalf = (10 * Math.PI) / 180;
+        g.lineStyle(8, 0xD8C8A6, 0.55);
+        g.arc(cx, cy, radius, sweetCenter - sweetHalf, sweetCenter + sweetHalf);
 
-      const sweetCenter = (a0 + a1) * 0.5;
-      const sweetHalf = (10 * Math.PI) / 180;
-      g.lineStyle(8, 0xD8C8A6, 0.55);
-      g.arc(cx, cy, radius, sweetCenter - sweetHalf, sweetCenter + sweetHalf);
+        const p = Math.min(1, Math.max(0, Number.isFinite(head01) ? head01 : lastDemoHead01));
+        const ang = a0 + (a1 - a0) * p;
+        const rx = cx + radius * Math.cos(ang);
+        const ry = cy + radius * Math.sin(ang);
 
-      const p = Math.min(1, Math.max(0, lastDemoHead01));
-      const ang = a0 + (a1 - a0) * p;
-      const rx = cx + radius * Math.cos(ang);
-      const ry = cy + radius * Math.sin(ang);
+        g.beginFill(0xE8ECF1, 0.90);
+        g.drawCircle(rx, ry, 6);
+        g.endFill();
 
-      g.beginFill(0xE8ECF1, 0.90);
-      g.drawCircle(rx, ry, 6);
-      g.endFill();
+        g.beginFill(0x000000, 0.25);
+        g.drawEllipse(rx, ry + 6, 10, 4);
+        g.endFill();
+      }
 
-      g.beginFill(0x000000, 0.25);
-      g.drawEllipse(rx, ry + 6, 10, 4);
-      g.endFill();
-    }
-
-    renderDemoFn = renderDemo;
-    renderDemo(0.0);
-    app.render();
-
-    controller.app = app;
-    controller.update = (head01) => {
-      renderDemo(head01);
+      renderDemoFn = renderDemo;
+      renderDemo(pendingHead01 ?? 0.0);
       app.render();
-    };
-    controller.destroy = () => {
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-        resizeObserver = null;
-      }
-      if (visibilityObserver) {
-        visibilityObserver.disconnect();
-        visibilityObserver = null;
-      }
-      if (intersectionObserver) {
-        intersectionObserver.disconnect();
-        intersectionObserver = null;
-      }
-      if (windowResizeHandler) {
-        window.removeEventListener("resize", windowResizeHandler);
-        windowResizeHandler = null;
-      }
-      app?.destroy(true, { children: true, texture: true, baseTexture: true });
-      app = null;
-      initialized = false;
-      initState = "idle";
-    };
+      pendingHead01 = null;
 
-    console.log("[SwingMetricsPixi] Initialized");
+      controller.app = app;
+      controller.update = (head01) => {
+        renderDemo(head01);
+        app.render();
+      };
+      controller.destroy = () => {
+        if (resizeObserver) {
+          resizeObserver.disconnect();
+          resizeObserver = null;
+        }
+        if (visibilityObserver) {
+          visibilityObserver.disconnect();
+          visibilityObserver = null;
+        }
+        if (intersectionObserver) {
+          intersectionObserver.disconnect();
+          intersectionObserver = null;
+        }
+        if (windowResizeHandler) {
+          window.removeEventListener("resize", windowResizeHandler);
+          windowResizeHandler = null;
+        }
+        app?.destroy?.(true, { children: true, texture: true, baseTexture: true });
+        app = null;
+        initialized = false;
+        initState = "idle";
+      };
+
+      console.log("[SwingMetricsPixi] Initialized");
+    });
   }
 
   function waitForVisibleMount(maxFrames = 120) {
@@ -302,6 +321,14 @@ export function initSwingMetricsPixi(opts = {}) {
     startInit();
   }
 
+  controller.update = (head01) => {
+    if (!initialized) {
+      pendingHead01 = head01;
+      return;
+    }
+    renderDemoFn?.(head01);
+    app.render();
+  };
   return controller;
 }
 
