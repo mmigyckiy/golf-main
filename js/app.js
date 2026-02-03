@@ -40,6 +40,7 @@ const RISK_P = 2.2;
 const DANGER_X_START = 2.2;
 const DANGER_X_FULL = 3.6;
 const DBG_PHYS = false;
+const REACT_UI = true;
 let widgetManager = null;
 
 const FEATURES = {
@@ -687,7 +688,7 @@ function resetRoundState(reason = "manual"){
   state.alignment.hit = false;
   state.alignment.frozenValue = 0;
   resetAttackAnglePlane();
-  if (widgetManager) widgetManager.reset();
+  if (!REACT_UI && widgetManager) widgetManager.reset();
   state.sweetSpot = {
     baseCenterX: 2.7,
     baseWidthX: 0.55,
@@ -754,7 +755,7 @@ function resetRound(reason = "manual"){
   SwingControls.resetTempo();
   SwingPath.resetPath();
   resetAttackAnglePlane();
-  if (widgetManager) widgetManager.reset();
+  if (!REACT_UI && widgetManager) widgetManager.reset();
   
   // Clear impact flash state (Variant 1)
   document.getElementById("swingMetricsRow")?.classList.remove("is-impact");
@@ -976,7 +977,12 @@ function renderImpactReadout(){
 function syncSwingUI(){
   SwingControls.syncFromState(state);
   const headPos = SwingControls.getTempoHeadPos();
-  renderSwingTempo(Number.isFinite(headPos) ? headPos : (state.tempo?.headPos ?? 0));
+  if (!REACT_UI) {
+    renderSwingTempo(Number.isFinite(headPos) ? headPos : (state.tempo?.headPos ?? 0));
+  } else {
+    state.tempo = state.tempo || {};
+    state.tempo.headPos = Number.isFinite(headPos) ? headPos : (state.tempo?.headPos ?? 0);
+  }
   
   // === PHYSICS OVERRIDE: Path + Attack from state.shot (spring-damper physics) ===
   // During ARMING/locked, use physics-driven values; otherwise fallback
@@ -984,12 +990,23 @@ function syncSwingUI(){
     ? (state.shot?.path01 ?? 0.5)
     : (Number.isFinite(headPos) ? headPos : 0.5);
   
-  if(window.SwingPath && !state.flags?.pathPixiActive){
+  if(!REACT_UI && window.SwingPath && !state.flags?.pathPixiActive){
     window.SwingPath.update({
       phase: state.phase,
       headPos01: path01,
       sweetCenter: state.alignment?.sweetCenter ?? 0,
       sweetWidthDeg: 18
+    });
+  }
+  if (window.DrivixUI?.set) {
+    window.DrivixUI.set({
+      phase: state.phase,
+      locked: !!state.shot?.locked,
+      tempo01: state.shot?.tempo01 ?? headPos ?? 0,
+      path01: state.shot?.path01 ?? path01 ?? 0.5,
+      attackDeg: state.shot?.attackDeg ?? 0,
+      sweetStart01: state.tempo?.windowStart,
+      sweetEnd01: state.tempo?.windowEnd
     });
   }
   renderImpactReadout();
@@ -1528,7 +1545,7 @@ function releaseSwing(ts, power = 0){
   SwingControls.releaseSwing(now, state);
   state.tempo.holding = false;
   state.tempo.released = true;
-  if (widgetManager) widgetManager.lock(now);
+  if (!REACT_UI && widgetManager) widgetManager.lock(now);
   updateImpactQuality();
   state.impact.locked = state.impact.live;
   const tempoRelease = SwingControls.getTempoHeadPos();
@@ -1690,7 +1707,7 @@ function tick(ts){
       state.shot.tempo01 = SwingControls.getTempoHeadPos();
     }
     
-    if (widgetManager) {
+    if (!REACT_UI && widgetManager) {
       widgetManager.update(ts, dtMs, state.phase);
     }
     
@@ -2302,18 +2319,28 @@ function resetPlayer(){
 function initUI(){
   ensureAnim();
   SwingControls.init(state);
-  window.SwingPath?.init?.();
-  if (!widgetManager) {
-    state.uiRefs = getUIRefs();
-    widgetManager = createWidgetManager({ getState: () => state, ui: state.uiRefs });
+  if (!REACT_UI) {
+    window.SwingPath?.init?.();
+    if (!widgetManager) {
+      state.uiRefs = getUIRefs();
+      widgetManager = createWidgetManager({ getState: () => state, ui: state.uiRefs });
+    }
+    widgetManager.mount();
   }
-  widgetManager.mount();
+  window.DrivixUIInput = {
+    beginHold: () => beginHold(performance.now()),
+    release: () => {
+      const headPos = SwingControls.getTempoHeadPos();
+      const power = computeTempoPower(headPos);
+      releaseSwing(performance.now(), power);
+    }
+  };
   console.log("[BOOT] swing hosts", {
     swingMetricsRow: !!document.getElementById("swingMetricsRow"),
-    pathPixi: !!document.getElementById("pathPixi"),
+    pathPixi: !!document.getElementById("pathPixiHost"),
     alignmentSvg: !!document.getElementById("alignmentSvg"),
     attackAngle: !!document.getElementById("attackAngle"),
-    tempo: !!document.getElementById("swingTempoTube")
+    tempo: !!document.querySelector(".tempo-meter__tube")
   });
   setStatus("READY");
   setStatusState("ready");
@@ -2331,7 +2358,9 @@ function initUI(){
   updateShotInfo();
   ensureImpactReadout();
 
-  bindSwingTempoInput();
+  if (!REACT_UI) {
+    bindSwingTempoInput();
+  }
   wireModal();
   wireInfoTooltips();
   wireGcInfoTooltips();

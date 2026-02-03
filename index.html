@@ -151,7 +151,8 @@
             <div class="gc-controls__row gc-controls__row--buttons gc-controls__row--primary">
               <div class="gc-swingControl">
                 <!-- Premium 3-widget row with Pixi canvases -->
-                <div class="swing-metrics-row" id="swingMetricsRow">
+                <div id="uiRoot"></div>
+                <div class="swing-metrics-row legacy-swing-ui" id="swingMetricsRowLegacy" aria-hidden="true">
                   <!-- Pixi overlay for premium B-style visuals -->
                   <div class="swing-metric swing-metric--tempo">
                     <div class="swing-metric__title">SWING TEMPO</div>
@@ -297,6 +298,7 @@
   <!-- Scripts (keep paths consistent with your project) -->
   <script src="js/flight_aviatorlike.js"></script>
   <script src="js/stats.js"></script>
+  <script type="module" src="/src/main.jsx"></script>
   <script type="module" src="js/swing_path.js"></script>
   <script src="js/swing_path_pixi.js"></script>
   <script type="module" src="js/app.js"></script>

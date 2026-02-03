@@ -1558,6 +1558,12 @@ hr,
   position: relative;
   min-height: 220px;
 }
+#uiRoot{
+  width: 100%;
+}
+.legacy-swing-ui{
+  display: none !important;
+}
 #swingMetricsRow > *{
   min-width: 0;
   width: 100%;
