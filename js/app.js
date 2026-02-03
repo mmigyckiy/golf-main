@@ -20,20 +20,8 @@ import { loadPlayerMental, applyAttemptMental, applyRecoveryOnRoundEnd } from ".
 import { initWind, sampleWind } from "./logic/wind.js";
 import { SwingControls } from "./swing_controls.js";
 import { SwingPath } from "./swing_path.js";
-import { 
-  initAttackAnglePlane, 
-  updateAttackAnglePlane, 
-  lockAttackAnglePlane, 
-  resetAttackAnglePlane, 
-  getAttackAngleValue,
-  isInsideAttackWindow,
-  renderAttackAnglePlane 
-} from "./attack_angle_plane.js";
-import {
-  initSwingMetricsPixi,
-  updateSwingMetricsPixi,
-  resizeSwingMetricsPixi
-} from "./swing_metrics_pixi.js";
+import { createWidgetManager } from "./widgets/widget_manager.js";
+import { resetAttackAnglePlane } from "./attack_angle_plane.js";
 
 const FLIGHT_MS_VISUAL = 2200;
 const STORAGE_KEY = "golfcentral.longdrive.v1";
@@ -51,7 +39,7 @@ const RISK_P = 2.2;
 const DANGER_X_START = 2.2;
 const DANGER_X_FULL = 3.6;
 const DBG_PHYS = false;
-let swingPixiLogTs = 0;
+let widgetManager = null;
 
 const FEATURES = {
   tempoInertia: true,
@@ -698,6 +686,7 @@ function resetRoundState(reason = "manual"){
   state.alignment.hit = false;
   state.alignment.frozenValue = 0;
   resetAttackAnglePlane();
+  if (widgetManager) widgetManager.reset();
   state.sweetSpot = {
     baseCenterX: 2.7,
     baseWidthX: 0.55,
@@ -764,19 +753,11 @@ function resetRound(reason = "manual"){
   SwingControls.resetTempo();
   SwingPath.resetPath();
   resetAttackAnglePlane();
+  if (widgetManager) widgetManager.reset();
   
   // Clear impact flash state (Variant 1)
   document.getElementById("swingMetricsRow")?.classList.remove("is-impact");
   clearTimeout(state._impactFlashT);
-  
-  // Reset Pixi overlay (legacy)
-  updateSwingMetricsPixi({
-    phase: RoundPhase.IDLE,
-    tempo01: 0,
-    path01: 0,
-    attackDeg: 0,
-    locked: false
-  });
   
   // Reset unified SwingWidget
   state.swingWidget = {
@@ -787,7 +768,6 @@ function resetRound(reason = "manual"){
     holdStartMs: 0,
     prevPath01: 0.5
   };
-  window.SwingWidget?.reset();
   
   // Reset spring-damper physics state
   if(state.swingPhys){
@@ -797,12 +777,6 @@ function resetRound(reason = "manual"){
     state.swingPhys.attackAngle = 0;
     state.swingPhys.attackOmega = 0;
   }
-  
-  // Reset premium Pixi widgets
-  window._pixiTempo?.reset();
-  window._pixiPath?.reset();
-  window._pixiAttack?.reset();
-  window.SwingPathPixi?.reset();
   
   // Reset shot state
   state.shot = {
@@ -1529,7 +1503,6 @@ function beginHold(ts){
   state.swingWidget.path01 = 0.5;
   state.swingWidget.attackDeg = 0;
   state.swingWidget.prevPath01 = 0.5;
-  window.SwingWidget?.reset();
   
   // Initialize spring-damper physics with some initial velocity for "overshoot/settle" feel
   ensureSwingPhysState();
@@ -1554,6 +1527,7 @@ function releaseSwing(ts, power = 0){
   SwingControls.releaseSwing(now, state);
   state.tempo.holding = false;
   state.tempo.released = true;
+  if (widgetManager) widgetManager.lock(now);
   updateImpactQuality();
   state.impact.locked = state.impact.live;
   const tempoRelease = SwingControls.getTempoHeadPos();
@@ -1573,8 +1547,6 @@ function releaseSwing(ts, power = 0){
   
   // LOCK ALL 3 WIDGETS
   SwingControls.lockTempo();
-  SwingPath.lockPath();
-  lockAttackAnglePlane();
   
   // Capture final values
   // Tempo still comes from SwingControls (source of truth)
@@ -1584,19 +1556,9 @@ function releaseSwing(ts, power = 0){
   // state.shot.path01 and state.shot.attackDeg are already set by stepSwingPhysics
   state.shot.locked = true;
   
-  // Update Pixi with locked state (legacy)
-  updateSwingMetricsPixi({
-    phase: state.phase,
-    tempo01: state.shot.tempo01,
-    path01: state.shot.path01,
-    attackDeg: state.shot.attackDeg,
-    locked: true
-  });
-  
   // Lock unified SwingWidget + physics
   ensureSwingPhysState();
   state.swingWidget.locked = true;
-  window.SwingWidget?.lock();
   console.log("[SWING WIDGET]", {
     tempo01: state.swingWidget.tempo01?.toFixed(3) ?? "0",
     path01: state.swingWidget.path01?.toFixed(3) ?? "0.5",
@@ -1607,21 +1569,7 @@ function releaseSwing(ts, power = 0){
     attackDeg: state.shot.attackDeg?.toFixed(2) ?? "0"
   });
   
-  // Lock premium Pixi widgets
-  window._pixiTempo?.lock();
-  window._pixiPath?.lock();
-  window._pixiAttack?.lock();
-  
-  // Swing Path Pixi — trigger impact pulse if in sweet zone
   const pathSweet = Math.abs((state.shot.path01 ?? 0.5) - 0.5) < 0.09;
-  window.SwingPathPixi?.onRelease({ isSweet: pathSweet });
-  
-  console.log("[PIXIWIDGETS]", {
-    tempo01: state.shot.tempo01?.toFixed(3) ?? "0",
-    path01: state.shot.path01?.toFixed(3) ?? "0.5",
-    attackDeg: state.shot.attackDeg?.toFixed(2) ?? "0",
-    pathSweet
-  });
   
   // === IMPACT FLASH (Variant 1) ===
   const impactRow = document.getElementById("swingMetricsRow");
@@ -1660,7 +1608,6 @@ function releaseSwing(ts, power = 0){
   state.round.faceAlignedAtRelease = alignHit;
   state.round.faceAlignedQuality01 = alignHit ? 1 : 0;
   syncSwingUI();
-  renderAttackAnglePlane();
   if(ui.alignmentRing){
     ui.alignmentRing.classList.toggle("is-hit", alignHit);
     if(alignHit){
@@ -1742,72 +1689,8 @@ function tick(ts){
       state.shot.tempo01 = SwingControls.getTempoHeadPos();
     }
     
-    // Now render attack angle DOM with physics-driven values (not its own oscillation)
-    // Skip updateAttackAnglePlane() to avoid overwriting physics values with sine-wave
-    renderAttackAnglePlane();
-    
-    // Update all visual overlays with current-frame physics values
-    updateSwingMetricsPixi({
-      phase: state.phase,
-      tempo01: state.shot.tempo01,
-      path01: state.shot.path01,
-      attackDeg: state.shot.attackDeg,
-      locked: state.shot.locked
-    });
-    
-    if(!state.shot.locked){
-      // Update SwingWidget visual
-      const sw = state.swingWidget;
-      const holdMs = ts - (sw.holdStartMs || ts);
-      window.SwingWidget?.update({
-        phase: "ARMING",
-        holdMs: holdMs,
-        tempo01: sw.tempo01,
-        path01: state.shot.path01,
-        attackDeg: state.shot.attackDeg,
-        locked: false,
-        sweet: { pathCenter01: 0.5, pathWidth01: 0.18 }
-      });
-      
-      // Update premium Pixi widget renderers (visual only)
-      window._pixiTempo?.update({
-        value01: state.shot.tempo01 ?? 0,
-        sweetStart01: state.tempo?.windowStart ?? 0.6,
-        sweetEnd01: state.tempo?.windowEnd ?? 0.8,
-        isHolding: true,
-        isLocked: false
-      });
-      window._pixiPath?.update({
-        value01: state.shot.path01 ?? 0.5,
-        sweetCenter01: 0.5,
-        sweetWidth01: 0.18,
-        isHolding: true,
-        isLocked: false
-      });
-      window._pixiAttack?.update({
-        attackDeg: state.shot.attackDeg ?? 0,
-        isHolding: true,
-        isLocked: false
-      });
-      
-      // === SWING PATH PIXI (Variant A) — golden trail + dust ===
-      window.SwingPathPixi?.update({
-        headPos01: state.shot.path01 ?? 0.5,
-        sweetStart01: 0.41,
-        sweetEnd01: 0.59,
-        locked: false,
-        intensity01: sw.tempo01 ?? 0.5,
-        dtMs: dtMs
-      });
-      
-      const head01 =
-        (typeof window.SwingPath?.getHeadPos01 === "function") ? window.SwingPath.getHeadPos01()
-        : (state?.shot?.path01 ?? state?.alignment?.value ?? 0);
-      window.SwingMetricsPixi?.update?.(head01);
-      if (ts - swingPixiLogTs > 1000) {
-        console.log("[SWING_PATH_PIXI] head01", head01);
-        swingPixiLogTs = ts;
-      }
+    if (widgetManager) {
+      widgetManager.update(ts, dtMs, state.phase);
     }
     
     syncSwingUI();
@@ -2419,10 +2302,16 @@ function initUI(){
   ensureAnim();
   SwingControls.init(state);
   window.SwingPath?.init?.();
+  if (!widgetManager) {
+    widgetManager = createWidgetManager({ getState: () => state });
+  }
+  widgetManager.mount();
   console.log("[BOOT] swing hosts", {
     swingMetricsRow: !!document.getElementById("swingMetricsRow"),
     pathPixi: !!document.getElementById("pathPixi"),
-    swingMetricsPixi: !!document.getElementById("swingMetricsPixi")
+    alignmentSvg: !!document.getElementById("alignmentSvg"),
+    attackAngle: !!document.getElementById("attackAngle"),
+    tempo: !!document.getElementById("swingTempoTube")
   });
   setStatus("READY");
   setStatusState("ready");
@@ -2434,54 +2323,6 @@ function initUI(){
   updateModeUI();
   updateTargetLine();
   syncSwingUI();
-  initAttackAnglePlane(() => state, { isArming: (s) => s.phase === RoundPhase.ARMING });
-  renderAttackAnglePlane();
-  
-  // === PIXI OVERLAYS DISABLED — using DOM widgets only ===
-  // initSwingMetricsPixi, SwingWidget, PixiTempo, PixiSwingPath, PixiAttackAngle
-  // are all disabled to eliminate duplicate/ghosting visuals.
-  // CSS hides #swingMetricsPixi, #tempoPixi, #attackPixi.
-  function isMountUsable(el) {
-    if (!el) return false;
-    const cs = getComputedStyle(el);
-    if (cs.display === "none" || cs.visibility === "hidden") return false;
-    const r = el.getBoundingClientRect();
-    return (r.width > 2 && r.height > 2);
-  }
-  if (typeof initSwingMetricsPixi === "function") {
-    const swingMetricsEl = document.getElementById("swingMetricsPixi");
-    console.log("[BOOT] initSwingMetricsPixi mount:", swingMetricsEl, "display:", swingMetricsEl ? getComputedStyle(swingMetricsEl).display : null, "rect:", swingMetricsEl ? swingMetricsEl.getBoundingClientRect() : null);
-    try {
-      if (isMountUsable(swingMetricsEl)) {
-        window.SwingMetricsPixi = initSwingMetricsPixi({ mountEl: swingMetricsEl });
-        window.SwingMetricsPixi?.ready?.then(() => {
-          const el = document.getElementById("swingMetricsPixi");
-          console.log("[BOOT] swingMetricsPixi ready; canvas now:", el ? el.querySelector("canvas") : null);
-        });
-      } else {
-        console.log("[PIXI] swingMetricsPixi mount unusable -> skip", swingMetricsEl);
-      }
-      console.log("[BOOT] swingMetricsPixi canvas:", swingMetricsEl ? swingMetricsEl.querySelector("canvas") : null);
-    } catch (e) {
-      console.error("[BOOT] initSwingMetricsPixi failed", e);
-    }
-  }
-  
-  // === SWING PATH PIXI OVERLAY (Variant A) — ENABLED ===
-  const pathPixiEl = document.getElementById("pathPixi") || document.getElementById("swingMetricsPixi");
-  if (window.SwingPathPixi?.init) {
-    console.log("[BOOT] SwingPathPixi mount:", pathPixiEl, "display:", pathPixiEl ? getComputedStyle(pathPixiEl).display : null, "rect:", pathPixiEl ? pathPixiEl.getBoundingClientRect() : null);
-    try {
-      if (isMountUsable(pathPixiEl)) {
-        window.SwingPathPixiInstance = window.SwingPathPixi.init({ containerEl: pathPixiEl });
-      } else {
-        console.log("[PIXI] SwingPathPixi mount unusable or missing -> skip", pathPixiEl);
-      }
-      console.log("[BOOT] SwingPathPixi canvas:", pathPixiEl ? pathPixiEl.querySelector("canvas") : null);
-    } catch (e) {
-      console.error("[BOOT] SwingPathPixi init failed", e);
-    }
-  }
   
   resetSwingTempoMeter();
   setButtons();
@@ -2589,17 +2430,6 @@ window.addEventListener("DOMContentLoaded", () => {
   }
   initUI();
   
-  // Resize handler for Pixi overlays (throttled)
-  let resizeTimeout = null;
-  window.addEventListener("resize", () => {
-    if(resizeTimeout) clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      resizeSwingMetricsPixi();
-      window.SwingWidget?.resize();
-      window.SwingPathPixi?.resize();
-    }, 100);
-  });
-
   const bestSrc = document.querySelector("#uiBestYd, #bestValue, #bestDistance, [data-best-distance]");
   const youBest = document.querySelector("#youBestInline");
   if(bestSrc && youBest){

@@ -66,12 +66,16 @@
   let striationGfx = null;
   let sweetGfx = null;
   let headGfx = null;
+  let fxContainer = null;
+  let fxGfx = null;
   let mounted = false;
   let arcRadius = 40;
   let lastState = { headPos01: 0.5, locked: false };
   let spinRafId = null;
   let resizeObserver = null;
   let onWindowResize = null;
+  let currentHead01 = 0.5;
+  let currentIntensity01 = 0.5;
   
   // Pulse state
   let pulseActive = false;
@@ -244,6 +248,21 @@
     // Direction is handled by CONFIG.DIR_X at coordinate level
     rootContainer.scale.set(fitScale, fitScale);
     rootContainer.rotation = 0;
+    // Mirror horizontally (left-right flip)
+    rootContainer.scale.x = -Math.abs(rootContainer.scale.x || 1);
+    rootContainer.position.x = app.renderer.width;
+    
+    if (fxContainer) {
+      const rootMirrored = rootContainer.scale.x < 0;
+      if (CONFIG.MIRROR_X && !rootMirrored) {
+        fxContainer.scale.x = -1;
+        fxContainer.x = app.renderer.width;
+      } else {
+        fxContainer.scale.x = 1;
+        fxContainer.x = 0;
+      }
+      fxContainer.y = 0;
+    }
     
     // Ensure visibility
     rootContainer.alpha = 1;
@@ -260,8 +279,6 @@
     const containerEl =
       opts?.containerEl ||
       document.getElementById("pathPixi") ||
-      document.getElementById("swingMetricsPixi") ||
-      document.getElementById("alignmentRing") ||
       null;
     console.log("[SWING_PATH] mount", containerEl);
     if (!containerEl) {
@@ -295,17 +312,19 @@
 
       while (containerEl.firstChild) containerEl.removeChild(containerEl.firstChild);
       containerEl.appendChild(app.view);
+      containerEl.style.position = containerEl.style.position || "relative";
+      containerEl.style.overflow = "visible";
       app.view.style.position = 'absolute';
-      app.view.style.top = '0';
-      app.view.style.left = '0';
+      app.view.style.inset = '0';
       app.view.style.width = '100%';
       app.view.style.height = '100%';
       app.view.style.display = 'block';
       app.view.style.opacity = '1';
       app.view.style.pointerEvents = 'none';
-      app.view.style.zIndex = '5';
+      app.view.style.zIndex = '50';
       console.log("[SWING_PATH] appended", { canvas: app.view?.tagName, parentId: app.view?.parentElement?.id });
       logHostCSS("after-append", containerEl, app.view);
+      containerEl.style.position = containerEl.style.position || 'relative';
 
       // Create ONE root container for all graphics
       rootContainer = new PIXI.Container();
@@ -314,6 +333,14 @@
       app.stage.alpha = 1;
       rootContainer.visible = true;
       rootContainer.alpha = 1;
+      app.stage.sortableChildren = true;
+      rootContainer.sortableChildren = true;
+
+      fxContainer = new PIXI.Container();
+      fxContainer.zIndex = 9999;
+      fxGfx = new PIXI.Graphics();
+      fxContainer.addChild(fxGfx);
+      app.stage.addChild(fxContainer);
 
       // Build graphics layers
       buildLayers();
@@ -350,24 +377,105 @@
 
       mounted = true;
       
-      // Initial draw
-      drawSweet(0.41, 0.59);
-      drawRibbon(0.5);
-      drawHead(0.5, 0.5);
-      
-      // Render
-      app.render();
+      // Initial draw state
+      currentHead01 = 0.5;
+      currentIntensity01 = 0.5;
 
       console.log("[SwingPathPixi] Initialized", { 
         w, h, 
         arcRadius,
         mirrorX: CONFIG.MIRROR_X
       });
+      drawComet(0);
       return true;
     } catch (err) {
       console.error("[SwingPathPixi] Init failed:", err);
       return false;
     }
+  }
+
+  function drawComet(dtMs) {
+    if (!fxGfx || !app) return;
+    const dtSec = Number.isFinite(dtMs) ? dtMs / 1000 : 0;
+    updatePulse(dtSec);
+
+    const W = app.renderer.width;
+    const H = app.renderer.height;
+    const cx = W * 0.52;
+    const cy = H * 0.62;
+    const R = Math.min(W, H) * 0.42;
+    const TAU = Math.PI * 2;
+    const A_START = Math.PI; // 9 o'clock
+    const A_END = 0; // 3 o'clock
+    const _lerp = (a, b, t) => a + (b - a) * t;
+    const lerpAngleCCW = (a0, a1, t) => {
+      let d = (a1 - a0) % TAU;
+      if (d < 0) d += TAU;
+      return a0 + d * t;
+    };
+    const MIRROR = false;
+    const mirrorX = (x) => cx - (x - cx);
+
+    fxGfx.clear();
+
+    // Comet head position
+    const p = clamp01(currentHead01);
+    const angHead = lerpAngleCCW(A_START, A_END, p);
+    let hx = cx + R * Math.cos(angHead);
+    let hy = cy + R * Math.sin(angHead);
+    if (MIRROR) hx = mirrorX(hx);
+
+    const drawArcTile = (a0, a1) => {
+      const K = 6;
+      for (let k = 0; k <= K; k++) {
+        const ak = a0 + (a1 - a0) * (k / K);
+        let xk = cx + R * Math.cos(ak);
+        const yk = cy + R * Math.sin(ak);
+        if (MIRROR) xk = mirrorX(xk);
+        if (k === 0) {
+          fxGfx.moveTo(xk, yk);
+        } else {
+          fxGfx.lineTo(xk, yk);
+        }
+      }
+    };
+
+    // Base track (grey tiles across whole arc)
+    const N = 16;
+    for (let i = 0; i < N; i++) {
+      const t0 = i / N;
+      const t1 = (i + 0.68) / N;
+      const a0 = lerpAngleCCW(A_START, A_END, t0);
+      const a1 = lerpAngleCCW(A_START, A_END, t1);
+      fxGfx.lineStyle(8, 0x6B727A, 0.16);
+      drawArcTile(a0, a1);
+    }
+
+    // Comet tiles (behind head only)
+    for (let i = 0; i < N; i++) {
+      const t0 = i / N;
+      const t1 = (i + 0.68) / N;
+      const mid = (t0 + t1) * 0.5;
+      if (mid > p) continue;
+      const local = p <= 0.0001 ? 0 : mid / p;
+      const w = _lerp(2.0, 14.0, Math.pow(local, 1.6));
+      const a = _lerp(0.06, 0.35, Math.pow(local, 1.2));
+      const a0 = lerpAngleCCW(A_START, A_END, t0);
+      const a1 = lerpAngleCCW(A_START, A_END, t1);
+      fxGfx.lineStyle(w, 0xD8C8A6, a);
+      drawArcTile(a0, a1);
+    }
+
+    // Impact head (ball)
+    fxGfx.beginFill(0xFFFFFF, 0.92);
+    fxGfx.drawCircle(hx, hy, 9);
+    fxGfx.endFill();
+    fxGfx.lineStyle(10, 0xD8C8A6, 0.08);
+    fxGfx.drawCircle(hx, hy, 26);
+    fxGfx.lineStyle(2, 0xD8C8A6, 0.35);
+    fxGfx.drawCircle(hx, hy, 16);
+
+    app.render();
   }
 
   /**
@@ -512,7 +620,7 @@
       ribbonGfx.moveTo(points[i].x, points[i].y);
       ribbonGfx.lineTo(points[i + 1].x, points[i + 1].y);
     }
-    
+
     return points;
   }
 
@@ -614,22 +722,13 @@
       dtMs = 16
     } = data;
     
-    const dtSec = dtMs / 1000;
-    
-    // Update pulse
-    updatePulse(dtSec);
-    
-    // Draw all layers
-    drawSweet(sweetStart01, sweetEnd01);
-    drawRibbon(headPos01);
-    drawStriations(headPos01);
-    drawHead(headPos01, intensity01);
+    // Update state used by draw
+    currentHead01 = headPos01;
+    currentIntensity01 = intensity01;
     
     // Store state
     lastState = { headPos01, locked };
-    
-    // Render
-    app.render();
+    drawComet(dtMs);
   }
 
   /**
@@ -644,7 +743,7 @@
     }
     
     lastState.locked = true;
-    if (app) app.render();
+    drawComet(0);
   }
 
   /**
@@ -652,7 +751,7 @@
    */
   function lock() {
     lastState.locked = true;
-    if (app) app.render();
+    drawComet(0);
   }
 
   /**
@@ -671,12 +770,9 @@
     if (sweetGfx) sweetGfx.clear();
     if (headGfx) headGfx.clear();
     
-    // Draw initial state
-    drawSweet(0.41, 0.59);
-    drawRibbon(0.5);
-    drawHead(0.5, 0.5);
-    
-    if (app) app.render();
+    currentHead01 = 0.5;
+    currentIntensity01 = 0.5;
+    drawComet(0);
   }
 
   /**
@@ -695,12 +791,7 @@
     mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
     assertSwingPathVisible("resize", app, rootContainer, app.view.parentElement);
     
-    // Redraw with last state
-    drawSweet(0.41, 0.59);
-    drawRibbon(lastState.headPos01);
-    drawHead(lastState.headPos01, 0.5);
-    
-    if (app) app.render();
+    drawComet(0);
   }
 
   /**
@@ -729,6 +820,8 @@
     striationGfx = null;
     sweetGfx = null;
     headGfx = null;
+    fxContainer = null;
+    fxGfx = null;
     mounted = false;
     lastState = { headPos01: 0.5, locked: false };
     pulseActive = false;

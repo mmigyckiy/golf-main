@@ -150,16 +150,12 @@
             </div>
             <div class="gc-controls__row gc-controls__row--buttons gc-controls__row--primary">
               <div class="gc-swingControl">
-                <!-- Unified Pixi Swing Widget (Variant 2) — LEGACY, hidden -->
-                <div id="swingWidget" class="swing-widget is-hidden" data-legacy="true" aria-label="Swing Widget"></div>
                 <!-- Premium 3-widget row with Pixi canvases -->
                 <div class="swing-metrics-row" id="swingMetricsRow">
                   <!-- Pixi overlay for premium B-style visuals -->
-                  <div id="swingMetricsPixi" class="swing-metrics-pixi" aria-hidden="true"></div>
                   <div class="swing-metric swing-metric--tempo">
                     <div class="swing-metric__title">SWING TEMPO</div>
                     <div class="swing-metric__body">
-                      <canvas id="tempoPixi" class="pixi-widget-canvas" aria-hidden="true"></canvas>
                       <div class="tempo-meter" id="swingTempoControl" role="button" aria-label="Swing tempo" tabindex="0">
                         <div class="tempo-meter__scale" aria-hidden="true">
                           <span class="tempo-meter__label" data-value="100">100</span>
@@ -215,7 +211,6 @@
                   <div class="swing-metric swing-metric--attack">
                     <div class="swing-metric__title">ATTACK ANGLE</div>
                     <div class="swing-metric__body">
-                      <canvas id="attackPixi" class="pixi-widget-canvas" aria-hidden="true"></canvas>
                       <div class="attack-angle" id="attackAngle" aria-label="Attack angle">
                         <!-- Reticle plane: single ring + crosshair + driver silhouette -->
                         <div class="attack-angle__plane" id="attackAnglePlane">
@@ -252,30 +247,6 @@
                       <div class="swing-metric__hint"></div>
                     </div>
                   </div>
-                </div>
-                <!-- PENDULUM STRIKE — LEGACY Visual Prototype, hidden -->
-                <div id="pendulumStrike" class="pendulum-strike" data-legacy="true" aria-label="Swing pendulum">
-                  <svg class="pendulum-strike__svg" viewBox="0 0 200 240" aria-hidden="true">
-                    <!-- Background arc (swing path) -->
-                    <path class="pendulum-arc__base" d="M 30 200 A 85 85 0 0 1 170 200" />
-                    <!-- Sweet spot segment on arc -->
-                    <path class="pendulum-arc__sweet" d="M 85 145 A 85 85 0 0 1 115 145" />
-                    <!-- Impact zone marker -->
-                    <line class="pendulum-impact__line" x1="100" y1="195" x2="100" y2="210" />
-                    <!-- Ball at impact point -->
-                    <circle class="pendulum-ball" cx="100" cy="205" r="5" />
-                    <!-- Pendulum group (rotates) -->
-                    <g class="pendulum-arm" transform="rotate(-12, 100, 45)">
-                      <!-- Pivot point -->
-                      <circle class="pendulum-pivot" cx="100" cy="45" r="4" />
-                      <!-- Shaft -->
-                      <line class="pendulum-shaft" x1="100" y1="49" x2="100" y2="175" />
-                      <!-- Clubhead -->
-                      <rect class="pendulum-head" x="92" y="172" width="16" height="8" rx="4" />
-                      <!-- Angle indicator on clubhead -->
-                      <line class="pendulum-angle" x1="100" y1="172" x2="100" y2="164" />
-                    </g>
-                  </svg>
                 </div>
               </div>
             </div>
@@ -327,12 +298,6 @@
   <script src="js/flight_aviatorlike.js"></script>
   <script src="js/stats.js"></script>
   <script type="module" src="js/swing_path.js"></script>
-  <script type="module" src="js/attack_angle.js"></script>
-  <script type="module" src="js/swing_metrics_pixi.js"></script>
-  <script src="js/swing_widget_pixi.js"></script>
-  <script src="js/pixi_tempo.js"></script>
-  <script src="js/pixi_swing_path.js"></script>
-  <script src="js/pixi_attack_angle.js"></script>
   <script src="js/swing_path_pixi.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
