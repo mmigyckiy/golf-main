@@ -66,16 +66,14 @@
   let striationGfx = null;
   let sweetGfx = null;
   let headGfx = null;
-  let fxContainer = null;
-  let fxGfx = null;
   let mounted = false;
   let arcRadius = 40;
-  let lastState = { headPos01: 0.5, locked: false };
-  let spinRafId = null;
   let resizeObserver = null;
   let onWindowResize = null;
   let currentHead01 = 0.5;
   let currentIntensity01 = 0.5;
+  let currentSweetStart01 = 0.41;
+  let currentSweetEnd01 = 0.59;
   
   // Pulse state
   let pulseActive = false;
@@ -94,49 +92,6 @@
    */
   function clamp01(v) {
     return Math.max(0, Math.min(1, v));
-  }
-
-  /**
-   * Assert Swing Path visibility/placement
-   */
-  function assertSwingPathVisible(tag, app, root, hostEl) {
-    const w = app?.renderer?.width;
-    const h = app?.renderer?.height;
-    const view = app?.view;
-    const attached = !!(view && view.parentNode);
-    const hostRect = hostEl?.getBoundingClientRect?.();
-    console.log("[SWING_PATH][ASSERT]", tag, {
-      hostExists: !!hostEl,
-      hostW: hostRect?.width,
-      hostH: hostRect?.height,
-      rendererW: w,
-      rendererH: h,
-      viewAttached: attached,
-      viewStyleDisplay: view ? getComputedStyle(view).display : null,
-      rootVisible: root?.visible,
-      rootAlpha: root?.alpha,
-      stageVisible: app?.stage?.visible,
-      stageAlpha: app?.stage?.alpha,
-      rootPos: root ? { x: root.x, y: root.y } : null,
-      rootScale: root ? { x: root.scale?.x, y: root.scale?.y } : null,
-      masked: !!root?.mask
-    });
-  }
-
-  function logHostCSS(tag, hostEl, view) {
-    if (!hostEl) return console.log("[SWING_PATH][HOST]", tag, "NO_HOST");
-    const cs = getComputedStyle(hostEl);
-    const r = hostEl.getBoundingClientRect();
-    const pcs = hostEl.parentElement ? getComputedStyle(hostEl.parentElement) : null;
-    const pr = hostEl.parentElement ? hostEl.parentElement.getBoundingClientRect() : null;
-    console.log("[SWING_PATH][HOST]", tag, {
-      hostRect: { w: r.width, h: r.height, x: r.x, y: r.y },
-      hostCSS: { display: cs.display, position: cs.position, opacity: cs.opacity, visibility: cs.visibility, zIndex: cs.zIndex, overflow: cs.overflow },
-      parentRect: pr ? { w: pr.width, h: pr.height } : null,
-      parentCSS: pcs ? { display: pcs.display, position: pcs.position, opacity: pcs.opacity, visibility: pcs.visibility, zIndex: pcs.zIndex, overflow: pcs.overflow } : null,
-      viewAttached: !!(view && view.parentNode),
-      viewParentId: view?.parentElement?.id || null
-    });
   }
 
   /**
@@ -252,23 +207,9 @@
     rootContainer.scale.x = -Math.abs(rootContainer.scale.x || 1);
     rootContainer.position.x = app.renderer.width;
     
-    if (fxContainer) {
-      const rootMirrored = rootContainer.scale.x < 0;
-      if (CONFIG.MIRROR_X && !rootMirrored) {
-        fxContainer.scale.x = -1;
-        fxContainer.x = app.renderer.width;
-      } else {
-        fxContainer.scale.x = 1;
-        fxContainer.x = 0;
-      }
-      fxContainer.y = 0;
-    }
-    
     // Ensure visibility
     rootContainer.alpha = 1;
     rootContainer.visible = true;
-    
-    console.log("[SwingPathPixi] Layout", { w, h, cx: cx.toFixed(1), cy: cy.toFixed(1), fitScale: fitScale.toFixed(3), targetSize: CONFIG.TARGET_SIZE });
   }
 
   /**
@@ -280,7 +221,6 @@
       opts?.containerEl ||
       document.getElementById("pathPixi") ||
       null;
-    console.log("[SWING_PATH] mount", containerEl);
     if (!containerEl) {
       console.warn("[SwingPathPixi] mount missing; skipping init");
       return null;
@@ -322,8 +262,6 @@
       app.view.style.opacity = '1';
       app.view.style.pointerEvents = 'none';
       app.view.style.zIndex = '50';
-      console.log("[SWING_PATH] appended", { canvas: app.view?.tagName, parentId: app.view?.parentElement?.id });
-      logHostCSS("after-append", containerEl, app.view);
       containerEl.style.position = containerEl.style.position || 'relative';
 
       // Create ONE root container for all graphics
@@ -336,34 +274,20 @@
       app.stage.sortableChildren = true;
       rootContainer.sortableChildren = true;
 
-      fxContainer = new PIXI.Container();
-      fxContainer.zIndex = 9999;
-      fxGfx = new PIXI.Graphics();
-      fxContainer.addChild(fxGfx);
-      app.stage.addChild(fxContainer);
-
       // Build graphics layers
       buildLayers();
       
       // Layout root with correct position/transforms
       layoutRoot();
       mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
-      assertSwingPathVisible("after-append", app, rootContainer, containerEl);
-
-      requestAnimationFrame(() => {
-        resizeSwingPath(app, rootContainer, containerEl);
-        layoutRoot();
-        mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
-        assertSwingPathVisible("after-resize", app, rootContainer, containerEl);
-        logHostCSS("after-resize", containerEl, app.view);
-      });
+      resizeSwingPath(app, rootContainer, containerEl);
+      layoutRoot();
+      mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
 
       resizeObserver = new ResizeObserver(() => {
         resizeSwingPath(app, rootContainer, containerEl);
         layoutRoot();
         mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
-        assertSwingPathVisible("ro-resize", app, rootContainer, containerEl);
-        logHostCSS("resize-observer", containerEl, app.view);
       });
       resizeObserver.observe(containerEl);
 
@@ -371,7 +295,6 @@
         resizeSwingPath(app, rootContainer, containerEl);
         layoutRoot();
         mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
-        assertSwingPathVisible("window-resize", app, rootContainer, containerEl);
       };
       window.addEventListener('resize', onWindowResize);
 
@@ -381,12 +304,7 @@
       currentHead01 = 0.5;
       currentIntensity01 = 0.5;
 
-      console.log("[SwingPathPixi] Initialized", { 
-        w, h, 
-        arcRadius,
-        mirrorX: CONFIG.MIRROR_X
-      });
-      drawComet(0);
+      renderFrame(0);
       return true;
     } catch (err) {
       console.error("[SwingPathPixi] Init failed:", err);
@@ -394,121 +312,15 @@
     }
   }
 
-  function drawComet(dtMs) {
-    if (!fxGfx || !app) return;
+  function renderFrame(dtMs) {
+    if (!app) return;
     const dtSec = Number.isFinite(dtMs) ? dtMs / 1000 : 0;
     updatePulse(dtSec);
-
-    const W = app.renderer.width;
-    const H = app.renderer.height;
-    const cx = W * 0.52;
-    const cy = H * 0.62;
-    const R = Math.min(W, H) * 0.42;
-    const TAU = Math.PI * 2;
-    const A_START = Math.PI; // 9 o'clock
-    const A_END = 0; // 3 o'clock
-    const _lerp = (a, b, t) => a + (b - a) * t;
-    const lerpAngleCCW = (a0, a1, t) => {
-      let d = (a1 - a0) % TAU;
-      if (d < 0) d += TAU;
-      return a0 + d * t;
-    };
-    const MIRROR = false;
-    const mirrorX = (x) => cx - (x - cx);
-
-    fxGfx.clear();
-
-    // Comet head position
-    const p = clamp01(currentHead01);
-    const angHead = lerpAngleCCW(A_START, A_END, p);
-    let hx = cx + R * Math.cos(angHead);
-    let hy = cy + R * Math.sin(angHead);
-    if (MIRROR) hx = mirrorX(hx);
-
-    const drawArcTile = (a0, a1) => {
-      const K = 6;
-      for (let k = 0; k <= K; k++) {
-        const ak = a0 + (a1 - a0) * (k / K);
-        let xk = cx + R * Math.cos(ak);
-        const yk = cy + R * Math.sin(ak);
-        if (MIRROR) xk = mirrorX(xk);
-        if (k === 0) {
-          fxGfx.moveTo(xk, yk);
-        } else {
-          fxGfx.lineTo(xk, yk);
-        }
-      }
-    };
-
-    // Base track (grey tiles across whole arc)
-    const N = 16;
-    for (let i = 0; i < N; i++) {
-      const t0 = i / N;
-      const t1 = (i + 0.68) / N;
-      const a0 = lerpAngleCCW(A_START, A_END, t0);
-      const a1 = lerpAngleCCW(A_START, A_END, t1);
-      fxGfx.lineStyle(8, 0x6B727A, 0.16);
-      drawArcTile(a0, a1);
-    }
-
-    // Comet tiles (behind head only)
-    for (let i = 0; i < N; i++) {
-      const t0 = i / N;
-      const t1 = (i + 0.68) / N;
-      const mid = (t0 + t1) * 0.5;
-      if (mid > p) continue;
-      const local = p <= 0.0001 ? 0 : mid / p;
-      const w = _lerp(2.0, 14.0, Math.pow(local, 1.6));
-      const a = _lerp(0.06, 0.35, Math.pow(local, 1.2));
-      const a0 = lerpAngleCCW(A_START, A_END, t0);
-      const a1 = lerpAngleCCW(A_START, A_END, t1);
-      fxGfx.lineStyle(w, 0xD8C8A6, a);
-      drawArcTile(a0, a1);
-    }
-
-    // Impact head (ball)
-    fxGfx.beginFill(0xFFFFFF, 0.92);
-    fxGfx.drawCircle(hx, hy, 9);
-    fxGfx.endFill();
-    fxGfx.lineStyle(10, 0xD8C8A6, 0.08);
-    fxGfx.drawCircle(hx, hy, 26);
-    fxGfx.lineStyle(2, 0xD8C8A6, 0.35);
-    fxGfx.drawCircle(hx, hy, 16);
-
+    drawRibbon(currentHead01);
+    drawSweet(currentSweetStart01, currentSweetEnd01);
+    drawStriations(currentHead01);
+    drawHead(currentHead01, currentIntensity01);
     app.render();
-  }
-
-  /**
-   * Spin the entire widget once (clockwise) over durationMs
-   */
-  function spinOnce(durationMs = 1000) {
-    if (!mounted || !rootContainer || !app) return;
-    
-    if (spinRafId) {
-      cancelAnimationFrame(spinRafId);
-      spinRafId = null;
-    }
-    
-    const start = performance.now();
-    const startRot = rootContainer.rotation || 0;
-    const targetRot = startRot + Math.PI * 2;
-    
-    const tick = (now) => {
-      if (!rootContainer || !app) return;
-      const t = Math.min(1, (now - start) / durationMs);
-      rootContainer.rotation = startRot + (targetRot - startRot) * t;
-      app.render();
-      
-      if (t < 1) {
-        spinRafId = requestAnimationFrame(tick);
-      } else {
-        spinRafId = null;
-        rootContainer.rotation = targetRot;
-        app.render();
-      }
-    };
-    
-    spinRafId = requestAnimationFrame(tick);
   }
 
   /**
@@ -717,7 +529,6 @@
       headPos01 = 0.5,
       sweetStart01 = 0.41,
       sweetEnd01 = 0.59,
-      locked = false,
       intensity01 = 0.5,
       dtMs = 16
     } = data;
@@ -725,54 +536,10 @@
     // Update state used by draw
     currentHead01 = headPos01;
     currentIntensity01 = intensity01;
-    
-    // Store state
-    lastState = { headPos01, locked };
-    drawComet(dtMs);
-  }
 
-  /**
-   * Trigger impact pulse on release
-   */
-  function onRelease(opts = {}) {
-    const { isSweet = false } = opts;
-    
-    if (isSweet) {
-      pulseActive = true;
-      pulseT = 0;
-    }
-    
-    lastState.locked = true;
-    drawComet(0);
-  }
-
-  /**
-   * Lock the overlay (freeze visuals)
-   */
-  function lock() {
-    lastState.locked = true;
-    drawComet(0);
-  }
-
-  /**
-   * Reset to initial state
-   */
-  function reset() {
-    lastState = { headPos01: 0.5, locked: false };
-    pulseActive = false;
-    pulseT = 0;
-    pulseMul = 1;
-    
-    // Clear all graphics
-    if (glowGfx) glowGfx.clear();
-    if (ribbonGfx) ribbonGfx.clear();
-    if (striationGfx) striationGfx.clear();
-    if (sweetGfx) sweetGfx.clear();
-    if (headGfx) headGfx.clear();
-    
-    currentHead01 = 0.5;
-    currentIntensity01 = 0.5;
-    drawComet(0);
+    currentSweetStart01 = sweetStart01;
+    currentSweetEnd01 = sweetEnd01;
+    renderFrame(dtMs);
   }
 
   /**
@@ -789,9 +556,8 @@
     resizeSwingPath(app, rootContainer, app.view.parentElement);
     layoutRoot();
     mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
-    assertSwingPathVisible("resize", app, rootContainer, app.view.parentElement);
     
-    drawComet(0);
+    renderFrame(0);
   }
 
   /**
@@ -806,10 +572,6 @@
       window.removeEventListener('resize', onWindowResize);
       onWindowResize = null;
     }
-    if (spinRafId) {
-      cancelAnimationFrame(spinRafId);
-      spinRafId = null;
-    }
     if (app) {
       app.destroy(true, { children: true, texture: true, baseTexture: true });
       app = null;
@@ -820,10 +582,7 @@
     striationGfx = null;
     sweetGfx = null;
     headGfx = null;
-    fxContainer = null;
-    fxGfx = null;
     mounted = false;
-    lastState = { headPos01: 0.5, locked: false };
     pulseActive = false;
     pulseT = 0;
     pulseMul = 1;
@@ -833,12 +592,8 @@
   window.SwingPathPixi = {
     init,
     update,
-    onRelease,
-    lock,
-    reset,
     resize,
-    destroy,
-    spinOnce
+    destroy
   };
 
 })();

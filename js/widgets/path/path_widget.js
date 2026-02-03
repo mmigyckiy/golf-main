@@ -6,6 +6,9 @@ export function createPathWidget() {
   const model = createPathModel();
   let mounted = false;
   let usePixi = false;
+  let useDom = true;
+  let pixiInitFailed = false;
+  let warnedPixiInit = false;
   let mountEl = null;
   let hostEl = null;
   let getState = null;
@@ -15,12 +18,23 @@ export function createPathWidget() {
     getState = getStateFn || null;
     mountEl = ui?.path?.mount || document.getElementById("pathPixi");
     hostEl = document.querySelector(".swing-metric--path");
-    if (usePixiPreferred && mountEl && window.SwingPathPixi?.init) {
+    usePixi = false;
+    useDom = true;
+    pixiInitFailed = false;
+    const canInitPixi = usePixiPreferred && mountEl && window.SwingPathPixi?.init;
+    if (canInitPixi) {
       usePixi = !!window.SwingPathPixi.init({ containerEl: mountEl });
       if (!usePixi) {
-        console.warn("[PathWidget] Pixi init failed; falling back to DOM.");
+        pixiInitFailed = true;
+        if (!warnedPixiInit) {
+          console.warn("[PathWidget] Pixi init failed; falling back to DOM.");
+          warnedPixiInit = true;
+        }
       }
+    } else if (usePixiPreferred) {
+      pixiInitFailed = true;
     }
+    useDom = !usePixi && (!usePixiPreferred || pixiInitFailed);
     if (usePixi && hostEl) {
       hostEl.classList.add("is-pixi-path");
     }
@@ -46,7 +60,7 @@ export function createPathWidget() {
         intensity01,
         dtMs: dt
       });
-    } else {
+    } else if (useDom) {
       SwingPath.update({ phase, headPos01: head01, sweetCenter: 0, sweetWidthDeg: 18 });
     }
   }
@@ -54,13 +68,11 @@ export function createPathWidget() {
   function lock() {
     model.lock();
     SwingPath.lockPath();
-    window.SwingPathPixi?.onRelease?.({ isSweet: false });
   }
 
   function reset() {
     model.reset();
     SwingPath.resetPath();
-    window.SwingPathPixi?.reset?.();
   }
 
   function destroy() {

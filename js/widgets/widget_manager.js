@@ -10,6 +10,7 @@ export function createWidgetManager({ getState, ui }) {
   ];
 
   let mounted = false;
+  let mounting = false;
   let pathPixiActive = false;
 
   function safeCall(fn, label) {
@@ -22,7 +23,8 @@ export function createWidgetManager({ getState, ui }) {
   }
 
   function mount() {
-    if (mounted) return;
+    if (mounted || mounting) return;
+    mounting = true;
     const usePixiPreferred = !!(ui?.path?.mount && window.PIXI);
     widgets.forEach((w) => {
       const res = safeCall(
@@ -39,6 +41,7 @@ export function createWidgetManager({ getState, ui }) {
       state.flags.pathPixiActive = pathPixiActive;
     }
     mounted = true;
+    mounting = false;
   }
 
   function update(ts, dt, phase) {
@@ -80,6 +83,8 @@ export function createWidgetManager({ getState, ui }) {
   function destroy() {
     widgets.forEach((w) => safeCall(() => w.destroy?.(), `${w.name || "widget"}.destroy`));
     mounted = false;
+    mounting = false;
+    pathPixiActive = false;
   }
 
   function getValues() {
