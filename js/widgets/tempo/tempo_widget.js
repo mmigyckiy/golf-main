@@ -1,10 +1,11 @@
 import { SwingControls } from "../../swing_controls.js";
 
-export function createTempoWidget({ getState }) {
+export function createTempoWidget() {
   const name = "tempo";
   let mounted = false;
   let locked = false;
   let lastValue = 0;
+  let getState = null;
   let els = {
     fill: null,
     runner: null,
@@ -16,11 +17,11 @@ export function createTempoWidget({ getState }) {
     return Math.max(0, Math.min(1, v));
   }
 
-  function cacheEls() {
-    els.fill = document.getElementById("swingTempoFill");
-    els.runner = document.getElementById("swingTempoRunner");
-    els.tube = document.getElementById("swingTempoTube");
-    els.pct = document.getElementById("swingTempoPct");
+  function cacheEls(ui) {
+    els.fill = ui?.tempo?.fill || document.getElementById("swingTempoFill");
+    els.runner = ui?.tempo?.runner || document.getElementById("swingTempoRunner");
+    els.tube = ui?.tempo?.tube || document.getElementById("swingTempoTube");
+    els.pct = ui?.tempo?.pct || document.getElementById("swingTempoPct");
   }
 
   function render(p) {
@@ -42,16 +43,18 @@ export function createTempoWidget({ getState }) {
     if (els.pct) els.pct.textContent = `${Math.round(v * 100)}%`;
   }
 
-  function mount() {
+  function mount({ getState: getStateFn, ui } = {}) {
     if (mounted) return;
-    cacheEls();
+    getState = getStateFn || null;
+    cacheEls(ui);
     render(0);
     mounted = true;
   }
 
-  function update({ phase, state }) {
+  function update({ phase }) {
     if (!mounted) mount();
     if (locked || phase !== "ARMING") return;
+    const state = typeof getState === "function" ? getState() : null;
     const head01 = Number.isFinite(state?.shot?.tempo01)
       ? state.shot.tempo01
       : SwingControls.getTempoHeadPos();
@@ -68,9 +71,13 @@ export function createTempoWidget({ getState }) {
     render(0);
   }
 
+  function destroy() {
+    mounted = false;
+  }
+
   function getValue() {
     return { tempo01: lastValue };
   }
 
-  return { name, mount, update, lock, reset, getValue };
+  return { name, mount, update, lock, reset, destroy, getValue };
 }

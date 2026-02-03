@@ -2,14 +2,15 @@ import { createTempoWidget } from "./tempo/tempo_widget.js";
 import { createPathWidget } from "./path/path_widget.js";
 import { createAttackWidget } from "./attack/attack_widget.js";
 
-export function createWidgetManager({ getState }) {
+export function createWidgetManager({ getState, ui }) {
   const widgets = [
-    createTempoWidget({ getState }),
-    createPathWidget({ getState }),
-    createAttackWidget({ getState })
+    createTempoWidget(),
+    createPathWidget(),
+    createAttackWidget()
   ];
 
   let mounted = false;
+  let pathPixiActive = false;
 
   function safeCall(fn, label) {
     try {
@@ -22,14 +23,33 @@ export function createWidgetManager({ getState }) {
 
   function mount() {
     if (mounted) return;
-    widgets.forEach((w) => safeCall(() => w.mount?.(), `${w.name || "widget"}.mount`));
+    const usePixiPreferred = !!(ui?.path?.mount && window.PIXI);
+    widgets.forEach((w) => {
+      const res = safeCall(
+        () => w.mount?.({ rootEl: ui?.common?.swingMetricsRow || null, getState, ui, usePixiPreferred }),
+        `${w.name || "widget"}.mount`
+      );
+      if (w.name === "path" && res && typeof res.usePixi === "boolean") {
+        pathPixiActive = res.usePixi;
+      }
+    });
+    const state = getState?.();
+    if (state) {
+      state.flags = state.flags || {};
+      state.flags.pathPixiActive = pathPixiActive;
+    }
     mounted = true;
   }
 
   function update(ts, dt, phase) {
     if (!mounted) mount();
     const state = getState?.();
-    widgets.forEach((w) => safeCall(() => w.update?.({ ts, dt, phase, state }), `${w.name || "widget"}.update`));
+    widgets.forEach((w) =>
+      safeCall(
+        () => w.update?.({ ts, dt, phase, state, pathPixiActive }),
+        `${w.name || "widget"}.update`
+      )
+    );
     if (state) {
       state.swing = state.swing || { locked: false, values: { tempo01: 0, path01: 0, attackDeg: 0 } };
       const values = getValues();

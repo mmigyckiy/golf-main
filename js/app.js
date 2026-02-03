@@ -22,6 +22,7 @@ import { SwingControls } from "./swing_controls.js";
 import { SwingPath } from "./swing_path.js";
 import { createWidgetManager } from "./widgets/widget_manager.js";
 import { resetAttackAnglePlane } from "./attack_angle_plane.js";
+import { getUIRefs } from "./ui_refs.js";
 
 const FLIGHT_MS_VISUAL = 2200;
 const STORAGE_KEY = "golfcentral.longdrive.v1";
@@ -983,7 +984,7 @@ function syncSwingUI(){
     ? (state.shot?.path01 ?? 0.5)
     : (Number.isFinite(headPos) ? headPos : 0.5);
   
-  if(window.SwingPath){
+  if(window.SwingPath && !state.flags?.pathPixiActive){
     window.SwingPath.update({
       phase: state.phase,
       headPos01: path01,
@@ -2303,7 +2304,8 @@ function initUI(){
   SwingControls.init(state);
   window.SwingPath?.init?.();
   if (!widgetManager) {
-    widgetManager = createWidgetManager({ getState: () => state });
+    state.uiRefs = getUIRefs();
+    widgetManager = createWidgetManager({ getState: () => state, ui: state.uiRefs });
   }
   widgetManager.mount();
   console.log("[BOOT] swing hosts", {

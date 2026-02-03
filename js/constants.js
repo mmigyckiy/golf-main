@@ -148,7 +148,7 @@ export const YARDS = {
 };
 
 // =============================================================================
-// TEMPO ARC (Radians - for swing_controls.js, swing_tempo.js)
+// TEMPO ARC (Radians - for swing_controls.js)
 // =============================================================================
 
 export const TEMPO_ARC_RAD = {

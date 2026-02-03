@@ -7,20 +7,25 @@ import {
   renderAttackAnglePlane
 } from "../../attack_angle_plane.js";
 
-export function createAttackWidget({ getState }) {
+export function createAttackWidget() {
   const name = "attack";
   let mounted = false;
+  let getState = null;
 
-  function mount() {
+  function mount({ getState: getStateFn } = {}) {
     if (mounted) return;
-    initAttackAnglePlane(() => getState(), { isArming: (s) => s?.phase === "ARMING" });
+    getState = getStateFn || null;
+    initAttackAnglePlane(() => (typeof getState === "function" ? getState() : null), {
+      isArming: (s) => s?.phase === "ARMING"
+    });
     renderAttackAnglePlane();
     mounted = true;
   }
 
-  function update({ ts, dt, phase, state }) {
+  function update({ ts, dt, phase }) {
     if (!mounted) mount();
     if (phase !== "ARMING") return;
+    const state = typeof getState === "function" ? getState() : null;
 
     if (state?.shot && Number.isFinite(state.shot.attackDeg)) {
       state.attackAngle = state.attackAngle || {};
@@ -41,9 +46,13 @@ export function createAttackWidget({ getState }) {
     resetAttackAnglePlane();
   }
 
+  function destroy() {
+    mounted = false;
+  }
+
   function getValue() {
     return { attackDeg: getAttackAngleValue() };
   }
 
-  return { name, mount, update, lock, reset, getValue };
+  return { name, mount, update, lock, reset, destroy, getValue };
 }

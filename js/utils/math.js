@@ -1,7 +1,7 @@
 /**
  * Shared math utilities for Drivix
- * Consolidated from: rng.js, swing_path.js, swing_controls.js, 
- * attack_angle.js, flight_aviatorlike.js, golfMath.js
+ * Consolidated from: rng.js, swing_path.js, swing_controls.js,
+ * attack_angle_plane.js, flight_aviatorlike.js, golfMath.js
  */
 
 // Re-export core functions from rng.js for compatibility
