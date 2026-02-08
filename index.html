@@ -212,24 +212,33 @@
                     <div class="swing-metric__title">ATTACK ANGLE</div>
 
                     <div class="swing-metric__body">
-                      <!-- Selectors: arc ".attack-angle--arc .aa-arc, .attack-angle--arc .aa-arc-edge" -->
-                      <!-- Selector: runner "#attackAngleRunner.aa-runner" -->
-                      <!-- Selector: halo ".attack-angle--arc .aa-runner::after" -->
                       <div class="attack-angle attack-angle--arc" id="attackAngle" aria-label="Attack angle">
-                        <div class="attack-angle__plane" id="attackAnglePlane">
-                          <svg class="attack-angle__svg" viewBox="0 0 120 120" aria-hidden="true">
-                            <!-- Arc (edge + main) -->
-                            <path class="aa-arc-edge" d="M16 60 A44 44 0 0 1 104 60" />
-                            <path class="aa-arc" d="M18 60 A42 42 0 0 1 102 60" />
-                            <!-- sweet window (small highlight on arc) -->
-                            <path class="aa-sweet" d="M52 42 A44 44 0 0 1 68 42" />
-                            <!-- subtle center dot -->
-                            <circle class="aa-center" cx="60" cy="76" r="3.2"></circle>
-                          </svg>
-                        </div>
+                        <svg class="attack-angle__svg" viewBox="0 0 120 120" aria-hidden="true">
+                          <!-- SINGLE ARC ONLY (no circles, no crosshair) -->
+                          <path class="aa-arc"
+                                d="M18 72
+                                   A42 42 0 0 1 102 72"
+                          />
+                          <!-- subtle inner highlight for “glass” feel -->
+                          <path class="aa-arc-hi"
+                                d="M22 72
+                                   A38 38 0 0 1 98 72"
+                          />
+                          <!-- anchor dot (quiet) -->
+                          <circle class="aa-anchor" cx="60" cy="76" r="3.2"></circle>
+                        </svg>
 
-                        <!-- Runner (JS moves this). Keep the SAME id -->
+                        <!-- moving runner (JS positions/updates this element) -->
                         <div id="attackAngleRunner" class="aa-runner" aria-hidden="true"></div>
+
+                        <!-- optional: ultra subtle scale on the right (static) -->
+                        <div class="aa-scale" aria-hidden="true">
+                          <div class="aa-scale__label aa-scale__label--top">+6</div>
+                          <div class="aa-scale__tick"></div>
+                          <div class="aa-scale__label aa-scale__label--mid">0</div>
+                          <div class="aa-scale__tick"></div>
+                          <div class="aa-scale__label aa-scale__label--bot">-6</div>
+                        </div>
                       </div>
                     </div>
 

@@ -4494,15 +4494,12 @@ body.uidebug #uiRoot::before{
   opacity: 0 !important;
 }
 
-/* === AA LAYOUT: normalized scale + runner-on-arc === */
-#attackAngle,
-.attack-angle{
-  position: relative;
-}
+/* =========================
+   ATTACK ANGLE — ARC MODE
+   (Tempo-like: 1 arc + 1 runner)
+   ========================= */
 
-/* Keep the drawing area centered and scaled */
-#attackAnglePlane,
-.attack-angle__plane{
+.swing-metric--attack .attack-angle{
   position: relative;
   width: 100%;
   height: 100%;
@@ -4510,65 +4507,337 @@ body.uidebug #uiRoot::before{
   place-items: center;
 }
 
-/* Control the arc size via CSS vars (easy tuning) */
-#attackAnglePlane{
-  --aa-size: min(260px, 78%);
-  --aa-stroke: 18px;
-  --aa-arc-r: 44;
-  --aa-vb: 120;
+
+/* Kill any legacy reticle leftovers if they still exist */
+.swing-metric--attack .attack-angle__plane,
+.swing-metric--attack .aa-ring,
+.swing-metric--attack .aa-cross,
+.swing-metric--attack .aa-arrow,
+.swing-metric--attack .aa-glint,
+.swing-metric--attack .aa-driver{
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
 }
 
-#attackAnglePlane .attack-angle__svg{
-  width: var(--aa-size);
-  height: var(--aa-size);
+/* SVG fits like Swing Tempo inner tube */
+.swing-metric--attack .attack-angle__svg{
+  width: min(86%, 220px);
+  height: auto;
   display: block;
+  overflow: visible;
 }
 
-/* Ensure ring thickness matches and looks consistent */
-#attackAnglePlane .aa-ring{
-  stroke-width: var(--aa-stroke);
+/* Main arc (matte gold) */
+.swing-metric--attack .aa-arc{
+  fill: none;
+  stroke: rgba(216,200,166,0.55);
+  stroke-width: 14;
   stroke-linecap: round;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.35));
 }
 
-/* Runner ball: absolute over the SVG, centered on the stroke */
-#attackAngleRunner,
-#attackAnglePlane .aa-ball,
-#attackAnglePlane .aa-runner{
+/* Inner highlight (subtle) */
+.swing-metric--attack .aa-arc-hi{
+  fill: none;
+  stroke: rgba(255,255,255,0.10);
+  stroke-width: 6;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
+/* Anchor dot (quiet) */
+.swing-metric--attack .aa-anchor{
+  fill: rgba(216,200,166,0.55);
+  opacity: 0.55;
+}
+
+/* Runner: SINGLE ball, NO second halo */
+.swing-metric--attack #attackAngleRunner.aa-runner{
   position: absolute;
   width: 28px;
   height: 28px;
-  border-radius: 50%;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%,
+    rgba(255,255,255,0.92),
+    rgba(255,255,255,0.30) 55%,
+    rgba(0,0,0,0.22) 100%);
+  box-shadow:
+    0 10px 22px rgba(0,0,0,0.40),
+    inset 0 1px 0 rgba(255,255,255,0.22);
   transform: translate(-50%, -50%);
-  z-index: 5;
+  z-index: 4;
 }
 
-/*
-  IMPORTANT:
-  attack_angle_plane.js usually sets translate/left/top OR transform.
-  We force "transform: translate(-50%,-50%)" so (left,top) are the ball center.
-*/
-
-/* Default resting position: left side of arc (for initial visual) */
-#attackAngleRunner{
-  left: 50%;
-  top: 50%;
+/* IMPORTANT: remove pseudo halos */
+.swing-metric--attack #attackAngleRunner.aa-runner::before,
+.swing-metric--attack #attackAngleRunner.aa-runner::after{
+  content: none !important;
+  display: none !important;
 }
 
-/* If JS uses translateX/Y on runner, keep it working but still centered */
-#attackAngleRunner{
-  transform: translate(-50%, -50%) translate(var(--aa-runner-x, 0px), var(--aa-runner-y, 0px));
+/* Scale on the right: keep it super quiet */
+.swing-metric--attack .aa-scale{
+  position: absolute;
+  right: 10%;
+  top: 18%;
+  bottom: 18%;
+  width: 26px;
+  display: grid;
+  grid-template-rows: auto 1fr auto 1fr auto;
+  align-items: center;
+  justify-items: center;
+  opacity: 0.32;
+  pointer-events: none;
 }
 
-/* --- OPTIONAL: set the runner onto the arc even if JS only moves it vertically ---
-   We anchor "arc center" and let JS supply offsets via CSS vars if needed later. */
-#attackAnglePlane{
-  --aa-px: calc(var(--aa-size) / var(--aa-vb));
-  --aa-cx: calc(60 * var(--aa-px));
-  --aa-cy: calc(60 * var(--aa-px));
+.swing-metric--attack .aa-scale__label{
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: rgba(216,200,166,0.85);
 }
 
-/* Place runner at arc center by default (JS offsets applied via vars above) */
-#attackAngleRunner{
-  left: var(--aa-cx);
-  top: var(--aa-cy);
+.swing-metric--attack .aa-scale__tick{
+  width: 14px;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(216,200,166,0.35);
+}
+
+/* Ensure the attack widget doesn’t overflow its card */
+.swing-metric--attack .swing-metric__body{
+  overflow: hidden;
+}
+
+/* =========================================
+   ATTACK ANGLE — Step 2: remove double layers / keep clean track + runner
+   Paste at END of css/style.css
+   ========================================= */
+
+/* 1) Kill any generic “glass pocket” overlays that often double visuals */
+.swing-metric--attack .swing-metric__body::before,
+.swing-metric--attack .swing-metric__body::after,
+.swing-metric--attack .attack-angle::before,
+.swing-metric--attack .attack-angle::after,
+.swing-metric--attack .attack-angle__plane::before,
+.swing-metric--attack .attack-angle__plane::after{
+  content: none !important;
+  opacity: 0 !important;
+  filter: none !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+/* 2) Ensure only ONE arc/track is visible (hide legacy rings/crosshair if still present) */
+.swing-metric--attack .aa-ring,
+.swing-metric--attack .aa-cross,
+.swing-metric--attack .aa-arrow,
+.swing-metric--attack .aa-glint,
+.swing-metric--attack .aa-driver{
+  opacity: 0 !important;
+}
+
+/* If your new arc is SVG path(s), keep them ON explicitly */
+.swing-metric--attack .aa-arc,
+.swing-metric--attack .aa-arc-edge{
+  opacity: 1 !important;
+}
+
+/* 3) Runner (ball) sits above track, no extra halos/pills */
+.swing-metric--attack #attackAngleRunner{
+  z-index: 5 !important;
+  box-shadow:
+    0 8px 18px rgba(0,0,0,0.45),
+    0 0 0 2px rgba(255,255,255,0.10) !important;
+}
+
+/* Remove “second halo” if it was coming from pseudo elements on runner */
+.swing-metric--attack #attackAngleRunner::before,
+.swing-metric--attack #attackAngleRunner::after{
+  content: none !important;
+  opacity: 0 !important;
+  filter: none !important;
+  background: none !important;
+}
+
+/* 4) Make sure the arc is the hero: soften its shadow so it means thickness, not duplication */
+.swing-metric--attack .aa-arc,
+.swing-metric--attack .aa-arc-edge{
+  filter: none !important;
+}
+
+/* =========================================================
+   SWING METRICS — unify card heights (Tempo/Path/Attack)
+   Goal: all three widgets have одинаковую "длину"/высоту карточки
+   ========================================================= */
+
+#swingMetricsRow,
+.swing-metrics-row{
+  align-items: stretch !important;
+}
+
+/* Each widget becomes a fixed-height card with 3 sections:
+   title (fixed) + body (fixed) + footer (fixed) */
+#swingMetricsRow .swing-metric,
+.swing-metrics-row .swing-metric{
+  height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fixed header height */
+#swingMetricsRow .swing-metric__title,
+.swing-metrics-row .swing-metric__title{
+  flex: 0 0 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px 0;
+}
+
+/* Fixed body height (у тебя уже ~220, фиксируем жёстко) */
+#swingMetricsRow .swing-metric__body,
+.swing-metrics-row .swing-metric__body{
+  flex: 0 0 220px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Fixed footer height */
+#swingMetricsRow .swing-metric__footer,
+.swing-metrics-row .swing-metric__footer{
+  flex: 1 0 auto;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 8px 12px 14px;
+}
+
+/* Ensure Path doesn’t look "taller" because of extra label spacing */
+#swingMetricsRow .swing-metric--path .swing-metric__footer,
+.swing-metrics-row .swing-metric--path .swing-metric__footer{
+  min-height: 56px;
+}
+
+/* Optional: keep titles aligned even if one has extra margin somewhere */
+#swingMetricsRow .swing-metric__title,
+#swingMetricsRow .swing-metric__footer,
+.swing-metrics-row .swing-metric__title,
+.swing-metrics-row .swing-metric__footer{
+  margin: 0 !important;
+}
+
+/* =========================================================
+   SWING TEMPO — reduce empty space, make tube taller
+   (only Tempo widget)
+   ========================================================= */
+
+/* компактнее заголовок */
+.swing-metric--tempo .swing-metric__title{
+  flex: 0 0 34px !important;
+  padding-top: 8px !important;
+}
+
+/* компактнее футер */
+.swing-metric--tempo .swing-metric__footer{
+  min-height: 42px !important;
+  padding: 6px 10px 10px !important;
+}
+
+/* body чуть выше за счёт header/footer */
+.swing-metric--tempo .swing-metric__body{
+  flex: 1 1 auto !important;
+  padding: 6px 0 !important;
+}
+
+/* сам темпо-метр заполняет body */
+.swing-metric--tempo #swingTempoControl.tempo-meter{
+  height: 100% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* tube становится выше (главный эффект) */
+.swing-metric--tempo .tempo-meter__tube{
+  height: 88% !important;
+  max-height: 240px;
+}
+
+/* шкалу (100/50/0) чуть ближе к tube */
+.swing-metric--tempo .tempo-meter__scale{
+  margin-left: 12px !important;
+}
+
+/* значение в футере чуть компактнее */
+.swing-metric--tempo #tempoValueLabel{
+  margin-top: 2px !important;
+}
+
+/* SWING TEMPO — nudge percentage closer to scale (micro adjust) */
+.swing-metric--tempo #tempoValueLabel{
+  margin-top: -4px !important;
+}
+
+/* SWING TEMPO — equalize bottom spacing */
+.swing-metric--tempo .swing-metric__body{
+  padding-bottom: 14px;
+}
+
+/* already nudged label up — оставляем */
+.swing-metric--tempo #tempoValueLabel{
+  margin-top: -4px !important;
+}
+
+/* SWING TEMPO — final vertical balance */
+.swing-metric--tempo .swing-metric__body{
+  padding-bottom: 8px;
+}
+
+/* процент ещё ближе к шкале */
+.swing-metric--tempo #tempoValueLabel{
+  margin-top: -16px !important;
+}
+
+.swing-metric--tempo .swing-metric__footer{
+  outline: 1px solid red;
+}
+
+/* UI polish: bring Swing Tempo footer closer to the tube */
+.swing-metric--tempo .swing-metric__footer{
+  transform: translateY(-12px);
+}
+
+/* UI polish: reduce bottom padding of Swing Tempo body */
+.swing-metric--tempo .swing-metric__body{
+  padding-bottom: 18px;
+}
+
+/* === Swing Tempo: tighten bottom (override-proof) === */
+#swingMetricsRow .swing-metric--tempo .swing-metric__body{
+  padding-bottom: 8px !important;
+  outline: 1px solid rgba(255,0,0,0.35); /* TEMP: verify rule applied */
+}
+#swingMetricsRow .swing-metric--tempo .swing-metric__footer{
+  margin-top: -10px !important; /* pull % closer to tube */
+  outline: 1px solid rgba(0,255,0,0.35); /* TEMP */
+}
+
+/* TEMPO: tighten bottom area (remove empty space under % readout) */
+.swing-metric--tempo.swing-metric{
+  padding-bottom: 12px !important;
+}
+
+.swing-metric--tempo .swing-metric__footer{
+  margin-top: -10px !important;
+  padding-bottom: 0 !important;
+}
+
+/* TEMPO: keep % closer to scale */
+.swing-metric--tempo #tempoValueLabel{
+  margin-top: -6px !important;
 }

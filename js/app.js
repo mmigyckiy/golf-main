@@ -2432,6 +2432,21 @@ function initUI(){
   state.mental.data = loadPlayerMental();
   updateWindHUD(state.shotSetup || { windSpeed: 0, windDir: "E", dir: "E" });
   window.__drivixState = state;
+
+  setTimeout(() => {
+    const root = document.querySelector('.swing-metric--tempo');
+    if (!root) return console.warn('[TEMPO_DBG] root not found');
+    const body = root.querySelector('.swing-metric__body');
+    const footer = root.querySelector('.swing-metric__footer');
+    console.log('[TEMPO_DBG] sizes', {
+      root: root.getBoundingClientRect(),
+      body: body?.getBoundingClientRect(),
+      footer: footer?.getBoundingClientRect(),
+      rootCS: { minHeight: getComputedStyle(root).minHeight, height: getComputedStyle(root).height, display: getComputedStyle(root).display },
+      bodyCS: { flex: getComputedStyle(body).flex, minHeight: getComputedStyle(body).minHeight, height: getComputedStyle(body).height },
+      footerCS:{ flex: getComputedStyle(footer).flex, marginTop: getComputedStyle(footer).marginTop, paddingBottom: getComputedStyle(footer).paddingBottom }
+    });
+  }, 300);
 }
 
 function bindSwingTempoInput(){
