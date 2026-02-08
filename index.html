@@ -17,9 +17,9 @@
   <div class="gc-ambient gc-ambient--one" aria-hidden="true"></div>
   <div class="gc-ambient gc-ambient--two" aria-hidden="true"></div>
   <div class="gc-ambient gc-ambient--grain" aria-hidden="true"></div>
-  <div class="gc-shell">
+  <div id="appShell" class="appShell gc-shell">
     <!-- Top Club Header -->
-    <header class="gc-topbar gc-panel gc-panel--hero" aria-label="Drivix top bar">
+    <header id="appHeader" class="appHeader gc-topbar gc-panel gc-panel--hero drivix-card drivix-card--strong" aria-label="Drivix top bar">
       <div id="memberBackdrop" class="gc-backdrop gc-hidden" aria-hidden="true"></div>
       <div class="top-banner-inner">
         <div class="top-left">
@@ -96,179 +96,160 @@
       </div>
     </header>
 
-    <div class="gc-layout">
+    <div id="appBody" class="appBody gc-layout">
       <!-- Main layout -->
-      <main class="gc-main">
+      <main id="mainPanel" class="mainPanel gc-main">
         <!-- Left column: Tee Shot / Field / Controls -->
-        <section class="gc-card gc-card--primary gc-panel gc-panel--hero">
-          <div class="gc-card__head">
-            <div>
-              <div class="gc-eyebrow">LONG DRIVE • TEE SHOT</div>
-              <h1 class="gc-h1">Power Window</h1>
-              <div id="subline" class="gc-muted gc-subline">
-                Precision, timing, and power — one confident swing.
+        <section class="gc-card gc-card--primary gc-panel gc-panel--hero drivix-card powerCard">
+          <div class="powerCard__main">
+            <div class="gc-card__head">
+              <div>
+                <div class="gc-eyebrow">LONG DRIVE • TEE SHOT</div>
+                <h1 class="gc-h1">Power Window</h1>
+                <div id="subline" class="gc-muted gc-subline">
+                  Precision, timing, and power — one confident swing.
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="gc-power gc-panel gc-panel--soft gc-hidden-legacy">
-            <div class="gc-power__label">POWER WINDOW</div>
-            <div id="coef" class="gc-power__value">×1.00</div>
-            <div class="gc-power__meta">
-              <span class="gc-pillStat"><span id="uiDistanceYd">0</span> yd</span>
-              <span class="gc-pillStat gc-pillStat--muted">Best: <span id="uiBestYd">0</span> yd</span>
+            <div class="gc-power gc-panel gc-panel--soft gc-hidden-legacy drivix-panel">
+              <div class="gc-power__label">POWER WINDOW</div>
+              <div id="coef" class="gc-power__value">×1.00</div>
+              <div class="gc-power__meta">
+                <span class="gc-pillStat"><span id="uiDistanceYd">0</span> yd</span>
+                <span class="gc-pillStat gc-pillStat--muted">Best: <span id="uiBestYd">0</span> yd</span>
+              </div>
+              <div class="powerCard__footer">
+                <div class="gc-controls__row gc-controls__row--segmented">
+                  <div class="gc-segmented" role="group" aria-label="Risk selection">
+                    <button type="button" class="gc-segmented__btn gc-segmented__btn--active" data-risk="calm">Calm</button>
+                    <button type="button" class="gc-segmented__btn" data-risk="aggressive">Aggressive</button>
+                  </div>
+                </div>
+                <div class="gc-controls__row gc-controls__row--meta">
+                  <div id="perfectWindowLabel" class="gc-mutedSmall">SWEET SPOT: —</div>
+                  <div class="swing-wind" id="swingWind">
+                    <span class="swing-wind__label">WIND</span>
+                    <span class="swing-wind__arrow" id="swingWindArrow">→</span>
+                    <span class="swing-wind__val" id="swingWindValue">0</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <!-- Field -->
-          <div class="gc-field gc-panel gc-panel--soft" aria-label="Flight view">
-            <div class="gc-flightHud" aria-hidden="true">
-              <div class="gc-flightHud__left">
-                <div class="gc-flightHud__label">POWER</div>
-                <div class="gc-flightHud__x" id="hudX">x1.00</div>
+            <!-- Field -->
+            <div class="gc-field gc-panel gc-panel--soft" aria-label="Flight view">
+              <div class="gc-flightHud" aria-hidden="true">
+                <div class="gc-flightHud__left">
+                  <div class="gc-flightHud__label">POWER</div>
+                  <div class="gc-flightHud__x" id="hudX">x1.00</div>
+                </div>
+                <div class="gc-flightHud__right">
+                  <div class="gc-flightHud__stat distText"><span class="k">DIST</span><span class="v" id="hudDist">0</span><span class="u">yd</span></div>
+                  <div id="statusBadge" class="gc-statusBadge gc-hidden" aria-live="polite"></div>
+                </div>
               </div>
-              <div class="gc-flightHud__right">
-                <div class="gc-flightHud__stat distText"><span class="k">DIST</span><span class="v" id="hudDist">0</span><span class="u">yd</span></div>
-                <div id="statusBadge" class="gc-statusBadge gc-hidden" aria-live="polite"></div>
+              <div class="wind-hud" id="windHUD" aria-hidden="true">
+                <span class="wind-hud__label">WIND</span>
+                <span class="wind-hud__arrow" id="windArrow">▲</span>
+                <span class="wind-hud__val" id="windValue">0 mph</span>
               </div>
+              <canvas id="flight3dCanvas" class="gc-field__canvas"></canvas>
             </div>
-            <div class="wind-hud" id="windHUD" aria-hidden="true">
-              <span class="wind-hud__label">WIND</span>
-              <span class="wind-hud__arrow" id="windArrow">▲</span>
-              <span class="wind-hud__val" id="windValue">0 mph</span>
-            </div>
-            <canvas id="flight3dCanvas" class="gc-field__canvas"></canvas>
-          </div>
 
-          <!-- Controls -->
-          <div class="gc-controls">
-            <div class="gc-controls__row gc-controls__row--segmented">
-              <div class="gc-segmented" role="group" aria-label="Risk selection">
-                <button type="button" class="gc-segmented__btn gc-segmented__btn--active" data-risk="calm">Calm</button>
-                <button type="button" class="gc-segmented__btn" data-risk="aggressive">Aggressive</button>
-              </div>
-            </div>
+            <footer class="gc-footer">
+              <span>Drivix — Designed for Distance</span>
+            </footer>
+          </div>
+          <div class="powerCard__controls">
             <div class="gc-controls__row gc-controls__row--buttons gc-controls__row--primary">
               <div class="gc-swingControl">
-                <!-- Premium 3-widget row with Pixi canvases -->
-                <div id="uiRoot"></div>
-                <div class="swing-metrics-row legacy-swing-ui" id="swingMetricsRowLegacy" aria-hidden="true">
-                  <!-- Pixi overlay for premium B-style visuals -->
+                <div class="swing-metrics-row" id="swingMetricsRow">
                   <div class="swing-metric swing-metric--tempo">
-                    <div class="swing-metric__title">SWING TEMPO</div>
+                    <div class="swing-metric__title">Swing Tempo</div>
                     <div class="swing-metric__body">
-                      <div class="tempo-meter" id="swingTempoControl" role="button" aria-label="Swing tempo" tabindex="0">
-                        <div class="tempo-meter__scale" aria-hidden="true">
-                          <span class="tempo-meter__label" data-value="100">100</span>
-                          <span class="tempo-meter__tick tempo-meter__tick--major"></span>
-                          <span class="tempo-meter__tick"></span>
-                          <span class="tempo-meter__tick"></span>
-                          <span class="tempo-meter__tick"></span>
-                          <span class="tempo-meter__tick"></span>
-                          <span class="tempo-meter__label" data-value="50">50</span>
-                          <span class="tempo-meter__tick tempo-meter__tick--major"></span>
-                          <span class="tempo-meter__tick"></span>
-                          <span class="tempo-meter__tick"></span>
-                          <span class="tempo-meter__tick"></span>
-                          <span class="tempo-meter__tick"></span>
-                          <span class="tempo-meter__label" data-value="0">0</span>
-                        </div>
+                      <div class="tempo-meter swing-tempo-vertical" id="swingTempoControl">
                         <div class="tempo-meter__tube" id="swingTempoTube">
-                          <div class="tempo-meter__fill" id="swingTempoFill" aria-hidden="true"></div>
-                          <div class="tempo-meter__runner" id="swingTempoRunner" aria-hidden="true"></div>
+                          <div class="tempo-meter__fill" id="swingTempoFill"></div>
+                          <div class="tempo-meter__runner" id="swingTempoRunner"></div>
+                        </div>
+                        <div class="tempo-meter__scale" aria-hidden="true">
+                          <span class="tempo-meter__label">100</span>
+                          <span class="tempo-meter__tick tempo-meter__tick--major"></span>
+                          <span class="tempo-meter__label">50</span>
+                          <span class="tempo-meter__tick"></span>
+                          <span class="tempo-meter__label">0</span>
                         </div>
                       </div>
                     </div>
                     <div class="swing-metric__footer">
-                      <div class="swing-metric__value" id="tempoValueLabel"><span id="swingTempoPct">0%</span></div>
-                      <div class="swing-metric__hint">HOLD • RELEASE</div>
+                      <div class="swing-metric__value" id="tempoValueLabel">—</div>
+                      <div class="swing-metric__hint" id="swingTempoPct">0%</div>
                     </div>
                   </div>
+
                   <div class="swing-metric swing-metric--path">
-                    <div class="swing-metric__title">SWING PATH</div>
+                    <div class="swing-metric__title">Swing Path</div>
                     <div class="swing-metric__body">
-                      <div id="pathPixi" class="pixi-widget-canvas" aria-hidden="true"></div>
-                      <div class="alignment-ring" id="alignmentRing" aria-label="Alignment ring">
-                        <svg class="alignment-ring__svg" id="alignmentSvg" viewBox="0 0 120 120" aria-hidden="true">
-                          <defs>
-                            <linearGradient id="alignmentRingGradient" x1="0" y1="10" x2="0" y2="110" gradientUnits="userSpaceOnUse">
-                              <stop offset="0%" stop-color="rgba(255,255,255,0.10)"></stop>
-                              <stop offset="100%" stop-color="rgba(0,0,0,0.30)"></stop>
-                            </linearGradient>
-                          </defs>
+                      <div id="pathPixi" aria-hidden="true"></div>
+                      <div class="alignment-ring" id="alignmentRing">
+                        <svg class="alignment-ring__svg" id="alignmentSvg" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
                           <path class="alignment-ring__base" id="alignmentBase" d=""></path>
                           <path class="alignment-ring__sweet" id="alignmentSweet" d=""></path>
-                          <circle class="alignment-ring__ball" id="alignmentBall" cx="60" cy="102" r="3"></circle>
-                          <circle class="alignment-ring__runner" id="alignmentRunner" cx="60" cy="12" r="4.2"></circle>
+                          <circle class="alignment-ring__ball" id="alignmentBall" cx="100" cy="186" r="6"></circle>
+                          <circle class="alignment-ring__runner" id="alignmentRunner" cx="100" cy="186" r="7"></circle>
                         </svg>
                         <div class="align-target-tick" aria-hidden="true"></div>
                       </div>
                     </div>
                     <div class="swing-metric__footer">
-                      <div class="swing-metric__value swing-metric__value--muted"> </div>
-                      <div class="swing-metric__hint"> </div>
+                      <div class="swing-metric__value swing-metric__value--muted">—</div>
+                      <div class="swing-metric__hint">Alignment</div>
                     </div>
                   </div>
+
                   <div class="swing-metric swing-metric--attack">
                     <div class="swing-metric__title">ATTACK ANGLE</div>
+
                     <div class="swing-metric__body">
-                      <div class="attack-angle" id="attackAngle" aria-label="Attack angle">
-                        <!-- Reticle plane: single ring + crosshair + driver silhouette -->
+                      <!-- Selectors: arc ".attack-angle--arc .aa-arc, .attack-angle--arc .aa-arc-edge" -->
+                      <!-- Selector: runner "#attackAngleRunner.aa-runner" -->
+                      <!-- Selector: halo ".attack-angle--arc .aa-runner::after" -->
+                      <div class="attack-angle attack-angle--arc" id="attackAngle" aria-label="Attack angle">
                         <div class="attack-angle__plane" id="attackAnglePlane">
                           <svg class="attack-angle__svg" viewBox="0 0 120 120" aria-hidden="true">
-                            <!-- Single outer ring -->
-                            <circle class="aa-ring" cx="60" cy="60" r="44"></circle>
-                            <!-- Crosshair -->
-                            <line class="aa-cross aa-cross--h" x1="16" y1="60" x2="104" y2="60"></line>
-                            <line class="aa-cross aa-cross--v" x1="60" y1="16" x2="60" y2="104"></line>
-                            <!-- Top arrow indicator -->
-                            <path class="aa-arrow" d="M60 10 L56 18 H64 Z"></path>
-                            <!-- Glint sparkle -->
-                            <g class="aa-glint" transform="translate(96 92)">
-                              <path d="M0 -6 L1.5 -1.5 L6 0 L1.5 1.5 L0 6 L-1.5 1.5 L-6 0 L-1.5 -1.5 Z"></path>
-                            </g>
-                            <!-- Subtle driver silhouette -->
-                            <path class="aa-driver"
-                              d="M78 26
-                                 C92 36, 96 52, 92 68
-                                 C88 82, 78 92, 66 94
-                                 C72 86, 78 76, 82 66
-                                 C86 52, 86 40, 80 30
-                                 C79 28, 79 27, 78 26 Z"></path>
-                            <!-- Center dot -->
-                            <circle class="aa-center" cx="60" cy="60" r="4"></circle>
+                            <!-- Arc (edge + main) -->
+                            <path class="aa-arc-edge" d="M16 60 A44 44 0 0 1 104 60" />
+                            <path class="aa-arc" d="M18 60 A42 42 0 0 1 102 60" />
+                            <!-- sweet window (small highlight on arc) -->
+                            <path class="aa-sweet" d="M52 42 A44 44 0 0 1 68 42" />
+                            <!-- subtle center dot -->
+                            <circle class="aa-center" cx="60" cy="76" r="3.2"></circle>
                           </svg>
-                          <!-- Moving indicator (JS uses this ID) -->
-                          <div id="attackAngleRunner" class="aa-ball" aria-hidden="true"></div>
                         </div>
+
+                        <!-- Runner (JS moves this). Keep the SAME id -->
+                        <div id="attackAngleRunner" class="aa-runner" aria-hidden="true"></div>
                       </div>
                     </div>
+
                     <div class="swing-metric__footer">
-                      <div class="swing-metric__value" id="attackAngleValueLabel"><span id="attackAngleReadout">+0.0°</span></div>
-                      <div class="swing-metric__hint"></div>
+                      <div class="swing-metric__value" id="attackAngleValueLabel">
+                        <span id="attackAngleReadout">+0.0°</span>
+                      </div>
+                      <div class="swing-metric__hint">DEGREES</div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="gc-controls__row gc-controls__row--meta">
-              <div id="perfectWindowLabel" class="gc-mutedSmall">SWEET SPOT: —</div>
-              <div class="swing-wind" id="swingWind">
-                <span class="swing-wind__label">WIND</span>
-                <span class="swing-wind__arrow" id="swingWindArrow">→</span>
-                <span class="swing-wind__val" id="swingWindValue">0</span>
-              </div>
-            </div>
+            <div id="uiRoot"></div>
           </div>
-
-          <footer class="gc-footer">
-            <span>Drivix — Designed for Distance</span>
-          </footer>
         </section>
       </main>
 
-      <aside class="gc-sidepanel" aria-label="Club Panel">
-        <div class="gc-card gc-sidecard">
+      <aside id="sidePanel" class="sidePanel gc-sidepanel" aria-label="Club Panel">
+        <div class="gc-card gc-sidecard drivix-card">
           <div class="gc-card__kicker">DAILY CHALLENGE</div>
           <div class="gc-card__title">Fairway Precision</div>
           <div class="gc-card__text">Land a drive within the long-drive zone (≥ 260 yd) without crashing.</div>
@@ -278,7 +259,7 @@
           </div>
         </div>
 
-        <div class="gc-card gc-sidecard">
+        <div class="gc-card gc-sidecard drivix-card">
           <div class="gc-card__kicker">LEADERBOARD TODAY</div>
           <ol class="gc-leaderboard">
             <li><span class="name">E. Morgan</span><span class="val">318 yd</span></li>
@@ -293,12 +274,12 @@
           </div>
         </div>
       </aside>
-      </div>
     </div>
+
+  </div>
   <!-- Scripts (keep paths consistent with your project) -->
   <script src="js/flight_aviatorlike.js"></script>
   <script src="js/stats.js"></script>
-  <script type="module" src="/src/main.jsx"></script>
   <script type="module" src="js/swing_path.js"></script>
   <script src="js/swing_path_pixi.js"></script>
   <script type="module" src="js/app.js"></script>

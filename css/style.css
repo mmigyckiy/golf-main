@@ -148,13 +148,13 @@ html, body{ height: 100%; }
 
 body{
   margin: 0;
-  color: var(--text);
-  font-family: var(--font);
+  color: var(--text-0);
+  font-family: var(--font-ui);
   font-weight: 400;
   background:
-    radial-gradient(1200px 700px at 30% 10%, rgba(24,44,34,0.28), transparent 55%),
-    radial-gradient(900px 600px at 80% 40%, rgba(60,45,18,0.10), transparent 60%),
-    var(--drx-bg);
+    radial-gradient(900px 420px at 25% 10%, rgba(255,255,255,0.06), transparent 60%),
+    radial-gradient(650px 380px at 80% 20%, rgba(216,200,166,0.05), transparent 55%),
+    linear-gradient(180deg, var(--bg-0), var(--bg-1));
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   min-height: 100dvh;
@@ -191,6 +191,9 @@ body::after{
   max-width: 1260px;
   margin: 0 auto;
   padding: 22px 18px 34px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .gc-ambient{
@@ -571,12 +574,8 @@ hr,
 }
 
 .gc-sidecard{
-  background: rgba(0,0,0,0.22);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 22px;
+  border-radius: var(--card-r);
   padding: 18px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
-  backdrop-filter: blur(10px);
 }
 
 .gc-card__kicker{
@@ -1560,9 +1559,11 @@ hr,
 }
 #uiRoot{
   width: 100%;
-}
-.legacy-swing-ui{
-  display: none !important;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 #swingMetricsRow > *{
   min-width: 0;
@@ -3815,6 +3816,178 @@ kbd{
   display: none !important;
 }
 
+/* --- ATTACK ANGLE (Variant A: Semi-Arc) --- */
+/* ATTACK ANGLE — ARC VARIANT */
+.attack-angle--arc{
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 260px;
+  margin: 0 auto;
+  aspect-ratio: 1 / 1;
+  pointer-events: none;
+  isolation: isolate; /* cleaner blending */
+}
+
+.attack-angle--arc .attack-angle__svg{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+}
+
+/* Base arc (premium metal feel) */
+.attack-angle--arc .aa-arc{
+  fill:none;
+  stroke: rgba(216,200,166,0.32);
+  stroke-width: 6;
+  stroke-linecap: round;
+  opacity: 0.95;
+  filter:
+    drop-shadow(0 10px 18px rgba(0,0,0,0.22));
+}
+
+/* Secondary arc underlay to fake thicker edges */
+.attack-angle--arc .aa-arc-edge{
+  fill:none;
+  stroke: rgba(216,200,166,0.20);
+  stroke-width: 10;
+  stroke-linecap: round;
+  opacity: 0.55;
+  filter: drop-shadow(0 0 22px rgba(216,200,166,0.10));
+}
+
+/* Add a subtle “inner rim” by drawing the sweet path as a thin rim overlay */
+.attack-angle--arc .aa-sweet{
+  fill:none;
+  stroke: rgba(216,200,166,0.18);
+  stroke-width: 12;
+  stroke-linecap: round;
+  opacity: 0.35;
+  filter: drop-shadow(0 0 16px rgba(216,200,166,0.08));
+}
+
+/* Center marker: quieter */
+.attack-angle--arc .aa-center{
+  fill: rgba(255,255,255,0.45);
+  opacity: 0.32;
+}
+
+/* Runner: glassy ball (less “blob”, more premium) */
+.attack-angle--arc .aa-runner{
+  position:absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(255,255,255,0.65) 42%, rgba(255,255,255,0.22) 72%, rgba(255,255,255,0.12) 100%);
+  /* Removed ball halo glow; keep ball only */
+  box-shadow:
+    0 8px 16px rgba(0,0,0,0.28);
+
+  transform: translate(-50%, -50%) scale(0.96);
+  left: 60px; /* JS will override */
+  top: 76px;  /* JS will override */
+  z-index: 5;
+  opacity: 0.98;
+}
+
+/* Optional: subtle “bloom” around the runner without extra DOM */
+.attack-angle--arc .aa-runner::after{
+  content:"";
+  position:absolute;
+  inset:-8px;
+  border-radius: 999px;
+  /* Removed ball halo glow; keep ball only */
+  background: none !important;
+  filter: none !important;
+  opacity: 0 !important;
+  z-index: -1;
+}
+
+/* REMOVE runner background halo (capsule overlay) */
+#attackAngleRunner::before,
+#attackAngleRunner::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* Safety: if legacy bg element exists */
+.attack-angle .aa-runner-bg,
+.attack-angle .aa-runner-glow,
+.attack-angle .aa-runner-shadow {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+/* --- Attack Angle: kill the SECOND halo (extra glow layer) --- */
+#attackAngleRunner::before,
+#attackAngleRunner::after,
+.attack-angle--arc .aa-runner::before,
+.attack-angle--arc .aa-runner::after,
+.attack-angle--arc .aa-ball::before,
+.attack-angle--arc .aa-ball::after {
+  content: none !important;
+  opacity: 0 !important;
+  background: none !important;
+  background-image: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Keep ONE clean halo only (on the runner element itself) */
+#attackAngleRunner,
+.attack-angle--arc .aa-runner,
+.attack-angle--arc .aa-ball {
+  box-shadow: 0 0 0 10px rgba(216,200,166,0.08) !important;
+}
+
+/* If any extra blurred “cap”/overlay exists above the arc, disable it */
+.attack-angle--arc .aa-arc-glow,
+.attack-angle--arc .aa-glow,
+.attack-angle--arc .aa-runner-glow {
+  display: none !important;
+}
+
+/* --- Attack Angle: remove extra backdrop layers that can wash over the arc --- */
+
+/* 1) Kill the widget-body "glass pocket" overlay ONLY for Attack Angle */
+#swingMetricsRow .swing-metric--attack .swing-metric__body::before,
+#swingMetricsRow .swing-metric--attack .swing-metric__body::after {
+  content: none !important;
+  opacity: 0 !important;
+  background: none !important;
+  filter: none !important;
+}
+
+/* 2) If the Attack track/disc exists, make it fully transparent (keeps layout, removes wash) */
+#swingMetricsRow .swing-metric--attack .attack-angle__track,
+#swingMetricsRow .swing-metric--attack .attack-angle__plane::before,
+#swingMetricsRow .swing-metric--attack .attack-angle__plane::after,
+#swingMetricsRow .swing-metric--attack .attack-angle::before,
+#swingMetricsRow .swing-metric--attack .attack-angle::after {
+  opacity: 0 !important;
+  background: none !important;
+  background-image: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+}
+
+/* 3) Ensure arc is above any remaining backgrounds, but below the runner */
+#swingMetricsRow .swing-metric--attack .attack-angle__svg { position: relative; z-index: 2; }
+#swingMetricsRow .swing-metric--attack #attackAngleRunner { position: relative; z-index: 3; }
+
+/* Disable legacy visuals inside the new arc variant only */
+.attack-angle--arc .attack-angle__plane,
+.attack-angle--arc .aa-ring,
+.attack-angle--arc .aa-cross,
+.attack-angle--arc .aa-arrow,
+.attack-angle--arc .aa-driver,
+.attack-angle--arc .aa-glint{
+  display:none !important;
+}
+
 /* =========================================================
    LEGACY WIDGET HARD-DISABLE
    Prevents duplicate/prototype widgets from rendering
@@ -3826,4 +3999,576 @@ kbd{
 }
 [data-legacy="true"] *{
   pointer-events: none !important;
+}
+#appShell,
+.appShell{
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+#appHeader{
+  flex: 0 0 auto;
+}
+#appBody,
+.appBody{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 22px;
+}
+#mainPanel,
+.mainPanel{
+  min-width: 0;
+}
+#sidePanel,
+.sidePanel{
+  min-width: 0;
+}
+#appDock,
+.appDock{
+  display: none;
+}
+#uiRoot{
+  width: 100%;
+  min-height: 170px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+@media (max-width: 1100px){
+  #appBody,
+  .appBody{
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+@media (max-width: 960px){
+  #appBody,
+  .appBody{
+    grid-template-columns: 1fr;
+  }
+  #appDock,
+  .appDock{
+    display: none;
+  }
+}
+#powerCard,
+.powerCard,
+.gc-card--power,
+.gc-powerCard{
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.powerCard__main{
+  flex: 1 1 auto;
+  min-height: 260px;
+}
+.powerCard__controls{
+  flex: 0 0 auto;
+  padding: 18px 22px 20px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.10), rgba(0,0,0,0.18));
+  border-top: 1px solid rgba(255,255,255,0.06);
+  backdrop-filter: blur(8px);
+  position: relative;
+  z-index: 2;
+}
+.powerCard__controls #uiRoot{
+  width: 100%;
+  min-height: 170px;
+}
+.powerCard__controls .swing-metrics-row{
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+  padding: 0;
+}
+.powerCard__controls .swing-metric{
+  background: rgba(0,0,0,0.10);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 22px;
+}
+.powerCard__controls .swing-metric__title{
+  opacity: 0.55;
+}
+#swingMetricsRow{
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 0;
+}
+#uiRoot > *{
+  height: 100%;
+}
+
+@media (max-width: 980px){
+  :root{ --dock-h: 240px; }
+  .dockInner{ padding: 0 14px; }
+}
+@media (max-width: 700px){
+  :root{ --dock-h: 260px; }
+}
+html, body{
+  height: 100%;
+}
+body{
+  min-height: 100vh;
+}
+:root{
+  --dock-h: 260px;
+  --dock-pad: 16px;
+  --bg-0:#0f1413;
+  --bg-1:#121817;
+  --text-0: rgba(255,255,255,0.92);
+  --text-1: rgba(255,255,255,0.72);
+  --text-2: rgba(255,255,255,0.52);
+  --text-3: rgba(255,255,255,0.34);
+  --accent: #D8C8A6;
+  --accent-2: rgba(216,200,166,0.35);
+  --accent-3: rgba(216,200,166,0.14);
+  --ring: rgba(255,255,255,0.10);
+  --ring-strong: rgba(255,255,255,0.14);
+  --shadow-soft: 0 18px 55px rgba(0,0,0,0.55);
+  --shadow-tight: 0 10px 28px rgba(0,0,0,0.52);
+  --r-lg: 26px;
+  --r-md: 18px;
+  --r-sm: 12px;
+  --pad-lg: 22px;
+  --pad-md: 16px;
+  --pad-sm: 10px;
+  --font-ui: ui-sans-serif, system-ui, -apple-system, Segoe UI, Inter, Roboto, Arial, sans-serif;
+  --font: var(--font-ui);
+  --text: var(--text-0);
+  --card-r: 26px;
+  --card-border: rgba(255,255,255,0.10);
+  --card-border-strong: rgba(255,255,255,0.14);
+  --card-bg-1: rgba(30,34,33,0.86);
+  --card-bg-2: rgba(22,26,25,0.78);
+  --card-shadow: 0 22px 60px rgba(0,0,0,0.55);
+  --card-inner: inset 0 1px 0 rgba(255,255,255,0.06);
+  --card-blur: 14px;
+}
+
+.drivix-card{
+  border-radius: var(--card-r);
+  border: 1px solid var(--card-border);
+  background: linear-gradient(180deg, var(--card-bg-1), var(--card-bg-2));
+  box-shadow: var(--card-shadow), var(--card-inner);
+  backdrop-filter: blur(var(--card-blur));
+  -webkit-backdrop-filter: blur(var(--card-blur));
+}
+
+.drivix-card--strong{
+  border-color: var(--card-border-strong);
+}
+
+.drivix-card > *{ box-sizing:border-box; }
+
+.drivix-panel{
+  border-radius: var(--r-lg);
+  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.08));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+/* POWER card footer becomes part of the same card */
+.powerCard__footer{
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.powerCard__footer .gc-card,
+.powerCard__footer .drivix-card,
+.powerCard__footer .gc-controls__row{
+  background: transparent;
+  box-shadow: none;
+}
+.powerCard__footer .gc-segmented{
+  margin-bottom: 12px;
+}
+.powerCard__footer .gc-mutedSmall,
+.powerCard__footer .gc-controls__row--meta,
+.powerCard__footer .gc-controls__row--meta *{
+  color: rgba(255,255,255,0.62);
+}
+.powerCard__footer .gc-controls__row--meta{
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 18px;
+  align-items: center;
+}
+@media (max-width: 860px){
+  .powerCard__footer .gc-controls__row--meta{
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+.powerCard__footer .gc-controls__row{
+  margin-top: 0;
+}
+.ui-label,
+.gc-mutedSmall,
+.swing-metric__title,
+.gc-card__label{
+  color: var(--text-2);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+.gc-segmented{
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.gc-segmented__btn{
+  color: var(--text-1);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 12px;
+  border-right: 1px solid rgba(255,255,255,0.08);
+  background: transparent;
+}
+.gc-segmented__btn:last-child{ border-right:0; }
+.gc-segmented__btn.is-active,
+.gc-segmented__btn--active,
+.gc-segmented__btn[aria-pressed="true"]{
+  color: rgba(0,0,0,0.78);
+  background: linear-gradient(180deg, rgba(216,200,166,0.95), rgba(216,200,166,0.82));
+  box-shadow: 0 10px 26px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.35);
+}
+.gc-segmented__btn:not(.is-active):hover,
+.gc-segmented__btn:not(.gc-segmented__btn--active):hover{
+  background: rgba(255,255,255,0.05);
+  color: var(--text-0);
+}
+.gc-power__value,
+#powerValue,
+.powerValue{
+  font-size: clamp(44px, 4.5vw, 64px);
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  color: var(--text-0);
+}
+.gc-unit,
+.gc-smallValue{
+  color: var(--text-1);
+}
+.is-accent, .accent{
+  color: var(--accent);
+}
+#uiRoot .swing-metrics-row{
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  gap: 42px;
+  align-items: start;
+}
+#uiRoot .swing-metric{
+  min-height: 220px;
+}
+#uiRoot .swing-metric__footer .swing-metric__value{
+  color: var(--accent);
+  font-weight: 650;
+}
+#uiRoot .swing-metric__hint{
+  color: var(--text-2);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+#uiRoot .swing-metric__body{
+  border-radius: 22px;
+  background: radial-gradient(220px 160px at 50% 30%, rgba(255,255,255,0.05), transparent 60%);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+:focus-visible{
+  outline: 2px solid rgba(216,200,166,0.55);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+/* Layout Map Overlay (dev) */
+.layoutOverlay{
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
+.layoutOverlay__box{
+  position: fixed;
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.22);
+}
+.layoutOverlay__label{
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.42);
+  color: rgba(255,255,255,0.78);
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(6px);
+}
+
+/* --- UI ROOT: must never collapse --- */
+#uiRoot{
+  width: 100%;
+  min-height: 260px;
+  position: relative;
+  z-index: 120;
+}
+
+/* Dock must not clip its children */
+.appDock{
+  overflow: visible !important;
+}
+
+/* If any parent accidentally clips */
+.gc-swingControl,
+.gc-controls__row--primary{
+  overflow: visible !important;
+}
+
+/* Debug outline (enable via ?uidebug=1) */
+body.uidebug #uiRoot{ outline: 2px solid rgba(255,120,120,0.8); }
+body.uidebug #uiRoot::before{
+  content: "UI ROOT (debug)";
+  position: absolute;
+  top: -18px;
+  left: 0;
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+/* ================================
+   ATTACK ANGLE — runner cleanup
+   (restore ball, kill extra halo)
+   ================================ */
+
+/* The unwanted layer is almost certainly a ::before/backplate on the runner.
+   Kill it completely. */
+#attackAngleRunner::before,
+.attack-angle #attackAngleRunner::before,
+.attack-angle .aa-ball::before {
+  content: none !important;
+  display: none !important;
+  opacity: 0 !important;
+  filter: none !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+/* Ensure the runner itself is ONLY the ball (no pill/rect). */
+#attackAngleRunner,
+.attack-angle #attackAngleRunner,
+.attack-angle .aa-ball {
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 999px !important;
+  background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.95), rgba(220,220,220,0.55) 55%, rgba(0,0,0,0.18) 100%) !important;
+  box-shadow:
+    0 10px 22px rgba(0,0,0,0.35),
+    0 0 0 1px rgba(216,200,166,0.18) inset !important;
+  opacity: 1 !important;
+}
+
+/* Optional: keep a subtle SINGLE glow around the ball (not a second halo plate). */
+#attackAngleRunner::after,
+.attack-angle #attackAngleRunner::after,
+.attack-angle .aa-ball::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: -12px !important;
+  border-radius: 999px !important;
+  background: radial-gradient(circle, rgba(216,200,166,0.16), rgba(216,200,166,0.00) 70%) !important;
+  filter: blur(0.2px) !important;
+  opacity: 0.55 !important;
+  pointer-events: none !important;
+}
+
+/* Make sure the ball sits above the arc (but still inside the widget). */
+.attack-angle,
+#attackAngle {
+  position: relative;
+}
+#attackAngleRunner,
+.attack-angle #attackAngleRunner {
+  position: absolute !important;
+  z-index: 6 !important;
+}
+
+/* --- AA: restore arc visibility --- */
+#attackAnglePlane .aa-arc-edge,
+#attackAnglePlane .aa-arc{
+  fill: none !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: inline !important;
+}
+
+#attackAnglePlane .aa-arc-edge{
+  stroke: rgba(216,200,166,0.16) !important;
+  stroke-width: 18 !important;
+  filter: blur(0.2px);
+}
+
+#attackAnglePlane .aa-arc{
+  stroke: rgba(216,200,166,0.34) !important;
+  stroke-width: 14 !important;
+}
+
+#attackAnglePlane .attack-angle__svg{
+  overflow: visible !important;
+}
+
+/* keep runner above arc */
+#attackAngleRunner{ z-index: 6 !important; }
+
+/* --- DEBUG: force-show Attack Angle widget --- */
+.swing-metric--attack,
+.swing-metric--attack .swing-metric__body,
+#attackAngle,
+#attackAnglePlane,
+#attackAngleRunner,
+.attack-angle,
+.attack-angle__plane,
+.attack-angle__svg {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Ensure containers establish stacking context */
+.swing-metric--attack .swing-metric__body,
+#attackAngle,
+#attackAnglePlane,
+.attack-angle {
+  position: relative !important;
+  z-index: 50 !important;
+}
+
+/* Ensure SVG and runner are on top within the widget */
+.attack-angle__svg { position: relative !important; z-index: 2 !important; }
+#attackAngleRunner { position: absolute !important; z-index: 5 !important; }
+
+/* === AA FIX: remove the "capsule" halo above the arc (from sweet/runner layers) === */
+#attackAnglePlane #attackAngleSweet,
+#attackAnglePlane .aa-sweet{
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+#attackAnglePlane #attackAngleSweet::before,
+#attackAnglePlane #attackAngleSweet::after,
+#attackAnglePlane .aa-sweet::before,
+#attackAnglePlane .aa-sweet::after,
+#attackAnglePlane #attackAngleRunner::before,
+#attackAnglePlane #attackAngleRunner::after,
+#attackAnglePlane .aa-runner::before,
+#attackAnglePlane .aa-runner::after,
+#attackAnglePlane .aa-ball::before,
+#attackAnglePlane .aa-ball::after{
+  content: none !important;
+  background: none !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* If the capsule is an SVG pill/window layer, hide only that */
+#attackAnglePlane svg .aa-sweet,
+#attackAnglePlane svg .aa-sweet-bg,
+#attackAnglePlane svg .aa-window,
+#attackAnglePlane svg .aa-pill{
+  display: none !important;
+  opacity: 0 !important;
+}
+
+/* === AA LAYOUT: normalized scale + runner-on-arc === */
+#attackAngle,
+.attack-angle{
+  position: relative;
+}
+
+/* Keep the drawing area centered and scaled */
+#attackAnglePlane,
+.attack-angle__plane{
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+/* Control the arc size via CSS vars (easy tuning) */
+#attackAnglePlane{
+  --aa-size: min(260px, 78%);
+  --aa-stroke: 18px;
+  --aa-arc-r: 44;
+  --aa-vb: 120;
+}
+
+#attackAnglePlane .attack-angle__svg{
+  width: var(--aa-size);
+  height: var(--aa-size);
+  display: block;
+}
+
+/* Ensure ring thickness matches and looks consistent */
+#attackAnglePlane .aa-ring{
+  stroke-width: var(--aa-stroke);
+  stroke-linecap: round;
+}
+
+/* Runner ball: absolute over the SVG, centered on the stroke */
+#attackAngleRunner,
+#attackAnglePlane .aa-ball,
+#attackAnglePlane .aa-runner{
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+}
+
+/*
+  IMPORTANT:
+  attack_angle_plane.js usually sets translate/left/top OR transform.
+  We force "transform: translate(-50%,-50%)" so (left,top) are the ball center.
+*/
+
+/* Default resting position: left side of arc (for initial visual) */
+#attackAngleRunner{
+  left: 50%;
+  top: 50%;
+}
+
+/* If JS uses translateX/Y on runner, keep it working but still centered */
+#attackAngleRunner{
+  transform: translate(-50%, -50%) translate(var(--aa-runner-x, 0px), var(--aa-runner-y, 0px));
+}
+
+/* --- OPTIONAL: set the runner onto the arc even if JS only moves it vertically ---
+   We anchor "arc center" and let JS supply offsets via CSS vars if needed later. */
+#attackAnglePlane{
+  --aa-px: calc(var(--aa-size) / var(--aa-vb));
+  --aa-cx: calc(60 * var(--aa-px));
+  --aa-cy: calc(60 * var(--aa-px));
+}
+
+/* Place runner at arc center by default (JS offsets applied via vars above) */
+#attackAngleRunner{
+  left: var(--aa-cx);
+  top: var(--aa-cy);
 }

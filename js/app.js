@@ -40,7 +40,7 @@ const RISK_P = 2.2;
 const DANGER_X_START = 2.2;
 const DANGER_X_FULL = 3.6;
 const DBG_PHYS = false;
-const REACT_UI = true;
+const REACT_UI = false;
 let widgetManager = null;
 
 const FEATURES = {
@@ -317,6 +317,18 @@ const state = {
 state._lastWindHudAt = 0;
 state._windFrozenOnce = false;
 state.ui = state.ui || { canStart: true };
+
+// --- UI Bridge (React reads from here) ---
+if (!window.__DRIVIX_UI__) {
+  const listeners = new Set();
+  window.__DRIVIX_UI__ = {
+    getState: () => window.__DRIVIX_UI__._state,
+    subscribe: (fn) => (listeners.add(fn), () => listeners.delete(fn)),
+    _emit: () => listeners.forEach((fn) => fn()),
+    _state: null,
+  };
+}
+window.__DRIVIX_UI__._state = state;
 
 const ANALYTICS_STORAGE_KEY = "drivix.stats";
 const ANALYTICS_MAX = 12;
@@ -720,6 +732,7 @@ function resetRoundState(reason = "manual"){
   state.impact.attackScore = 0;
   state.ui = state.ui || {};
   state.ui.canStart = true;
+  if (state.ui?.preview) state.ui.preview.attackDeg = 0;
   setButtons();
 }
 
@@ -998,13 +1011,17 @@ function syncSwingUI(){
       sweetWidthDeg: 18
     });
   }
+  const attackDegForUI =
+    (state.phase === RoundPhase.ARMING)
+      ? (state.ui?.preview?.attackDeg ?? 0)
+      : (state.shot?.attackDeg ?? state.attackDeg ?? 0);
   if (window.DrivixUI?.set) {
     window.DrivixUI.set({
       phase: state.phase,
       locked: !!state.shot?.locked,
       tempo01: state.shot?.tempo01 ?? headPos ?? 0,
       path01: state.shot?.path01 ?? path01 ?? 0.5,
-      attackDeg: state.shot?.attackDeg ?? 0,
+      attackDeg: attackDegForUI,
       sweetStart01: state.tempo?.windowStart,
       sweetEnd01: state.tempo?.windowEnd
     });
@@ -1660,6 +1677,9 @@ function releaseSwing(ts, power = 0){
 // == Round Loop ==
 
 function tick(ts){
+  const emitUI = () => {
+    if (window.__DRIVIX_UI__) window.__DRIVIX_UI__._emit();
+  };
   const dtMs = state.lastTs ? (ts - state.lastTs) : 16;
   state._dbg = state._dbg || { t: 0 };
   if(!state._dbg.t || ts - state._dbg.t > 800){
@@ -1675,6 +1695,16 @@ function tick(ts){
     updateRoundWind(ts);
     updateWindHUD();
     updateImpactQuality();
+
+    const tSec = ts * 0.001;
+    const previewAttackDeg = Math.sin(tSec * 0.85) * 2.2;
+    state.ui.preview.attackDeg = previewAttackDeg;
+    console.log("[PREVIEW] attackDeg", previewAttackDeg.toFixed(2));
+
+    const attackDegForUI =
+      (state.phase === RoundPhase.ARMING)
+        ? (state.ui?.preview?.attackDeg ?? 0)
+        : (state.shot?.attackDeg ?? state.attackDeg ?? 0);
     
     // === SPRING-DAMPER PHYSICS (Variant 2) ===
     // Run physics FIRST so all visuals use current-frame values
@@ -1696,7 +1726,7 @@ function tick(ts){
       // Inject physics values into attackAngle state BEFORE rendering
       // This ensures DOM attack driver shows the same values as scoring
       if(state.attackAngle){
-        state.attackAngle.valueDeg = state.shot.attackDeg;
+        state.attackAngle.valueDeg = attackDegForUI;
         state.attackAngle.active = true;
         state.attackAngle.locked = false;
       }
@@ -1708,18 +1738,32 @@ function tick(ts){
     }
     
     if (!REACT_UI && widgetManager) {
+      const attackDegRestore = state.shot?.attackDeg;
+      if (state.shot) state.shot.attackDeg = attackDegForUI;
       widgetManager.update(ts, dtMs, state.phase);
+      if (state.shot) state.shot.attackDeg = attackDegRestore;
+      if (!state._uiDbgTs || ts - state._uiDbgTs > 500) {
+        console.log("[UI] update", {
+          phase: state.phase,
+          tempo: state.shot?.tempo01,
+          path: state.shot?.path01,
+          attack: state.shot?.attackDeg
+        });
+        state._uiDbgTs = ts;
+      }
     }
     
     syncSwingUI();
     sendFlightHUD();
     syncRendererState();
+    emitUI();
     return;
   }
   if(!isRunning){
     state.lastTs = ts;
     sendFlightHUD();
     syncRendererState();
+    emitUI();
     return;
   }
   if(state.phase === RoundPhase.SWING){
@@ -1749,6 +1793,7 @@ function tick(ts){
     flight.updateLive(state.round.distanceLiveYards);
     flight.render?.(state);
     syncRendererState();
+    emitUI();
     return;
   }
   const windSample = state.round.wind ? sampleWind(state.round.wind, ts) : null;
@@ -1813,14 +1858,17 @@ function tick(ts){
     }
     if(Math.random() < crashProb){
       endRound("CRASH", ts);
+      emitUI();
       return;
     }
   }
   if(state.currentX >= landingTarget){
     state.currentX = landingTarget;
     endRound("STOP", ts);
+    emitUI();
     return;
   }
+  emitUI();
 }
 
 function startRound(power = 0, ts){
@@ -2318,15 +2366,18 @@ function resetPlayer(){
 
 function initUI(){
   ensureAnim();
+  state.ui = state.ui || {};
+  state.ui.preview = state.ui.preview || {};
+  state.ui.preview.attackDeg = state.ui.preview.attackDeg ?? 0;
   SwingControls.init(state);
-  if (!REACT_UI) {
-    window.SwingPath?.init?.();
-    if (!widgetManager) {
-      state.uiRefs = getUIRefs();
-      widgetManager = createWidgetManager({ getState: () => state, ui: state.uiRefs });
-    }
-    widgetManager.mount();
+  window.SwingPath?.init?.();
+  if (!widgetManager) {
+    state.uiRefs = getUIRefs();
+    window.__UI_REFS__ = state.uiRefs;
+    console.log("[UI] mounted", state.uiRefs);
+    widgetManager = createWidgetManager({ getState: () => state, ui: state.uiRefs });
   }
+  widgetManager.mount();
   window.DrivixUIInput = {
     beginHold: () => beginHold(performance.now()),
     release: () => {
@@ -2358,9 +2409,7 @@ function initUI(){
   updateShotInfo();
   ensureImpactReadout();
 
-  if (!REACT_UI) {
-    bindSwingTempoInput();
-  }
+  bindSwingTempoInput();
   wireModal();
   wireInfoTooltips();
   wireGcInfoTooltips();

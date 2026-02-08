@@ -1,30 +1,32 @@
 export function getUIRefs() {
+  const byId = (id) => document.getElementById(id);
   return {
+    uiRoot: byId("uiRoot"),
     tempo: {
-      control: document.getElementById("swingTempoControl"),
-      tube: document.getElementById("swingTempoTube"),
-      fill: document.getElementById("swingTempoFill"),
-      runner: document.getElementById("swingTempoRunner"),
-      pct: document.getElementById("swingTempoPct")
+      control: byId("swingTempoControl"),
+      tube: byId("swingTempoTube"),
+      fill: byId("swingTempoFill"),
+      runner: byId("swingTempoRunner"),
+      pct: byId("swingTempoPct")
     },
     path: {
-      mount: document.getElementById("pathPixi"),
-      ring: document.getElementById("alignmentRing"),
-      svg: document.getElementById("alignmentSvg"),
-      base: document.getElementById("alignmentBase"),
-      sweet: document.getElementById("alignmentSweet"),
-      runner: document.getElementById("alignmentRunner"),
-      ball: document.getElementById("alignmentBall")
+      mount: byId("pathPixi"),
+      ring: byId("alignmentRing"),
+      svg: byId("alignmentSvg"),
+      base: byId("alignmentBase"),
+      sweet: byId("alignmentSweet"),
+      runner: byId("alignmentRunner"),
+      ball: byId("alignmentBall")
     },
     attack: {
-      container: document.getElementById("attackAngle"),
-      plane: document.getElementById("attackAnglePlane"),
-      runner: document.getElementById("attackAngleRunner"),
-      sweet: document.getElementById("attackAngleSweet"),
-      readout: document.getElementById("attackAngleReadout")
+      container: byId("attackAngle"),
+      plane: byId("attackAnglePlane"),
+      runner: byId("attackAngleRunner"),
+      sweet: byId("attackAngleSweet"),
+      readout: byId("attackAngleReadout")
     },
     common: {
-      swingMetricsRow: document.getElementById("swingMetricsRow")
+      swingMetricsRow: byId("swingMetricsRow")
     }
   };
 }

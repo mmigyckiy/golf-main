@@ -33,6 +33,7 @@ const CONFIG = {
 // Module state
 let getStateFn = null;
 let isArmingFn = null;
+let __aaGeomCache = null;
 
 // Cached DOM elements
 let els = {
@@ -78,6 +79,85 @@ function formatDeg(d) {
   const sign = d >= 0 ? "+" : "−";
   return `${sign}${Math.abs(d).toFixed(1)}°`;
 }
+
+function __aaParseDashArray(v) {
+  if (!v || v === "none") return null;
+  return String(v).split(/[ ,]+/).map(Number).filter(n => Number.isFinite(n));
+}
+
+function __aaMod(a, n) {
+  return ((a % n) + n) % n;
+}
+
+function __aaGetGeom() {
+  const plane = document.getElementById("attackAnglePlane") || document.querySelector("#attackAnglePlane, .attack-angle__plane");
+  if (!plane) return null;
+
+  const svg = plane.querySelector("svg");
+  const ring = plane.querySelector(".aa-ring") || plane.querySelector(".aa-arc");
+  if (!svg || !ring || typeof ring.getTotalLength !== "function" || typeof ring.getPointAtLength !== "function") {
+    return null;
+  }
+
+  const total = ring.getTotalLength();
+  const cs = getComputedStyle(ring);
+  const da = __aaParseDashArray(cs.strokeDasharray);
+  const offRaw = parseFloat(cs.strokeDashoffset || "0") || 0;
+
+  // Determine a SINGLE visible segment length.
+  // If dasharray is [dash, gap, ...], assume first number is visible length.
+  // If dasharray missing -> fallback to full path length (the arc itself).
+  let visLen = null;
+  let patternLen = null;
+
+  if (da && da.length >= 2) {
+    visLen = da[0];
+    patternLen = da.reduce((s, x) => s + x, 0);
+  } else if (da && da.length === 1) {
+    visLen = da[0];
+    patternLen = da[0];
+  } else {
+    // If the arc is a standalone path (not dashed), the visible segment is the full path length.
+    visLen = total;
+    patternLen = total;
+  }
+
+  // Compute the start of the first dash segment after applying dashoffset.
+  // SVG stroke dash starts at path length 0. dashoffset shifts the pattern by offRaw.
+  // Start of visible dash is at length = (-dashoffset) mod patternLen.
+  // Then map that to the circle length domain.
+  const startOnPattern = __aaMod(-offRaw, patternLen);
+  // If patternLen differs from total, clamp to circle domain by modulo total.
+  const startLen = __aaMod(startOnPattern, total);
+
+  return { plane, svg, ring, total, visLen: Math.min(visLen, total), startLen };
+}
+
+function __aaPointOnVisibleArc(t01) {
+  // t01 in [0..1] along the visible segment
+  if (!__aaGeomCache) __aaGeomCache = __aaGetGeom();
+  const g = __aaGeomCache;
+  if (!g) return null;
+
+  const t = Math.min(1, Math.max(0, Number.isFinite(t01) ? t01 : 0));
+  // shift so t=0.5 is the middle of the visible arc (neutral/0°)
+  const phase = g.visLen * 0.5;
+  const len = __aaMod(g.startLen + phase + g.visLen * (t - 0.5), g.total);
+  const p = g.ring.getPointAtLength(len);
+
+  // Convert SVG user units to screen coords
+  const m = g.svg.getScreenCTM();
+  if (!m) return null;
+  const sp = g.svg.createSVGPoint();
+  sp.x = p.x;
+  sp.y = p.y;
+  const wp = sp.matrixTransform(m);
+
+  const pr = g.plane.getBoundingClientRect();
+  return { x: wp.x - pr.left, y: wp.y - pr.top };
+}
+
+window.addEventListener("resize", () => { __aaGeomCache = null; }, { passive: true });
 
 /**
  * Get app state
@@ -129,7 +209,6 @@ function render() {
   if (!state) return;
   
   const { track, readout } = els;
-  if (!track || !readout) return;
   
   const aa = state.attackAngle;
   
@@ -138,7 +217,9 @@ function render() {
   const display01 = mode === "LOCKED" ? locked01 : value01;
   
   // Update readout
-  readout.textContent = formatDeg(displayDeg ?? 0);
+  if (readout) {
+    readout.textContent = formatDeg(displayDeg ?? 0);
+  }
   
   // Apply vertical position to driver SVG (no rotation)
   // Mapping: negative angle (steep) → clubhead lower, positive angle (shallow) → clubhead higher
@@ -151,11 +232,56 @@ function render() {
     
     els.driver.style.setProperty("--attack-y-px", `${yPx.toFixed(2)}px`);
   }
+
+  // --- ATTACK ANGLE VISUAL CONTRACT ---
+  //
+  // 0° is defined as the CENTER of the arc (top-most point).
+  // This is the neutral aiming position for the player.
+  //
+  // Angle direction:
+  // - Negative degrees move the ball to the LEFT side of the arc
+  // - Positive degrees move the ball to the RIGHT side of the arc
+  //
+  // Visual rules:
+  // - The arc itself is static
+  // - Only the ball moves along the arc
+  // - The ball center always lies exactly on the arc radius
+  //
+  // WARNING:
+  // Changing this mapping will break visual alignment
+  // between the arc, the readout, and player intuition.
+  //
+  // Position runner on the visible arc segment
+  if (!__aaGeomCache) __aaGeomCache = __aaGetGeom();
+  const runner = els.ball || document.getElementById("attackAngleRunner");
+  if (runner) {
+    let t = 0.5;
+    if (Number.isFinite(displayDeg)) {
+      const maxAbs = Math.max(Math.abs(CONFIG.MIN_DEG), Math.abs(CONFIG.MAX_DEG)) || 1;
+      // 0° = center of arc
+      t = clamp(0.5 + (displayDeg / (2 * maxAbs)), 0, 1);
+    } else if (typeof display01 === "number") {
+      t = clamp(display01, 0, 1);
+    } else if (typeof value01 === "number") {
+      t = clamp(value01, 0, 1);
+    }
+
+    const pt = __aaPointOnVisibleArc(t);
+    if (pt) {
+      runner.style.left = pt.x + "px";
+      runner.style.top = pt.y + "px";
+      if (!runner.style.transform || !runner.style.transform.includes("translate(-50%")) {
+        runner.style.transform = "translate(-50%, -50%)";
+      }
+    }
+  }
   
   // Check if inside window and update highlight state
   const deg = displayDeg ?? 0;
   const inside = deg >= aa.windowMinDeg && deg <= aa.windowMaxDeg;
-  track.classList.toggle("attack-angle--inside", inside);
+  if (track) {
+    track.classList.toggle("attack-angle--inside", inside);
+  }
 }
 
 /**
@@ -271,6 +397,7 @@ export function resetAttackAnglePlane() {
   lockedDeg = null;
   locked01 = null;
   holdStartTime = 0;
+  __aaGeomCache = null;
   
   // Reset app state
   state.attackAngle.active = false;
