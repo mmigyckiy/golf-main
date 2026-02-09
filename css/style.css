@@ -4803,10 +4803,6 @@ body.uidebug #uiRoot::before{
   margin-top: -16px !important;
 }
 
-.swing-metric--tempo .swing-metric__footer{
-  outline: 1px solid red;
-}
-
 /* UI polish: bring Swing Tempo footer closer to the tube */
 .swing-metric--tempo .swing-metric__footer{
   transform: translateY(-12px);
@@ -4820,11 +4816,9 @@ body.uidebug #uiRoot::before{
 /* === Swing Tempo: tighten bottom (override-proof) === */
 #swingMetricsRow .swing-metric--tempo .swing-metric__body{
   padding-bottom: 8px !important;
-  outline: 1px solid rgba(255,0,0,0.35); /* TEMP: verify rule applied */
 }
 #swingMetricsRow .swing-metric--tempo .swing-metric__footer{
   margin-top: -10px !important; /* pull % closer to tube */
-  outline: 1px solid rgba(0,255,0,0.35); /* TEMP */
 }
 
 /* TEMPO: tighten bottom area (remove empty space under % readout) */
@@ -4840,4 +4834,17 @@ body.uidebug #uiRoot::before{
 /* TEMPO: keep % closer to scale */
 .swing-metric--tempo #tempoValueLabel{
   margin-top: -6px !important;
+}
+
+/* FIX: tempo should not stretch vertically; remove forced growth */
+.swing-metric--tempo{
+  min-height: 0 !important;
+  height: auto !important;
+}
+.swing-metric--tempo .swing-metric__body{
+  flex: 0 0 auto !important;
+}
+.swing-metric--tempo .swing-metric__footer{
+  flex: 0 0 auto !important;
+  padding-bottom: 0 !important;
 }
