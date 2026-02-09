@@ -3499,12 +3499,33 @@ kbd{
   height: 70%;
 }
 
+/* TEMPO: default fill before first JS update */
+#swingTempoControl:not(.is-ready) #swingTempoFill{
+  height: 12% !important;
+  opacity: 0.85;
+}
+
+/* Smooth transition when JS starts updating real value */
+#swingTempoFill{
+  transition: height 220ms ease-out;
+}
+
 /* runner: looks like a puck */
 #swingMetricsRow .swing-metric--tempo #swingTempoRunner{
   background: rgba(238,242,248,0.90) !important;
   box-shadow:
     0 10px 18px rgba(0,0,0,0.45),
     inset 0 1px 0 rgba(255,255,255,0.35);
+}
+
+/* TEMPO idle hint: make widget readable on first load (subtle, no glow) */
+#swingMetricsRow .swing-metric--tempo.is-idle #swingTempoControl:not(.is-ready) #swingTempoFill{
+  height: 8% !important;
+  opacity: 0.45 !important;
+}
+
+#swingMetricsRow .swing-metric--tempo.is-idle #swingTempoRunner{
+  opacity: 0.55 !important;
 }
 
 /* % value: stronger contrast */
@@ -4800,51 +4821,108 @@ body.uidebug #uiRoot::before{
 
 /* процент ещё ближе к шкале */
 .swing-metric--tempo #tempoValueLabel{
-  margin-top: -16px !important;
-}
-
-/* UI polish: bring Swing Tempo footer closer to the tube */
-.swing-metric--tempo .swing-metric__footer{
-  transform: translateY(-12px);
-}
-
-/* UI polish: reduce bottom padding of Swing Tempo body */
-.swing-metric--tempo .swing-metric__body{
-  padding-bottom: 18px;
-}
-
-/* === Swing Tempo: tighten bottom (override-proof) === */
-#swingMetricsRow .swing-metric--tempo .swing-metric__body{
-  padding-bottom: 8px !important;
-}
-#swingMetricsRow .swing-metric--tempo .swing-metric__footer{
-  margin-top: -10px !important; /* pull % closer to tube */
-}
-
-/* TEMPO: tighten bottom area (remove empty space under % readout) */
-.swing-metric--tempo.swing-metric{
-  padding-bottom: 12px !important;
-}
-
-.swing-metric--tempo .swing-metric__footer{
-  margin-top: -10px !important;
-  padding-bottom: 0 !important;
-}
-
-/* TEMPO: keep % closer to scale */
-.swing-metric--tempo #tempoValueLabel{
   margin-top: -6px !important;
 }
 
-/* FIX: tempo should not stretch vertically; remove forced growth */
-.swing-metric--tempo{
-  min-height: 0 !important;
-  height: auto !important;
+/* TEMPO: lock fill color so no state can repaint it */
+#swingMetricsRow .swing-metric--tempo #swingTempoFill{
+  background: linear-gradient(
+    to top,
+    rgba(216, 200, 166, 0.14) 0%,
+    rgba(216, 200, 166, 0.22) 55%,
+    rgba(216, 200, 166, 0.32) 100%
+  ) !important;
+  transition: height 220ms ease-out;
+  z-index: 2 !important;
 }
-.swing-metric--tempo .swing-metric__body{
-  flex: 0 0 auto !important;
+
+/* TEMPO: tube clips runner/fill cleanly at extremes */
+#swingMetricsRow .swing-metric--tempo #swingTempoTube{
+  overflow: hidden !important;
+  border-radius: 999px !important;
 }
-.swing-metric--tempo .swing-metric__footer{
-  flex: 0 0 auto !important;
-  padding-bottom: 0 !important;
+
+/* TEMPO: runner energy gradient + single-source Y positioning */
+#swingMetricsRow .swing-metric--tempo #swingTempoRunner{
+  bottom: var(--tempoRunnerY, 8px) !important;
+  top: auto !important;
+  height: 14px !important;
+  min-height: 14px !important;
+  max-height: 14px !important;
+  border-radius: 999px !important;
+  z-index: 3 !important;
+  background: linear-gradient(
+    to top,
+    rgba(216, 200, 166, 0.55) 0%,
+    rgba(216, 200, 166, 0.85) 60%,
+    rgba(216, 200, 166, 1.00) 100%
+  ) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.10) inset,
+    0 -1px 0 rgba(0,0,0,0.20) inset,
+    0 10px 22px rgba(0,0,0,0.30);
+}
+
+/* TEMPO: HOLD micro animation */
+#swingMetricsRow .swing-metric--tempo #swingTempoControl.is-hold #swingTempoRunner{
+  animation: tempoHoldPulse 700ms ease-in-out infinite;
+}
+
+@keyframes tempoHoldPulse{
+  0%   { transform: translateY(0) scaleY(1);    filter: brightness(1);    opacity: 0.98; }
+  50%  { transform: translateY(0) scaleY(1.03); filter: brightness(1.06); opacity: 1; }
+  100% { transform: translateY(0) scaleY(1);    filter: brightness(1);    opacity: 0.98; }
+}
+
+/* === SWING TEMPO: FIX RUNNER AS KNOB (NO STRETCH) === */
+#swingMetricsRow .tempo-meter__runner{
+  height: 14px !important;
+  min-height: 14px !important;
+  max-height: 14px !important;
+
+  width: 70% !important;
+  left: 15% !important;
+
+  border-radius: 999px;
+  background: rgba(216, 200, 166, 0.95);
+
+  transform: none !important;
+  transition: bottom 0.12s ease-out, opacity 0.12s ease-out;
+
+  z-index: 3;
+}
+
+/* Fill - background indication only, not runner */
+#swingMetricsRow .tempo-meter__fill{
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* === TEMPO footer typography: match ATTACK ANGLE readout style === */
+#swingMetricsRow .swing-metric--tempo #tempoValueLabel{
+  /* make footer stack like: dash (small) + percent (big) */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+}
+
+/* dash "—" line (usually first item inside tempoValueLabel) */
+#swingMetricsRow .swing-metric--tempo #tempoValueLabel > :first-child{
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+/* percent readout (slightly smaller - half step down) */
+#swingMetricsRow .swing-metric--tempo #swingTempoPct{
+  font-size: 16px;
+  line-height: 1.0;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(216, 200, 166, 0.92);
 }

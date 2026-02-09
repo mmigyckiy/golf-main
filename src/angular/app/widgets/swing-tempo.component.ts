@@ -25,16 +25,11 @@ import { ChangeDetectionStrategy, Component, Input } from "@angular/core";
         </div>
         <div class="tempo-meter__tube" id="swingTempoTube">
           <div
-            class="tempo-meter__fill"
-            id="swingTempoFill"
-            aria-hidden="true"
-            [style.height.%]="tempoPct"
-          ></div>
-          <div
             class="tempo-meter__runner"
             id="swingTempoRunner"
             aria-hidden="true"
-            [style.bottom]="runnerBottom"
+            [style.height.%]="tempoPct"
+            [style.bottom.px]="0"
           ></div>
         </div>
       </div>
@@ -62,7 +57,4 @@ export class SwingTempoComponent {
     return v * 100;
   }
 
-  get runnerBottom(): string {
-    return `calc(${this.tempoPct}% - 4px)`;
-  }
 }

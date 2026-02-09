@@ -10,15 +10,10 @@ export function TempoWidget({ tempo01 = 0 }) {
   const percent = Math.round(v * 100);
 
   const runnerStyle = useMemo(() => {
-    const tubeHeight = 120;
-    const runnerHeight = 10;
-    const travel = tubeHeight - runnerHeight - 16;
-    const bottom = 8 + travel * v;
-    return { bottom: `${bottom.toFixed(2)}px` };
-  }, [v]);
-
-  const fillStyle = useMemo(() => {
-    return { height: `${(v * 100).toFixed(1)}%` };
+    return {
+      height: `${(v * 100).toFixed(1)}%`,
+      bottom: "0px",
+    };
   }, [v]);
 
   const beginHold = (e) => {
@@ -69,7 +64,6 @@ export function TempoWidget({ tempo01 = 0 }) {
             <span className="tempo-meter__label" data-value="0">0</span>
           </div>
           <div className="tempo-meter__tube" aria-hidden="true">
-            <div className="tempo-meter__fill" style={fillStyle}></div>
             <div className="tempo-meter__runner" style={runnerStyle}></div>
           </div>
         </div>

@@ -5,7 +5,6 @@ export function getUIRefs() {
     tempo: {
       control: byId("swingTempoControl"),
       tube: byId("swingTempoTube"),
-      fill: byId("swingTempoFill"),
       runner: byId("swingTempoRunner"),
       pct: byId("swingTempoPct")
     },

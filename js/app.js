@@ -83,8 +83,7 @@ const $ = (...ids) => {
 const ui = {
   tempoControl: $("swingTempoControl"),
   tempoHead: $("swingTempoRunner", "swingTempoHead"),
-  tempoWindow: $("swingTempoFill", "swingTempoWindow"),
-  tempoFill: $("swingTempoFill"),
+  tempoWindow: $("swingTempoWindow"),
   tempoRunner: $("swingTempoRunner"),
   tempoPct: $("swingTempoPct"),
   swingWind: $("swingWind"),
@@ -861,20 +860,16 @@ function renderSwingTempo(headPos){
   const p = clamp01(Number.isFinite(headPos) ? headPos : (state.tempo?.headPos ?? 0));
   state.tempo = state.tempo || {};
   state.tempo.headPos = p;
-  const fill = document.getElementById("swingTempoFill");
-  if(fill) fill.style.height = `${(p * 100).toFixed(2)}%`;
   const runner = document.getElementById("swingTempoRunner");
   if(runner){
     const tube = document.getElementById("swingTempoTube");
     if(tube){
-      const pad = 8;
-      const tubeH = tube.clientHeight || 0;
-      const runnerH = runner.offsetHeight || 0;
-      const travel = Math.max(0, tubeH - runnerH - pad * 2);
-      const bottomPx = pad + travel * p;
-      runner.style.bottom = `${bottomPx}px`;
+      const tubeH = tube.clientHeight || tube.getBoundingClientRect().height || 0;
+      runner.style.height = `${(tubeH * p).toFixed(2)}px`;
+      runner.style.bottom = "0px";
     }else{
-      runner.style.bottom = `calc(${(p * 100).toFixed(2)}% + 8px)`;
+      runner.style.height = `${(p * 100).toFixed(2)}%`;
+      runner.style.bottom = "0px";
     }
   }
   const pct = document.getElementById("swingTempoPct");
@@ -2435,25 +2430,42 @@ function initUI(){
 
   setTimeout(() => {
     const root = document.querySelector('.swing-metric--tempo');
-    if (!root) return console.warn('[TEMPO_DBG] root not found');
-    const body = root.querySelector('.swing-metric__body');
-    const footer = root.querySelector('.swing-metric__footer');
-    console.log('[TEMPO_DBG] sizes', {
-      root: root.getBoundingClientRect(),
+    const body = root?.querySelector('.swing-metric__body');
+    const footer = root?.querySelector('.swing-metric__footer');
+    console.log('[TEMPO_DBG] rects', {
+      root: root?.getBoundingClientRect(),
       body: body?.getBoundingClientRect(),
       footer: footer?.getBoundingClientRect(),
-      rootCS: { minHeight: getComputedStyle(root).minHeight, height: getComputedStyle(root).height, display: getComputedStyle(root).display },
-      bodyCS: { flex: getComputedStyle(body).flex, minHeight: getComputedStyle(body).minHeight, height: getComputedStyle(body).height },
-      footerCS:{ flex: getComputedStyle(footer).flex, marginTop: getComputedStyle(footer).marginTop, paddingBottom: getComputedStyle(footer).paddingBottom }
+      rootCS: root ? {
+        display: getComputedStyle(root).display,
+        flex: getComputedStyle(root).flex,
+        flexDirection: getComputedStyle(root).flexDirection,
+        justifyContent: getComputedStyle(root).justifyContent,
+        alignItems: getComputedStyle(root).alignItems,
+        rowGap: getComputedStyle(root).rowGap,
+        gap: getComputedStyle(root).gap,
+        minHeight: getComputedStyle(root).minHeight,
+        height: getComputedStyle(root).height
+      } : null,
+      bodyCS: body ? {
+        flex: getComputedStyle(body).flex,
+        minHeight: getComputedStyle(body).minHeight,
+        height: getComputedStyle(body).height
+      } : null,
+      footerCS: footer ? {
+        flex: getComputedStyle(footer).flex,
+        minHeight: getComputedStyle(footer).minHeight,
+        height: getComputedStyle(footer).height,
+        marginTop: getComputedStyle(footer).marginTop
+      } : null
     });
-  }, 300);
+  }, 400);
 }
 
 function bindSwingTempoInput(){
   const control = ui.tempoControl;
   const head = ui.tempoHead;
-  const windowEl = ui.tempoWindow;
-  if(!control || !head || !windowEl){
+  if(!control || !head){
     return;
   }
 
