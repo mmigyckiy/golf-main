@@ -3,13 +3,13 @@ export function getUIRefs() {
   return {
     uiRoot: byId("uiRoot"),
     tempo: {
+      mount: byId("tempoMount"),
       control: byId("swingTempoControl"),
-      tube: byId("swingTempoTube"),
-      runner: byId("swingTempoRunner"),
       pct: byId("swingTempoPct")
     },
     path: {
-      mount: byId("pathPixi"),
+      mount: byId("pathMount"),
+      pixi: byId("pathPixi"),
       ring: byId("alignmentRing"),
       svg: byId("alignmentSvg"),
       base: byId("alignmentBase"),
@@ -18,10 +18,9 @@ export function getUIRefs() {
       ball: byId("alignmentBall")
     },
     attack: {
+      mount: byId("attackMount"),
       container: byId("attackAngle"),
-      plane: byId("attackAnglePlane"),
       runner: byId("attackAngleRunner"),
-      sweet: byId("attackAngleSweet"),
       readout: byId("attackAngleReadout")
     },
     common: {

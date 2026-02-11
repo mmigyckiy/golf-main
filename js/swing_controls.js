@@ -83,10 +83,13 @@ function safe(fn, label){
 
 function ensureTempoDOM(){
   const control = ui.tempoControl || document.getElementById("swingTempoControl");
-  const head = ui.tempoHead || document.getElementById("swingTempoRunner") || document.getElementById("swingTempoHead");
+  const head = ui.tempoHead || document.getElementById("swingTempoHead");
   if(!control || !head) return null;
   // For vertical meter, track is the tube element
-  const track = control.querySelector(".tempo-meter__tube") || control.querySelector(".swing-tempo__track") || control;
+  const track = control.querySelector(".tempo-meter__tube")
+    || control.querySelector(".tubeV__tube")
+    || control.querySelector(".swing-tempo__track")
+    || control;
   const trackStyle = getComputedStyle(track);
   if(trackStyle.position === "static") track.style.position = "relative";
   head.style.position = "absolute";

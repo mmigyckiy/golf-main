@@ -1,54 +1,58 @@
 import { createPathModel } from "./path_model.js";
 import { SwingPath } from "../../swing_path.js";
 
+function clamp01(v) {
+  return Math.max(0, Math.min(1, Number(v) || 0));
+}
+
 export function createPathWidget() {
   const name = "path";
   const model = createPathModel();
+
   let mounted = false;
   let usePixi = false;
   let useDom = true;
-  let pixiInitFailed = false;
-  let warnedPixiInit = false;
-  let mountEl = null;
-  let hostEl = null;
-  let getState = null;
+  let pathMountEl = null;
+  let pixiMountEl = null;
+  let ringEl = null;
 
-  function mount({ getState: getStateFn, ui, usePixiPreferred = true } = {}) {
-    if (mounted) return;
-    getState = getStateFn || null;
-    mountEl = ui?.path?.mount || document.getElementById("pathPixi");
-    hostEl = document.querySelector(".swing-metric--path");
+  function mount({ rootEl, ui, usePixiPreferred = true } = {}) {
+    if (mounted) return { usePixi };
+
+    pathMountEl = rootEl || ui?.path?.mount || document.getElementById("pathMount");
+    pixiMountEl = ui?.path?.pixi || document.getElementById("pathPixi");
+    ringEl = ui?.path?.ring || document.getElementById("alignmentRing");
+
     usePixi = false;
     useDom = true;
-    pixiInitFailed = false;
-    const canInitPixi = usePixiPreferred && mountEl && window.SwingPathPixi?.init;
-    if (canInitPixi) {
-      usePixi = !!window.SwingPathPixi.init({ containerEl: mountEl });
-      if (!usePixi) {
-        pixiInitFailed = true;
-        if (!warnedPixiInit) {
-          console.warn("[PathWidget] Pixi init failed; falling back to DOM.");
-          warnedPixiInit = true;
-        }
-      }
-    } else if (usePixiPreferred) {
-      pixiInitFailed = true;
+
+    const canUsePixi = !!(usePixiPreferred && window.SwingPathPixi?.init && pixiMountEl);
+    if (canUsePixi) {
+      usePixi = !!window.SwingPathPixi.init({ containerEl: pixiMountEl });
     }
-    useDom = !usePixi && (!usePixiPreferred || pixiInitFailed);
-    if (usePixi && hostEl) {
-      hostEl.classList.add("is-pixi-path");
+    useDom = !usePixi;
+
+    if (pathMountEl) {
+      pathMountEl.classList.toggle("is-pixi-path", usePixi);
+      pathMountEl.classList.toggle("is-dom-path", useDom);
     }
+    if (ringEl) ringEl.style.display = usePixi ? "none" : "";
+
+    if (useDom) SwingPath.init();
     mounted = true;
     return { usePixi };
   }
 
-  function update({ phase, dt }) {
-    if (!mounted) mount();
-    const state = typeof getState === "function" ? getState() : null;
-    const head01 = Number.isFinite(state?.shot?.path01)
-      ? state.shot.path01
-      : (state?.alignment?.value ?? 0.5);
-    const intensity01 = Number.isFinite(state?.shot?.tempo01) ? state.shot.tempo01 : 0.5;
+  function update({ phase = "IDLE", dt = 16, snapshot, state } = {}) {
+    if (!mounted) mount({ ui: state?.uiRefs });
+    if (!mounted) return;
+
+    const head01 = clamp01(
+      Number.isFinite(snapshot?.path01) ? snapshot.path01 : (state?.alignment?.value ?? 0.5)
+    );
+    const intensity01 = clamp01(
+      Number.isFinite(snapshot?.tempo01) ? snapshot.tempo01 : (state?.shot?.tempo01 ?? 0.5)
+    );
     model.update({ headPos01: head01, intensity: intensity01 });
 
     if (usePixi && window.SwingPathPixi?.update) {
@@ -60,23 +64,51 @@ export function createPathWidget() {
         intensity01,
         dtMs: dt
       });
-    } else if (useDom) {
-      SwingPath.update({ phase, headPos01: head01, sweetCenter: 0, sweetWidthDeg: 18 });
+      if (ringEl) ringEl.style.display = "none";
+      return;
+    }
+
+    if (useDom) {
+      if (ringEl) ringEl.style.display = "";
+      SwingPath.update({
+        phase,
+        headPos01: model.getValue().path01,
+        sweetCenter: state?.alignment?.sweetCenter ?? 0,
+        sweetWidthDeg: 18
+      });
     }
   }
 
   function lock() {
     model.lock();
-    SwingPath.lockPath();
+    if (useDom) SwingPath.lockPath();
   }
 
   function reset() {
     model.reset();
-    SwingPath.resetPath();
+    if (useDom) SwingPath.resetPath();
+    if (usePixi && window.SwingPathPixi?.update) {
+      window.SwingPathPixi.update({
+        headPos01: 0.5,
+        sweetStart01: 0.41,
+        sweetEnd01: 0.59,
+        locked: false,
+        intensity01: 0.5,
+        dtMs: 16
+      });
+    }
   }
 
   function destroy() {
+    if (usePixi && window.SwingPathPixi?.destroy) {
+      window.SwingPathPixi.destroy();
+    }
     mounted = false;
+    usePixi = false;
+    useDom = true;
+    pathMountEl = null;
+    pixiMountEl = null;
+    ringEl = null;
   }
 
   function getValue() {

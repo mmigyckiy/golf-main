@@ -8,6 +8,9 @@
   <meta property="og:title" content="Drivix — DISTANCE • TIMING • CONTROL" />
   <meta name="description" content="Drivix is a premium long drive challenge inspired by golf's most powerful swing." />
 
+  <link rel="stylesheet" href="css/ui_tokens.css" />
+  <link rel="stylesheet" href="css/metric_card.css" />
+  <link rel="stylesheet" href="css/tube.css" />
   <link rel="stylesheet" href="css/style.css" />
   <!-- PixiJS for premium swing metrics overlay -->
   <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.x/dist/pixi.min.js"></script>
@@ -165,32 +168,20 @@
             <div class="gc-controls__row gc-controls__row--buttons gc-controls__row--primary">
               <div class="gc-swingControl">
                 <div class="swing-metrics-row" id="swingMetricsRow">
-                  <div class="swing-metric swing-metric--tempo">
-                    <div class="swing-metric__title">Swing Tempo</div>
-                    <div class="swing-metric__body">
-                      <div class="tempo-meter swing-tempo-vertical" id="swingTempoControl">
-                        <div class="tempo-meter__tube" id="swingTempoTube">
-                          <div class="tempo-meter__fill" id="swingTempoFill" style="height:12%;" aria-hidden="true"></div>
-                          <div class="tempo-meter__runner" id="swingTempoRunner"></div>
-                        </div>
-                        <div class="tempo-meter__scale" aria-hidden="true">
-                          <span class="tempo-meter__label">100</span>
-                          <span class="tempo-meter__tick tempo-meter__tick--major"></span>
-                          <span class="tempo-meter__label">50</span>
-                          <span class="tempo-meter__tick"></span>
-                          <span class="tempo-meter__label">0</span>
-                        </div>
-                      </div>
+                  <div class="metricCard metricCard--tempo" data-widget="tempo">
+                    <div class="metricCard__title">SWING TEMPO</div>
+                    <div class="metricCard__body" id="tempoMount">
+                      <div id="swingTempoControl" class="metricWidgetHost" aria-label="Swing tempo"></div>
                     </div>
-                    <div class="swing-metric__footer">
-                      <div class="swing-metric__value" id="tempoValueLabel">—</div>
-                      <div class="swing-metric__hint" id="swingTempoPct">0%</div>
+                    <div class="metricCard__footer" id="tempoFooter">
+                      <div class="metricCard__value" id="tempoValueLabel">0%</div>
+                      <div class="metricCard__hint" id="swingTempoPct">0%</div>
                     </div>
                   </div>
 
-                  <div class="swing-metric swing-metric--path">
-                    <div class="swing-metric__title">Swing Path</div>
-                    <div class="swing-metric__body">
+                  <div class="metricCard metricCard--path" data-widget="path">
+                    <div class="metricCard__title">SWING PATH</div>
+                    <div class="metricCard__body" id="pathMount">
                       <div id="pathPixi" aria-hidden="true"></div>
                       <div class="alignment-ring" id="alignmentRing">
                         <svg class="alignment-ring__svg" id="alignmentSvg" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
@@ -202,51 +193,21 @@
                         <div class="align-target-tick" aria-hidden="true"></div>
                       </div>
                     </div>
-                    <div class="swing-metric__footer">
-                      <div class="swing-metric__value swing-metric__value--muted">—</div>
-                      <div class="swing-metric__hint">Alignment</div>
+                    <div class="metricCard__footer" id="pathFooter">
+                      <div class="metricCard__value">—</div>
+                      <div class="metricCard__hint">ALIGNMENT</div>
                     </div>
                   </div>
 
-                  <div class="swing-metric swing-metric--attack">
-                    <div class="swing-metric__title">ATTACK ANGLE</div>
-
-                    <div class="swing-metric__body">
-                      <div class="attack-angle attack-angle--arc" id="attackAngle" aria-label="Attack angle">
-                        <svg class="attack-angle__svg" viewBox="0 0 120 120" aria-hidden="true">
-                          <!-- SINGLE ARC ONLY (no circles, no crosshair) -->
-                          <path class="aa-arc"
-                                d="M18 72
-                                   A42 42 0 0 1 102 72"
-                          />
-                          <!-- subtle inner highlight for “glass” feel -->
-                          <path class="aa-arc-hi"
-                                d="M22 72
-                                   A38 38 0 0 1 98 72"
-                          />
-                          <!-- anchor dot (quiet) -->
-                          <circle class="aa-anchor" cx="60" cy="76" r="3.2"></circle>
-                        </svg>
-
-                        <!-- moving runner (JS positions/updates this element) -->
-                        <div id="attackAngleRunner" class="aa-runner" aria-hidden="true"></div>
-
-                        <!-- optional: ultra subtle scale on the right (static) -->
-                        <div class="aa-scale" aria-hidden="true">
-                          <div class="aa-scale__label aa-scale__label--top">+6</div>
-                          <div class="aa-scale__tick"></div>
-                          <div class="aa-scale__label aa-scale__label--mid">0</div>
-                          <div class="aa-scale__tick"></div>
-                          <div class="aa-scale__label aa-scale__label--bot">-6</div>
-                        </div>
-                      </div>
+                  <div class="metricCard metricCard--attack" data-widget="attack">
+                    <div class="metricCard__title">ATTACK ANGLE</div>
+                    <div class="metricCard__body" id="attackMount">
+                      <div id="attackAngle" class="metricWidgetHost" aria-label="Attack angle"></div>
                     </div>
-
-                    <div class="swing-metric__footer">
-                      <div class="swing-metric__value" id="attackAngleValueLabel">
+                    <div class="metricCard__footer" id="attackFooter">
+                      <div class="metricCard__value" id="attackAngleValueLabel">
                         <span id="attackAngleReadout">+0.0°</span>
                       </div>
-                      <div class="swing-metric__hint">DEGREES</div>
                     </div>
                   </div>
                 </div>

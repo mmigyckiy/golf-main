@@ -1,183 +1,110 @@
-import { SwingControls } from "../../swing_controls.js";
+import { createTubeViewVertical } from "../shared/tube/tube_view_vertical.js";
+
+function clamp01(v) {
+  return Math.max(0, Math.min(1, Number(v) || 0));
+}
+
+function tempoStateFromPhase({ phase, holdActive, locked }) {
+  if (locked) return "locked";
+  if (holdActive) return "hold";
+  if (phase === "IDLE" || phase === "END") return "idle";
+  return "active";
+}
 
 export function createTempoWidget() {
   const name = "tempo";
+  const view = createTubeViewVertical();
+
   let mounted = false;
   let locked = false;
-  let lastValue = 0;
-  let getState = null;
-  let root = null;
-  let tempoRoot = null;
-  let els = {
-    control: null,
-    fill: null,
-    runner: null,
-    tube: null,
-    pct: null
-  };
+  let lastTempo01 = 0;
+  let valueEl = null;
+  let pctEl = null;
+  let hostEl = null;
 
-  function clamp01(v) {
-    return Math.max(0, Math.min(1, v));
+  function render(tempo01, visualState) {
+    const v = clamp01(tempo01);
+    lastTempo01 = v;
+    view.setProgress01(v);
+    view.setRunner01(v);
+    view.setState(visualState);
+
+    const pct = `${Math.round(v * 100)}%`;
+    if (valueEl) valueEl.textContent = pct;
+    if (pctEl) pctEl.textContent = pct;
   }
 
-  function cacheEls(ui) {
-    els.control = ui?.tempo?.control || document.getElementById("swingTempoControl");
-    els.fill = ui?.tempo?.fill || document.getElementById("swingTempoFill");
-    els.runner = ui?.tempo?.runner || document.getElementById("swingTempoRunner");
-    els.tube = ui?.tempo?.tube || document.getElementById("swingTempoTube");
-    els.pct = ui?.tempo?.pct || document.getElementById("swingTempoPct");
-    tempoRoot = (els.tube || els.runner)?.closest?.(".swing-metric--tempo") || null;
-    root =
-      tempoRoot ||
-      document.querySelector("#swingMetricsRow .swing-metric--tempo") ||
-      null;
-  }
-
-  function easeOutQuad(t) {
-    return 1 - (1 - t) * (1 - t);
-  }
-
-  function mapRunnerT(v) {
-    return easeOutQuad(clamp01(v));
-  }
-
-  function setMaterialVars(tempo01, holdActive) {
-    if (!root) return;
-    root.style.setProperty("--tempoP", String(clamp01(tempo01)));
-    root.style.setProperty("--tempoHold", holdActive ? "1" : "0");
-  }
-
-  function setHoldClass(active) {
-    const el = els.control || document.getElementById("swingTempoControl");
-    if (!el?.classList) return;
-    el.classList.toggle("is-hold", !!active);
-  }
-
-  function setIdleClass(active) {
-    const el = tempoRoot || root;
-    if (!el?.classList) return;
-    el.classList.toggle("is-idle", !!active);
-  }
-
-  function render(p) {
-    const tRaw = clamp01(p);
-    const t = mapRunnerT(tRaw);
-    lastValue = tRaw;
-    const fill = els.fill || document.getElementById("swingTempoFill");
-    const runner = els.runner || document.getElementById("swingTempoRunner");
-    const tube = els.tube || document.getElementById("swingTempoTube");
-    if (runner && tube) {
-      const tubeRect = tube.getBoundingClientRect();
-      const tubeH = tube.clientHeight || tubeRect.height || 0;
-      const runnerStyle = window.getComputedStyle(runner);
-      const runnerH =
-        runner.offsetHeight ||
-        Number.parseFloat(runnerStyle.height) ||
-        0;
-      const inset = Math.max(2, Math.round(runnerH * 0.25));
-      const minBottom = inset;
-      const maxBottom = Math.max(minBottom, tubeH - runnerH - inset);
-      const yFinal = minBottom + (maxBottom - minBottom) * t;
-
-      tube.style.setProperty("--tempoRunnerY", `${yFinal.toFixed(2)}px`);
-
-      if (fill && tubeH > 0) {
-        const fillHeightPx = yFinal + runnerH * 0.5;
-        const fillPctFromRunner = clamp01(fillHeightPx / tubeH) * 100;
-        const shouldUseVisualFloor = tRaw <= 0.001;
-        const vf = shouldUseVisualFloor ? Math.max(tRaw, 0.08) : tRaw;
-        const floorPct = shouldUseVisualFloor ? vf * 100 : 0;
-        const fillPct = Math.max(fillPctFromRunner, floorPct);
-        fill.style.height = `${fillPct.toFixed(2)}%`;
-      } else if (fill) {
-        fill.style.height = "8%";
-      }
-
-      if (window.__DEBUG_TEMPO__) {
-        console.log("[TEMPO] unified fill+runner", {
-          tRaw,
-          t,
-          tubeH,
-          runnerH,
-          yFinal
-        });
-      }
-    } else if (fill) {
-      fill.style.height = "8%";
+  function resolveHost(rootEl, ui) {
+    const mount =
+      rootEl ||
+      ui?.tempo?.control ||
+      ui?.tempo?.mount ||
+      document.getElementById("tempoMount");
+    if (!mount) return null;
+    if (mount.id === "swingTempoControl") return mount;
+    let control = mount.querySelector("#swingTempoControl");
+    if (!control) {
+      control = document.createElement("div");
+      control.id = "swingTempoControl";
+      control.className = "metricWidgetHost";
+      mount.appendChild(control);
     }
-    if (els.pct) els.pct.textContent = `${Math.round(tRaw * 100)}%`;
+    return control;
   }
 
-  function mount({ getState: getStateFn, ui } = {}) {
+  function mount({ rootEl, ui } = {}) {
     if (mounted) return;
-    getState = getStateFn || null;
-    cacheEls(ui);
-    setHoldClass(false);
-    setIdleClass(false);
-    render(0);
+    hostEl = resolveHost(rootEl, ui);
+    if (!hostEl) return;
+    valueEl = document.getElementById("tempoValueLabel");
+    pctEl = document.getElementById("swingTempoPct");
+    view.mount(hostEl);
     mounted = true;
+    locked = false;
+    render(0, "idle");
   }
 
-  function update({ phase, state: stateArg, holding } = {}) {
-    if (!mounted) mount();
-    const state = stateArg || (typeof getState === "function" ? getState() : null);
-    const head01 = Number.isFinite(state?.shot?.tempo01)
-      ? state.shot.tempo01
-      : SwingControls.getTempoHeadPos();
-    const control = els.control || document.getElementById("swingTempoControl");
-    if (control && !control.classList.contains("is-ready")) {
-      control.classList.add("is-ready");
-    }
-    const holdingState =
-      typeof holding === "boolean"
-        ? holding
-        : typeof state?.tempo?.holding === "boolean"
-          ? state.tempo.holding
-          : typeof state?.ui?.tempoHold === "boolean"
-            ? state.ui.tempoHold
-            : undefined;
-    const isIdle = phase === "IDLE" || (holdingState === false && phase !== "ARMING");
-    setIdleClass(isIdle);
-    const hasExplicitHoldFlag =
-      typeof state?.tempo?.holding === "boolean" ||
-      typeof state?.ui?.tempoHold === "boolean" ||
-      typeof holding === "boolean";
-    const holdSignal = hasExplicitHoldFlag
-      ? !!(state?.tempo?.holding || state?.ui?.tempoHold || holding)
-      : phase === "ARMING";
-    const holdActive = !!holdSignal && !state?.shot?.locked;
-    setHoldClass(holdActive);
-    setMaterialVars(head01, holdActive);
+  function update({ phase = "IDLE", state, snapshot } = {}) {
+    if (!mounted) mount({ ui: state?.uiRefs });
+    if (!mounted) return;
 
-    if (locked || phase !== "ARMING") return;
-    render(head01);
+    const shotTempo = snapshot?.tempo01;
+    const stateTempo = state?.shot?.tempo01;
+    const tempo01 = Number.isFinite(shotTempo) ? shotTempo : stateTempo;
+
+    const holdActive =
+      !locked &&
+      phase === "ARMING" &&
+      (state?.tempo?.holding ?? state?.hand?.holding ?? true);
+    const visualState = tempoStateFromPhase({ phase, holdActive, locked: locked || !!state?.shot?.locked });
+
+    if (locked) return;
+    render(tempo01, visualState);
   }
 
-  function lock() {
+  function lock({ snapshot, state } = {}) {
     locked = true;
-    setHoldClass(false);
-    setIdleClass(false);
-    setMaterialVars(lastValue, false);
-    render(lastValue);
+    const tempo01 = Number.isFinite(snapshot?.tempo01) ? snapshot.tempo01 : state?.shot?.tempo01;
+    render(tempo01, "locked");
   }
 
   function reset() {
     locked = false;
-    setHoldClass(false);
-    setIdleClass(true);
-    setMaterialVars(0, false);
-    render(0);
+    render(0, "idle");
   }
 
   function destroy() {
-    setHoldClass(false);
-    setIdleClass(false);
-    setMaterialVars(0, false);
+    view.destroy();
     mounted = false;
+    locked = false;
+    hostEl = null;
+    valueEl = null;
+    pctEl = null;
+    lastTempo01 = 0;
   }
 
   function getValue() {
-    return { tempo01: lastValue };
+    return { tempo01: lastTempo01 };
   }
 
   return { name, mount, update, lock, reset, destroy, getValue };

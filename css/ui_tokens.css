@@ -1,0 +1,12 @@
+#swingMetricsRow {
+  --accent: rgba(216, 200, 166, 1);
+  --accent-soft: rgba(216, 200, 166, 0.22);
+  --accent-mid: rgba(216, 200, 166, 0.55);
+  --tube-edge: rgba(255, 255, 255, 0.08);
+  --tube-inner: rgba(0, 0, 0, 0.22);
+  --stroke-soft: rgba(255, 255, 255, 0.06);
+  --shadow-soft: 0 14px 40px rgba(0, 0, 0, 0.55);
+  --card-radius: 46px;
+  --inner-radius: 40px;
+  --text-dim: rgba(255, 255, 255, 0.45);
+}

@@ -253,24 +253,63 @@ function render() {
   //
   // Position runner on the visible arc segment
   if (!__aaGeomCache) __aaGeomCache = __aaGetGeom();
+  const root = els.container || document.getElementById("attackAngle");
   const runner = els.ball || document.getElementById("attackAngleRunner");
   if (runner) {
+    const MIN_DEG = -6;
+    const MAX_DEG = 6;
+    // AA: ball position is bound to arc path geometry (deg -6..+6 => left..right)
     let t = 0.5;
     if (Number.isFinite(displayDeg)) {
-      const maxAbs = Math.max(Math.abs(CONFIG.MIN_DEG), Math.abs(CONFIG.MAX_DEG)) || 1;
-      // 0° = center of arc
-      t = clamp(0.5 + (displayDeg / (2 * maxAbs)), 0, 1);
+      const degClamped = clamp(displayDeg, MIN_DEG, MAX_DEG);
+      t = (degClamped - MIN_DEG) / (MAX_DEG - MIN_DEG);
     } else if (typeof display01 === "number") {
       t = clamp(display01, 0, 1);
     } else if (typeof value01 === "number") {
       t = clamp(value01, 0, 1);
     }
+    t = clamp(t, 0, 1);
 
-    const pt = __aaPointOnVisibleArc(t);
-    if (pt) {
-      runner.style.left = pt.x + "px";
-      runner.style.top = pt.y + "px";
-      if (!runner.style.transform || !runner.style.transform.includes("translate(-50%")) {
+    let positioned = false;
+    const arcPath = root?.querySelector?.('[data-aa-arc="1"]');
+    if (arcPath && typeof arcPath.getTotalLength === "function") {
+      const total = arcPath.getTotalLength();
+      const svg = arcPath.ownerSVGElement;
+      const vb = svg?.viewBox?.baseVal;
+      const rect = svg?.getBoundingClientRect?.();
+      const rootRect = root?.getBoundingClientRect?.();
+
+      if (
+        Number.isFinite(total) &&
+        total > 0 &&
+        vb &&
+        rect &&
+        rootRect &&
+        rect.width > 0 &&
+        rect.height > 0 &&
+        vb.width > 0 &&
+        vb.height > 0
+      ) {
+        const p = arcPath.getPointAtLength(total * t);
+        const sx = rect.width / vb.width;
+        const sy = rect.height / vb.height;
+        const xPx = rect.left + (p.x - vb.x) * sx;
+        const yPx = rect.top + (p.y - vb.y) * sy;
+        const xLocal = xPx - rootRect.left;
+        const yLocal = yPx - rootRect.top;
+
+        runner.style.left = `${xLocal}px`;
+        runner.style.top = `${yLocal}px`;
+        runner.style.transform = "translate(-50%, -50%)";
+        positioned = true;
+      }
+    }
+
+    if (!positioned) {
+      const pt = __aaPointOnVisibleArc(t);
+      if (pt) {
+        runner.style.left = pt.x + "px";
+        runner.style.top = pt.y + "px";
         runner.style.transform = "translate(-50%, -50%)";
       }
     }

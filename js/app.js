@@ -21,7 +21,6 @@ import { initWind, sampleWind } from "./logic/wind.js";
 import { SwingControls } from "./swing_controls.js";
 import { SwingPath } from "./swing_path.js";
 import { createWidgetManager } from "./widgets/widget_manager.js";
-import { resetAttackAnglePlane } from "./attack_angle_plane.js";
 import { getUIRefs } from "./ui_refs.js";
 
 const FLIGHT_MS_VISUAL = 2200;
@@ -82,9 +81,8 @@ const $ = (...ids) => {
 // == UI Refs ==
 const ui = {
   tempoControl: $("swingTempoControl"),
-  tempoHead: $("swingTempoRunner", "swingTempoHead"),
+  tempoHead: $("swingTempoHead", "swingTempoControl"),
   tempoWindow: $("swingTempoWindow"),
-  tempoRunner: $("swingTempoRunner"),
   tempoPct: $("swingTempoPct"),
   swingWind: $("swingWind"),
   swingWindArrow: $("swingWindArrow"),
@@ -96,7 +94,6 @@ const ui = {
   alignmentRunner: $("alignmentRunner"),
   attackAngle: $("attackAngle"),
   attackAngleMeter: $("attackAngleMeter"),
-  attackAngleSweet: $("attackAngleSweet"),
   attackAngleRunner: $("attackAngleRunner"),
   attackAngleReadout: $("attackAngleReadout"),
   status: $("roundStatus", "status"),
@@ -644,9 +641,9 @@ function stepSwingPhysics(ts){
  * Get bounding rects for swing metric widgets (for Pixi overlay positioning)
  */
 function getSwingMetricsLayout(){
-  const tempoEl = document.querySelector(".swing-metric--tempo .swing-metric__body");
-  const pathEl = document.querySelector(".swing-metric--path .swing-metric__body");
-  const attackEl = document.querySelector(".swing-metric--attack .swing-metric__body");
+  const tempoEl = document.querySelector('#swingMetricsRow [data-widget="tempo"] .metricCard__body');
+  const pathEl = document.querySelector('#swingMetricsRow [data-widget="path"] .metricCard__body');
+  const attackEl = document.querySelector('#swingMetricsRow [data-widget="attack"] .metricCard__body');
   return {
     tempo: tempoEl?.getBoundingClientRect() || null,
     path: pathEl?.getBoundingClientRect() || null,
@@ -698,7 +695,6 @@ function resetRoundState(reason = "manual"){
   state.alignment.sweetCenter = 0;
   state.alignment.hit = false;
   state.alignment.frozenValue = 0;
-  resetAttackAnglePlane();
   if (!REACT_UI && widgetManager) widgetManager.reset();
   state.sweetSpot = {
     baseCenterX: 2.7,
@@ -766,7 +762,6 @@ function resetRound(reason = "manual"){
   // Reset all 3 widgets
   SwingControls.resetTempo();
   SwingPath.resetPath();
-  resetAttackAnglePlane();
   if (!REACT_UI && widgetManager) widgetManager.reset();
   
   // Clear impact flash state (Variant 1)
@@ -860,18 +855,6 @@ function renderSwingTempo(headPos){
   const p = clamp01(Number.isFinite(headPos) ? headPos : (state.tempo?.headPos ?? 0));
   state.tempo = state.tempo || {};
   state.tempo.headPos = p;
-  const runner = document.getElementById("swingTempoRunner");
-  if(runner){
-    const tube = document.getElementById("swingTempoTube");
-    if(tube){
-      const tubeH = tube.clientHeight || tube.getBoundingClientRect().height || 0;
-      runner.style.height = `${(tubeH * p).toFixed(2)}px`;
-      runner.style.bottom = "0px";
-    }else{
-      runner.style.height = `${(p * 100).toFixed(2)}%`;
-      runner.style.bottom = "0px";
-    }
-  }
   const pct = document.getElementById("swingTempoPct");
   if(pct) pct.textContent = `${Math.round(p * 100)}%`;
 }
@@ -998,14 +981,6 @@ function syncSwingUI(){
     ? (state.shot?.path01 ?? 0.5)
     : (Number.isFinite(headPos) ? headPos : 0.5);
   
-  if(!REACT_UI && window.SwingPath && !state.flags?.pathPixiActive){
-    window.SwingPath.update({
-      phase: state.phase,
-      headPos01: path01,
-      sweetCenter: state.alignment?.sweetCenter ?? 0,
-      sweetWidthDeg: 18
-    });
-  }
   const attackDegForUI =
     (state.phase === RoundPhase.ARMING)
       ? (state.ui?.preview?.attackDeg ?? 0)
@@ -1557,7 +1532,15 @@ function releaseSwing(ts, power = 0){
   SwingControls.releaseSwing(now, state);
   state.tempo.holding = false;
   state.tempo.released = true;
-  if (!REACT_UI && widgetManager) widgetManager.lock(now);
+  if (!REACT_UI && widgetManager) {
+    widgetManager.lock({
+      snapshot: {
+        tempo01: SwingControls.getTempoHeadPos(),
+        path01: state.shot?.path01 ?? 0.5,
+        attackDeg: state.shot?.attackDeg ?? state.ui?.preview?.attackDeg ?? 0
+      }
+    });
+  }
   updateImpactQuality();
   state.impact.locked = state.impact.live;
   const tempoRelease = SwingControls.getTempoHeadPos();
@@ -1733,10 +1716,16 @@ function tick(ts){
     }
     
     if (!REACT_UI && widgetManager) {
-      const attackDegRestore = state.shot?.attackDeg;
-      if (state.shot) state.shot.attackDeg = attackDegForUI;
-      widgetManager.update(ts, dtMs, state.phase);
-      if (state.shot) state.shot.attackDeg = attackDegRestore;
+      widgetManager.update({
+        ts,
+        dt: dtMs,
+        phase: state.phase,
+        snapshot: {
+          tempo01: state.shot?.tempo01 ?? 0,
+          path01: state.shot?.path01 ?? 0.5,
+          attackDeg: attackDegForUI
+        }
+      });
       if (!state._uiDbgTs || ts - state._uiDbgTs > 500) {
         console.log("[UI] update", {
           phase: state.phase,
@@ -2383,10 +2372,10 @@ function initUI(){
   };
   console.log("[BOOT] swing hosts", {
     swingMetricsRow: !!document.getElementById("swingMetricsRow"),
-    pathPixi: !!document.getElementById("pathPixiHost"),
+    pathPixi: !!document.getElementById("pathPixi"),
     alignmentSvg: !!document.getElementById("alignmentSvg"),
     attackAngle: !!document.getElementById("attackAngle"),
-    tempo: !!document.querySelector(".tempo-meter__tube")
+    tempo: !!document.getElementById("tempoMount")
   });
   setStatus("READY");
   setStatusState("ready");
@@ -2429,9 +2418,9 @@ function initUI(){
   window.__drivixState = state;
 
   setTimeout(() => {
-    const root = document.querySelector('.swing-metric--tempo');
-    const body = root?.querySelector('.swing-metric__body');
-    const footer = root?.querySelector('.swing-metric__footer');
+    const root = document.querySelector('#swingMetricsRow [data-widget="tempo"]');
+    const body = root?.querySelector('.metricCard__body');
+    const footer = root?.querySelector('.metricCard__footer');
     console.log('[TEMPO_DBG] rects', {
       root: root?.getBoundingClientRect(),
       body: body?.getBoundingClientRect(),
