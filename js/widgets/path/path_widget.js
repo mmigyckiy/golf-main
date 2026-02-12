@@ -19,6 +19,8 @@ export function createPathWidget() {
   function mount({ rootEl, ui, usePixiPreferred = true } = {}) {
     if (mounted) return { usePixi };
 
+    window.ensureSwingPathCardStructure?.();
+
     pathMountEl = rootEl || ui?.path?.mount || document.getElementById("pathMount");
     pixiMountEl = ui?.path?.pixi || document.getElementById("pathPixi");
     ringEl = ui?.path?.ring || document.getElementById("alignmentRing");
@@ -28,6 +30,8 @@ export function createPathWidget() {
 
     const canUsePixi = !!(usePixiPreferred && window.SwingPathPixi?.init && pixiMountEl);
     if (canUsePixi) {
+      window.ensureSwingPathCardStructure?.({ clearStage: true });
+      pixiMountEl = document.getElementById("pathPixi") || pixiMountEl;
       usePixi = !!window.SwingPathPixi.init({ containerEl: pixiMountEl });
     }
     useDom = !usePixi;
@@ -36,9 +40,14 @@ export function createPathWidget() {
       pathMountEl.classList.toggle("is-pixi-path", usePixi);
       pathMountEl.classList.toggle("is-dom-path", useDom);
     }
-    if (ringEl) ringEl.style.display = usePixi ? "none" : "";
+    if (ringEl) {
+      ringEl.classList.toggle("is-legacyPathLayer", usePixi);
+      if (usePixi) ringEl.setAttribute("aria-hidden", "true");
+      else ringEl.removeAttribute("aria-hidden");
+      ringEl.style.display = usePixi ? "none" : "";
+    }
 
-    if (useDom) SwingPath.init();
+    if (useDom && ringEl) SwingPath.init();
     mounted = true;
     return { usePixi };
   }

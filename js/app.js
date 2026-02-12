@@ -651,6 +651,124 @@ function getSwingMetricsLayout(){
   };
 }
 
+let pathStructureDebugLogged = false;
+
+function ensureSwingPathCardStructure({ clearStage = false } = {}){
+  const card = document.querySelector('.metricCard.metricCard--path[data-widget="path"], .metricCard.metricCard--path');
+  if (!card) return null;
+
+  const titleEls = Array.from(card.querySelectorAll(':scope > .metricCard__title'));
+  let titleEl = titleEls[0] || null;
+  if (!titleEl) {
+    titleEl = document.createElement("div");
+    titleEl.className = "metricCard__title";
+    titleEl.textContent = "SWING PATH";
+    card.prepend(titleEl);
+  } else if (!String(titleEl.textContent || "").trim()) {
+    titleEl.textContent = "SWING PATH";
+  }
+  for (let i = 1; i < titleEls.length; i += 1) titleEls[i].remove();
+
+  const bodyEls = Array.from(card.querySelectorAll(':scope > .metricCard__body'));
+  let bodyEl = bodyEls[0] || null;
+  if (!bodyEl) {
+    bodyEl = document.createElement("div");
+    bodyEl.className = "metricCard__body";
+    if (titleEl.nextSibling) card.insertBefore(bodyEl, titleEl.nextSibling);
+    else card.appendChild(bodyEl);
+  }
+  for (let i = 1; i < bodyEls.length; i += 1) {
+    const extraBody = bodyEls[i];
+    while (extraBody.firstChild) bodyEl.appendChild(extraBody.firstChild);
+    extraBody.remove();
+  }
+
+  const footerEls = Array.from(card.querySelectorAll(':scope > .metricCard__footer'));
+  let footerEl = footerEls[0] || null;
+  if (!footerEl) {
+    footerEl = document.createElement("div");
+    footerEl.className = "metricCard__footer";
+    footerEl.id = "pathFooter";
+
+    const valueEl = document.createElement("div");
+    valueEl.className = "metricCard__value";
+    valueEl.textContent = "—";
+
+    const hintEl = document.createElement("div");
+    hintEl.className = "metricCard__hint";
+    hintEl.textContent = "ALIGNMENT";
+
+    footerEl.appendChild(valueEl);
+    footerEl.appendChild(hintEl);
+    card.appendChild(footerEl);
+  }
+  for (let i = 1; i < footerEls.length; i += 1) footerEls[i].remove();
+
+  const pathPixiEls = Array.from(document.querySelectorAll("#pathPixi"));
+  let pathPixiEl =
+    pathPixiEls.find((el) => el.closest(".metricCard--path") === card) ||
+    pathPixiEls[0] ||
+    null;
+  if (!pathPixiEl) {
+    pathPixiEl = document.createElement("div");
+    pathPixiEl.id = "pathPixi";
+  }
+  for (const node of pathPixiEls) {
+    if (node === pathPixiEl) continue;
+    node.remove();
+  }
+  pathPixiEl.classList.add("metricStage", "metricStage--pixi");
+  pathPixiEl.setAttribute("aria-hidden", "true");
+
+  if (pathPixiEl.parentElement !== bodyEl) {
+    bodyEl.prepend(pathPixiEl);
+  } else {
+    bodyEl.prepend(pathPixiEl);
+  }
+
+  if (clearStage) {
+    while (pathPixiEl.firstChild) pathPixiEl.removeChild(pathPixiEl.firstChild);
+  }
+
+  for (const node of Array.from(bodyEl.children)) {
+    if (node === pathPixiEl) continue;
+    node.classList.add("is-legacyPathLayer");
+    node.setAttribute("aria-hidden", "true");
+  }
+
+  const devMode = Boolean(window.__DEV__ || window.__PATH_PICK__ || window.__DRIVIX_RENDER_DEBUG__?.logComposite);
+  if (devMode && !pathStructureDebugLogged) {
+    const b = bodyEl.getBoundingClientRect();
+    const p = pathPixiEl.getBoundingClientRect();
+    const rectMatch =
+      Math.abs(b.x - p.x) <= 1 &&
+      Math.abs(b.y - p.y) <= 1 &&
+      Math.abs(b.width - p.width) <= 1 &&
+      Math.abs(b.height - p.height) <= 1;
+    console.log("[PATH STRUCTURE]", {
+      hostInBody: pathPixiEl.parentElement === bodyEl,
+      rectMatch,
+      body: {
+        x: Math.round(b.x),
+        y: Math.round(b.y),
+        w: Math.round(b.width),
+        h: Math.round(b.height)
+      },
+      host: {
+        x: Math.round(p.x),
+        y: Math.round(p.y),
+        w: Math.round(p.width),
+        h: Math.round(p.height)
+      }
+    });
+    pathStructureDebugLogged = true;
+  }
+
+  return { cardEl: card, titleEl, bodyEl, footerEl, pathPixiEl };
+}
+
+window.ensureSwingPathCardStructure = ensureSwingPathCardStructure;
+
 function resetRoundState(reason = "manual"){
   console.log("[ROUND] reset", { reason, prev: state.round?.state });
   state.running = false;
@@ -2350,11 +2468,14 @@ function resetPlayer(){
 
 function initUI(){
   ensureAnim();
+  ensureSwingPathCardStructure();
   state.ui = state.ui || {};
   state.ui.preview = state.ui.preview || {};
   state.ui.preview.attackDeg = state.ui.preview.attackDeg ?? 0;
   SwingControls.init(state);
-  window.SwingPath?.init?.();
+  if (document.getElementById("alignmentRing")) {
+    window.SwingPath?.init?.();
+  }
   if (!widgetManager) {
     state.uiRefs = getUIRefs();
     window.__UI_REFS__ = state.uiRefs;
@@ -2511,6 +2632,7 @@ const flight = {
 window.addEventListener("DOMContentLoaded", () => {
   console.log("[BOOT] app.js loaded", { href: location.href, ts: performance.now() });
   document.documentElement.setAttribute("data-theme", "night");
+  ensureSwingPathCardStructure();
   hydrateProfile();
   loadAnalyticsState();
   renderStats(profile);
@@ -2553,3 +2675,109 @@ window.DRIVIX_DUMP = function(){
     return { error: String(e) };
   }
 };
+
+/* =========================================
+   PATH PICK DEBUG (opt-in)
+   Usage:
+     window.__PATH_PICK__ = true; location.reload();
+     Then click inside Swing Path area to see real container chain.
+========================================= */
+(function initPathPickDebug(){
+  try{
+    if (!window.__PATH_PICK__) return;
+
+    const css = `
+      .__pickOutlineA{ outline: 3px solid rgba(255,0,0,.85) !important; outline-offset: -2px !important; }
+      .__pickOutlineB{ outline: 3px solid rgba(0,255,120,.75) !important; outline-offset: -2px !important; }
+      .__pickOutlineC{ outline: 3px solid rgba(80,160,255,.85) !important; outline-offset: -2px !important; }
+    `;
+    const st = document.createElement("style");
+    st.id = "__PATH_PICK_STYLE__";
+    st.textContent = css;
+    document.head.appendChild(st);
+
+    const clean = () => {
+      document.querySelectorAll(".__pickOutlineA,.__pickOutlineB,.__pickOutlineC")
+        .forEach(n => n.classList.remove("__pickOutlineA","__pickOutlineB","__pickOutlineC"));
+    };
+
+    const brief = (el) => {
+      if (!el) return null;
+      const cs = getComputedStyle(el);
+      return {
+        tag: el.tagName.toLowerCase(),
+        id: el.id || "",
+        cls: (el.className && String(el.className).replace(/\s+/g," ").trim()) || "",
+        w: Math.round(el.getBoundingClientRect().width),
+        h: Math.round(el.getBoundingClientRect().height),
+        bgImg: cs.backgroundImage !== "none" ? cs.backgroundImage.slice(0,80)+"…" : "none",
+        bgCol: cs.backgroundColor,
+        border: cs.border,
+        radius: cs.borderRadius,
+        shadow: cs.boxShadow !== "none" ? cs.boxShadow.slice(0,80)+"…" : "none",
+        filter: cs.filter,
+        opacity: cs.opacity,
+        z: cs.zIndex,
+        pos: cs.position,
+        overflow: cs.overflow
+      };
+    };
+
+    const isSwingPathZone = (el) => {
+      if (!el) return false;
+      return !!(
+        el.closest?.(".swing-metric--path") ||
+        el.closest?.("#pathPixi") ||
+        el.closest?.("#alignmentRing") ||
+        el.closest?.(".alignment-ring") ||
+        el.closest?.("#swingMetricsRow")
+      );
+    };
+
+    window.addEventListener("click", (e) => {
+      clean();
+
+      const x = e.clientX;
+      const y = e.clientY;
+      const topEl = document.elementFromPoint(x, y);
+      if (!isSwingPathZone(topEl)) {
+        console.log("[PATH PICK] click not in Swing Path zone", topEl);
+        return;
+      }
+
+      const chain = [];
+      let cur = topEl;
+      for (let i = 0; i < 10 && cur; i += 1){
+        chain.push(cur);
+        cur = cur.parentElement;
+      }
+
+      if (chain[0]) chain[0].classList.add("__pickOutlineA");
+      if (chain[1]) chain[1].classList.add("__pickOutlineB");
+      if (chain[2]) chain[2].classList.add("__pickOutlineC");
+
+      let best = null;
+      for (const el of chain){
+        const cs = getComputedStyle(el);
+        const hasRadius = cs.borderRadius && cs.borderRadius !== "0px";
+        const hasBg = cs.backgroundImage !== "none" || (cs.backgroundColor && cs.backgroundColor !== "rgba(0, 0, 0, 0)");
+        const hasShadow = cs.boxShadow && cs.boxShadow !== "none";
+        if (hasRadius && (hasBg || hasShadow)) {
+          best = el;
+          break;
+        }
+      }
+
+      console.log("[PATH PICK] point", { x, y });
+      console.log("[PATH PICK] topEl", brief(chain[0]));
+      console.log("[PATH PICK] chain (brief)");
+      console.table(chain.map(brief).filter(Boolean));
+      console.log("[PATH PICK] best card candidate", best, best ? brief(best) : null);
+      if (best) best.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+    }, true);
+
+    console.log("[PATH PICK] enabled. Click inside Swing Path.");
+  }catch(err){
+    console.warn("[PATH PICK] init failed", err);
+  }
+})();

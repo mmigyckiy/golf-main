@@ -1,0 +1,462 @@
+/* =============================================================
+   SWING METRICS (Single Source of Truth)
+   ============================================================= */
+
+/* =========================
+   Variables
+   ========================= */
+:root {
+  --metric-side-max: 140px;
+  --metric-hero-max: 320px;
+  --path-ring-max: 340px;
+  --path-svg-size: min(260px, 48vw);
+  --ring-glow-size: min(200px, 40vw);
+}
+
+/* =========================
+   Row Layout
+   ========================= */
+#swingMetricsRow {
+  --sm-surface-radius: var(--card-radius, var(--hud-radius, var(--gc-radius, 18px)));
+  --sm-surface-pad: clamp(18px, 2.4vw, 22px);
+  --sm-col-gap: clamp(28px, 4vw, 56px);
+  --sm-divider: rgba(255, 255, 255, 0.06);
+  display: grid;
+  grid-template-columns: 1.15fr 1.6fr 1fr;
+  grid-template-areas: "attack path tempo";
+  column-gap: var(--sm-col-gap);
+  row-gap: 0;
+  padding: var(--sm-surface-pad);
+  align-items: start;
+  justify-items: center;
+  width: 100%;
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  min-height: 220px;
+  border-radius: var(--sm-surface-radius);
+  border: 1px solid var(--border-soft, rgba(255, 255, 255, 0.1));
+  background:
+    radial-gradient(130% 125% at 50% -12%, rgba(255, 255, 255, 0.1), transparent 54%),
+    var(--gc-panel-bg, linear-gradient(180deg, rgba(18, 22, 24, 0.9) 0%, rgba(10, 12, 16, 0.92) 100%));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.2),
+    var(--shadow, 0 18px 50px rgba(0, 0, 0, 0.55));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  isolation: isolate;
+}
+
+#swingMetricsRow::before,
+#swingMetricsRow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#swingMetricsRow::before {
+  background: radial-gradient(140% 115% at 50% 52%, transparent 34%, rgba(0, 0, 0, 0.52) 100%);
+}
+
+#swingMetricsRow::after {
+  background: radial-gradient(64% 46% at 50% 40%, rgba(255, 255, 255, 0.07), transparent 68%);
+}
+
+#swingMetricsRow,
+#swingMetricsRow * {
+  box-sizing: border-box;
+}
+
+#swingMetricsRow > [data-widget] {
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  position: relative;
+  align-self: stretch;
+  z-index: 1;
+}
+
+#swingMetricsRow > [data-widget="tempo"],
+#swingMetricsRow > [data-widget="attack"],
+#swingMetricsRow .metricCard--tempo[data-widget="tempo"],
+#swingMetricsRow .metricCard--attack[data-widget="attack"] {
+  max-width: var(--metric-side-max);
+  width: 100%;
+}
+
+#swingMetricsRow > [data-widget="path"] {
+  max-width: var(--metric-hero-max);
+}
+
+#swingMetricsRow > [data-widget="attack"],
+#swingMetricsRow .metricCard--attack[data-widget="attack"] {
+  grid-area: attack;
+}
+
+#swingMetricsRow > [data-widget="path"],
+#swingMetricsRow .metricCard--path[data-widget="path"] {
+  grid-area: path;
+}
+
+#swingMetricsRow > [data-widget="tempo"],
+#swingMetricsRow .metricCard--tempo[data-widget="tempo"] {
+  grid-area: tempo;
+}
+
+#swingMetricsRow > [data-widget="path"]::before,
+#swingMetricsRow > [data-widget="tempo"]::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--sm-col-gap) / -2);
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: var(--sm-divider);
+  pointer-events: none;
+}
+
+#swingMetricsRow .metricCard {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: visible;
+}
+
+#swingMetricsRow .metricCard::before,
+#swingMetricsRow .metricCard::after {
+  display: none;
+}
+
+#swingMetricsRow .metricCard__body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#swingMetricsRow .metricCard--tempo .metricCard__body,
+#swingMetricsRow .metricCard--attack .metricCard__body {
+  width: 100%;
+}
+
+#swingMetricsRow .metricCard--path .metricCard__body {
+  min-height: 300px;
+}
+
+/* =========================
+   Tempo
+   ========================= */
+#swingMetricsRow .metricCard--tempo #swingTempoControl {
+  width: 100%;
+  height: 100%;
+}
+
+#swingMetricsRow .metricCard--tempo #tempoMount,
+#swingMetricsRow .metricCard--tempo #swingTempoControl,
+#swingMetricsRow .metricCard--attack #attackMount,
+#swingMetricsRow .metricCard--attack #attackAngle,
+#swingMetricsRow .metricCard--attack .tubeArc {
+  max-width: 100%;
+}
+
+#swingMetricsRow .metricCard--tempo #tempoValueLabel {
+  color: rgba(216, 200, 166, 0.92);
+  text-shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
+}
+
+#swingMetricsRow .metricCard--tempo #swingTempoPct {
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(216, 200, 166, 0.92);
+}
+
+/* =========================
+   Path (Pixi Host + Scene)
+   ========================= */
+#swingMetricsRow .metricCard.metricCard--path {
+  position: relative;
+  border-radius: 0;
+  overflow: visible;
+  padding: 0;
+}
+
+#swingMetricsRow .metricCard.metricCard--path::before {
+  content: none;
+}
+
+#swingMetricsRow .metricCard.metricCard--path::after {
+  content: none;
+}
+
+#swingMetricsRow .metricCard.metricCard--path > * {
+  position: relative;
+  z-index: 2;
+}
+
+#swingMetricsRow .metricCard.metricCard--path .metricCard__body {
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+}
+
+#swingMetricsRow .metricCard.metricCard--path .metricCard__title {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#swingMetricsRow .metricCard.metricCard--path .metricCard__title::before,
+#swingMetricsRow .metricCard.metricCard--path .metricCard__title::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+  background: linear-gradient(
+    to right,
+    rgba(216, 200, 166, 0),
+    rgba(216, 200, 166, 0.55),
+    rgba(216, 200, 166, 0)
+  );
+  opacity: 0.62;
+  pointer-events: none;
+}
+
+#swingMetricsRow .metricCard.metricCard--path .metricCard__title::before {
+  left: 18px;
+  right: calc(50% + 70px);
+}
+
+#swingMetricsRow .metricCard.metricCard--path .metricCard__title::after {
+  left: calc(50% + 70px);
+  right: 18px;
+}
+
+#swingMetricsRow .metricCard.metricCard--path .metricCard__body.is-pixi-path .is-legacyPathLayer {
+  display: none;
+}
+
+#swingMetricsRow .metricCard.metricCard--path #pathPixi,
+#swingMetricsRow .metricCard.metricCard--path #pathPixi.metricStage--pixi {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+#swingMetricsRow .metricCard.metricCard--path #pathPixi canvas,
+#swingMetricsRow .metricCard.metricCard--path #pathPixi.metricStage--pixi canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+#swingMetricsRow .metricCard.metricCard--path #pathPixi:not(:has(canvas))::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(
+    120% 80% at 50% 60%,
+    rgba(216, 200, 166, 0.18) 0%,
+    rgba(216, 200, 166, 0.1) 35%,
+    rgba(216, 200, 166, 0.04) 55%,
+    transparent 70%
+  );
+  filter: blur(12px);
+  opacity: 0.55;
+  animation: swingPathBreath 3s ease-in-out infinite;
+}
+
+@keyframes swingPathBreath {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.65;
+  }
+}
+
+/* =========================
+   Attack
+   ========================= */
+#swingMetricsRow .metricCard--attack {
+  --aa-stage-w: clamp(160px, 18vw, 220px);
+  --aa-ball: clamp(16px, 2.1vw, 22px);
+}
+
+#swingMetricsRow .metricCard--attack .metricCard__body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 14px 10px;
+}
+
+#swingMetricsRow .metricCard--attack #attackAngle {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#swingMetricsRow .metricCard--attack .tubeArc {
+  width: 100%;
+}
+
+#swingMetricsRow .metricCard--attack .tubeArc__stage {
+  width: var(--aa-stage-w);
+  margin: 0 auto;
+}
+
+#swingMetricsRow .metricCard--attack .tubeArc__svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+#swingMetricsRow .metricCard--attack .tubeArc__outer,
+#swingMetricsRow .metricCard--attack .aa-arcTrack--outer {
+  stroke: rgba(0, 0, 0, 0.38);
+  stroke-width: 30;
+  stroke-linecap: round;
+  opacity: 1;
+  filter: blur(1.2px);
+}
+
+#swingMetricsRow .metricCard--attack .tubeArc__inner,
+#swingMetricsRow .metricCard--attack .aa-arcTrack--inner,
+#swingMetricsRow .metricCard--attack [data-aa-arc="1"] {
+  stroke: rgba(216, 200, 166, 0.78);
+  stroke-width: 26;
+  stroke-linecap: round;
+  opacity: 1;
+  filter: drop-shadow(0 -1px 0 rgba(255, 255, 255, 0.18));
+}
+
+#swingMetricsRow .metricCard--attack #attackAngleRunner,
+#swingMetricsRow .metricCard--attack .tubeArc__runner {
+  width: var(--aa-ball);
+  height: var(--aa-ball);
+  border-radius: 999px;
+  will-change: transform, left, top, filter, opacity;
+  transition: filter 160ms ease, opacity 160ms ease;
+}
+
+#swingMetricsRow #attackAngle.is-perfect #attackAngleRunner {
+  filter: drop-shadow(0 0 10px rgba(216, 200, 166, 0.22)) drop-shadow(0 0 18px rgba(216, 200, 166, 0.12));
+}
+
+#swingMetricsRow #attackAngle.is-perfect .tubeArc__inner,
+#swingMetricsRow #attackAngle.is-perfect .aa-arcTrack--inner {
+  opacity: 0.98;
+}
+
+#attackAngleValueLabel {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+}
+
+#attackAngleReadout {
+  font-size: 16px;
+  letter-spacing: 0.08em;
+}
+
+#swingMetricsRow .metricCard--attack .metricCard__hint {
+  display: none;
+}
+
+/* =========================
+   Responsive
+   ========================= */
+@media (max-width: 980px) {
+  #swingMetricsRow {
+    grid-template-columns: 1.15fr 1.4fr 1fr;
+    grid-template-areas: "attack path tempo";
+    column-gap: 24px;
+    row-gap: 0;
+    max-width: 600px;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --metric-side-max: 200px;
+    --metric-hero-max: 280px;
+    --path-svg-size: min(160px, 50vw);
+    --ring-glow-size: min(150px, 48vw);
+  }
+
+  #swingMetricsRow {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "path"
+      "tempo"
+      "attack";
+    row-gap: 0;
+    padding: 16px;
+    max-width: 320px;
+  }
+
+  #swingMetricsRow > [data-widget="path"]::before,
+  #swingMetricsRow > [data-widget="tempo"]::before {
+    content: none;
+  }
+
+  #swingMetricsRow > [data-widget] + [data-widget] {
+    border-top: 1px solid var(--sm-divider);
+    margin-top: 14px;
+    padding-top: 14px;
+  }
+
+  #swingMetricsRow > [data-widget="path"] {
+    order: -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #swingMetricsRow #attackAngle #attackAngleRunner {
+    transition: none;
+  }
+}
+
+/* ATTACK ARC SVG SCALE FIX */
+#swingMetricsRow .metricCard--attack #attackAngle{
+  width: 100%;
+}
+
+#swingMetricsRow .metricCard--attack .tubeArc,
+#swingMetricsRow .metricCard--attack .tubeView--arc,
+#swingMetricsRow .metricCard--attack .tubeArc__stage{
+  width: 100%;
+}
+
+#swingMetricsRow .metricCard--attack .tubeArc__svg{
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100% !important;
+  display: block;
+}

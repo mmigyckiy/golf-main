@@ -88,6 +88,10 @@ body[data-ui-phase="end"] #swingMetricsRow > [data-widget] {
   padding: 12px 14px 8px;
 }
 
+.metricCard--tempo .metricCard__body {
+  align-items: stretch;
+}
+
 #swingMetricsRow .metricCard__footer {
   flex: 0 0 auto;
   padding: 8px 14px 14px;

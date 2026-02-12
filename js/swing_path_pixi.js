@@ -1,599 +1,366 @@
 /**
- * Swing Path Pixi Overlay — Energy Ribbon Arc
- * Premium widening ribbon that builds toward the head with impact pulse
- * Scaled up 1.35x and rotated 180° for stronger strike feel
- * 
- * COORDINATE SYSTEM:
- * - All graphics drawn relative to LOCAL (0, 0)
- * - Container positioned at widget center
- * - Pivot at (0, 0) so transforms happen around center
+ * Swing Path Pixi — Premium Arc Renderer
+ * Keeps architecture intact: mounts to #pathPixi and exposes SwingPathPixi API.
  */
-
 (function() {
-  'use strict';
+  "use strict";
 
-  // === CONFIG ===
-  const CONFIG = {
-    // Arc geometry — movement LEFT → RIGHT
-    // angleStart = 0.9π (162°), angleEnd = 0.1π (18°)
-    arcStartRad: Math.PI * 0.9,   // Start on LEFT side
-    arcEndRad: Math.PI * 0.1,     // End on RIGHT side
-    DIR_X: 1,                      // Direction handled by container mirror
-    
-    // Energy ribbon
-    TRAIL_POINTS: 56,
-    TRAIL_LEN: 0.45,
-    TAIL_WIDTH: 3,
-    HEAD_WIDTH: 16,
-    WIDTH_EXP: 2.4,
-    
-    // Transform — fixed size to match other widgets (e.g. Attack Angle)
-    BASE_RADIUS: 70,     // Base arc radius in design pixels
-    TARGET_SIZE: 260,    // Fixed visual diameter in CSS pixels (matches Attack Angle widget)
-    
-    // Head
-    headRadius: 6,
-    headGlowRadius: 14,
-    
-    // Striations
-    striationCount: 9,
-    striationAlphaMin: 0.08,
-    striationAlphaMax: 0.14,
-    
-    // Sweet spot
-    sweetAlpha: 0.28,
-    sweetGlowAlpha: 0.12,
-    
-    // Impact pulse
-    pulseDuration: 0.16,
-    pulseIntensity: 0.35
-  };
+  const ARC_START = Math.PI; // left
+  const ARC_END = 0;         // right
+  const FOLLOW_LERP = 0.14;
+  const DEBUG_PATH_BOUNDS = false;
 
-  // === COLORS ===
   const COLORS = {
-    ribbon: 0xD8C8A6,
-    ribbonBright: 0xF0E6D0,
-    ribbonDim: 0xB8A886,
-    pearl: 0xF5F0E8,
-    white: 0xFFFFFF
+    gold: 0xd8c8a6,
+    white: 0xffffff,
+    black: 0x000000,
+    graphite: 0x626d7a
   };
 
-  // === STATE ===
   let app = null;
-  let rootContainer = null;
-  let glowGfx = null;
-  let ribbonGfx = null;
-  let striationGfx = null;
-  let sweetGfx = null;
-  let headGfx = null;
-  let mounted = false;
-  let arcRadius = 40;
+  let hostEl = null;
+  let resizeTargetEl = null;
+  let root = null;
+  let pathStage = null;
+  let layers = null;
   let resizeObserver = null;
   let onWindowResize = null;
-  let currentHead01 = 0.5;
-  let currentIntensity01 = 0.5;
-  let currentSweetStart01 = 0.41;
-  let currentSweetEnd01 = 0.59;
-  
-  // Pulse state
-  let pulseActive = false;
-  let pulseT = 0;
-  let pulseMul = 1;
+  let mounted = false;
 
-  /**
-   * Convert degrees to radians
-   */
-  function degToRad(deg) {
-    return deg * Math.PI / 180;
-  }
+  let targetT = 0.5;
+  let runnerT = 0.5;
+  let sweetStart01 = 0.40;
+  let sweetEnd01 = 0.60;
+  let intensity01 = 0.5;
 
-  /**
-   * Clamp value to [0, 1]
-   */
   function clamp01(v) {
-    return Math.max(0, Math.min(1, v));
+    return Math.max(0, Math.min(1, Number(v) || 0));
   }
 
-  /**
-   * Mirror around widget center without moving offscreen
-   */
-  function mirrorXKeepInBounds(root, viewW, viewH) {
-    const cx = viewW * 0.5;
-    const cy = viewH * 0.5;
-    
-    root.position.set(cx, cy);
-    root.pivot.set(cx, cy);
-    root.scale.x = -Math.abs(root.scale.x || 1);
-    root.visible = true;
-    root.alpha = 1;
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
   }
 
-  /**
-   * Resize renderer safely and keep root centered
-   */
-  function resizeSwingPath(app, root, hostEl) {
-    if (!app || !hostEl) return;
-    const r = hostEl.getBoundingClientRect();
-    const w = Math.max(1, Math.floor(r.width));
-    const h = Math.max(1, Math.floor(r.height));
-    app.renderer.resize(w, h);
-    
-    if (root) {
-      root.visible = true;
-      root.alpha = 1;
-      root.position.set(w * 0.5, h * 0.5);
-    }
-    app.stage.visible = true;
-    app.stage.alpha = 1;
+  function snapHalf(v) {
+    return Math.round(v * 2) / 2;
   }
 
-  /**
-   * Get point on arc for t in [0..1]
-   * Movement: LEFT → RIGHT (t=0 on left, t=1 on right)
-   * All coordinates are LOCAL (relative to 0,0 which is the arc center)
-   */
-  function getArcPoint(t01) {
-    const angle = CONFIG.arcStartRad + (CONFIG.arcEndRad - CONFIG.arcStartRad) * clamp01(t01);
+  function ensurePixi() {
+    return !!(window.PIXI && typeof window.PIXI.Application === "function");
+  }
+
+  function clearChildren(node) {
+    while (node && node.firstChild) node.removeChild(node.firstChild);
+  }
+
+  function getBlurFilterClass() {
+    if (!window.PIXI) return null;
+    return window.PIXI.BlurFilter || window.PIXI.filters?.BlurFilter || null;
+  }
+
+  function getElementSize(el) {
+    if (!el) return { width: 1, height: 1 };
+    const rect = el.getBoundingClientRect();
+    const width = Math.max(1, Math.floor(el.clientWidth || rect.width || 1));
+    const height = Math.max(1, Math.floor(el.clientHeight || rect.height || 1));
+    return { width, height };
+  }
+
+  function computeLayout() {
+    const w = Math.max(1, app?.screen?.width || app?.renderer?.width || 1);
+    const h = Math.max(1, app?.screen?.height || app?.renderer?.height || 1);
+    const pad = Math.min(w, h) * 0.10;
+    const cx = w * 0.5;
+    const cy = h * 0.62;
+    const desiredR = Math.min(w, h) * 0.42;
+    const maxBySides = Math.max(1, w * 0.5 - pad);
+    const maxByTop = Math.max(1, cy - pad);
+    const r = Math.max(12, Math.min(desiredR, maxBySides, maxByTop));
+    return { w, h, cx, cy, r, pad };
+  }
+
+  function pointOnArc(layout, t01) {
+    const t = clamp01(t01);
+    const angle = ARC_START + (ARC_END - ARC_START) * t;
     return {
-      x: Math.cos(angle) * arcRadius * CONFIG.DIR_X,
-      y: Math.sin(angle) * arcRadius,
+      x: layout.cx + Math.cos(angle) * layout.r,
+      y: layout.cy - Math.sin(angle) * layout.r,
       angle
     };
   }
 
-  /**
-   * Get tangent (perpendicular direction) at arc point
-   */
-  function getArcTangent(t01) {
-    const angle = CONFIG.arcStartRad + (CONFIG.arcEndRad - CONFIG.arcStartRad) * clamp01(t01);
-    return {
-      x: -Math.sin(angle) * CONFIG.DIR_X,
-      y: Math.cos(angle)
+  function drawArcSegment(gfx, layout, from01, to01, steps = 96) {
+    const a = clamp01(from01);
+    const b = clamp01(to01);
+    const s = Math.max(2, steps | 0);
+    for (let i = 0; i <= s; i += 1) {
+      const t = a + (b - a) * (i / s);
+      const p = pointOnArc(layout, t);
+      if (i === 0) gfx.moveTo(p.x, p.y);
+      else gfx.lineTo(p.x, p.y);
+    }
+  }
+
+  function buildLayers() {
+    if (!pathStage) return;
+    pathStage.removeChildren();
+
+    layers = {
+      baseOuter: new PIXI.Graphics(),
+      baseInner: new PIXI.Graphics(),
+      rimArc: new PIXI.Graphics(),
+      sweetGlow: new PIXI.Graphics(),
+      sweetArc: new PIXI.Graphics(),
+      energyArc: new PIXI.Graphics(),
+      runnerGlow: new PIXI.Graphics(),
+      runner: new PIXI.Graphics(),
+      debug: new PIXI.Graphics()
     };
-  }
 
-  /**
-   * Width function: widens toward head
-   */
-  function getWidth(s, headWidthMul = 1) {
-    const headW = CONFIG.HEAD_WIDTH * headWidthMul;
-    return CONFIG.TAIL_WIDTH + (headW - CONFIG.TAIL_WIDTH) * Math.pow(s, CONFIG.WIDTH_EXP);
-  }
-
-  /**
-   * Alpha function: builds toward head
-   */
-  function getAlpha(s) {
-    return 0.06 + 0.60 * Math.pow(s, 1.8);
-  }
-
-  /**
-   * Layout root container — positions widget and applies FIXED scale
-   * MUST be called after app creation and on resize
-   * 
-   * Scale is FIXED based on TARGET_SIZE to match other widgets (e.g. Attack Angle)
-   * Resize only updates position, not visual size
-   */
-  function layoutRoot() {
-    if (!rootContainer || !app) return;
-    
-    // Get CSS pixel dimensions (not device pixels)
-    const w = app.view.clientWidth || app.view.width;
-    const h = app.view.clientHeight || app.view.height;
-    // Position widget CENTERED horizontally
-    const cx = w * 0.5;
-    
-    // Arc radius is fixed in local coords (design space)
-    arcRadius = CONFIG.BASE_RADIUS;
-    
-    // FIXED SCALE: based on TARGET_SIZE, not viewport
-    // fitScale converts BASE_RADIUS design coords to TARGET_SIZE CSS pixels
-    // The arc spans roughly 2x the radius, so:
-    // visualDiameter = BASE_RADIUS * 2 * fitScale = TARGET_SIZE
-    const fitScale = CONFIG.TARGET_SIZE / (CONFIG.BASE_RADIUS * 2);
-    
-    // Vertical center — offset to align visual center of lower arc + ball
-    const cy = h * 0.5;
-    const visualCenterOffsetY = arcRadius * 0.7 * fitScale;
-    
-    // Position container
-    rootContainer.position.set(cx, cy + visualCenterOffsetY);
-    
-    // Apply transforms AFTER position
-    // Direction is handled by CONFIG.DIR_X at coordinate level
-    rootContainer.scale.set(fitScale, fitScale);
-    rootContainer.rotation = 0;
-    // Mirror horizontally (left-right flip)
-    rootContainer.scale.x = -Math.abs(rootContainer.scale.x || 1);
-    rootContainer.position.x = app.renderer.width;
-    
-    // Ensure visibility
-    rootContainer.alpha = 1;
-    rootContainer.visible = true;
-  }
-
-  /**
-   * Initialize the Pixi overlay
-   */
-  function init(opts = {}) {
-    opts = opts ?? {};
-    const containerEl =
-      opts?.containerEl ||
-      document.getElementById("pathPixi") ||
-      null;
-    if (!containerEl) {
-      console.warn("[SwingPathPixi] mount missing; skipping init");
-      return null;
-    }
-    if (!window.PIXI) {
-      console.warn("[SwingPathPixi] Missing container or PIXI");
-      return false;
+    const BlurFilter = getBlurFilterClass();
+    if (BlurFilter) {
+      layers.sweetGlow.filters = [new BlurFilter(4)];
+      layers.runnerGlow.filters = [new BlurFilter(1.8)];
     }
 
-    // Clean up existing to prevent duplicates
-    if (app) destroy();
+    pathStage.addChild(layers.baseOuter);
+    pathStage.addChild(layers.baseInner);
+    pathStage.addChild(layers.rimArc);
+    pathStage.addChild(layers.sweetGlow);
+    pathStage.addChild(layers.sweetArc);
+    pathStage.addChild(layers.energyArc);
+    pathStage.addChild(layers.runnerGlow);
+    pathStage.addChild(layers.runner);
+    if (DEBUG_PATH_BOUNDS) pathStage.addChild(layers.debug);
 
-    // Get container dimensions (CSS pixels)
-    const rect = containerEl.getBoundingClientRect?.() || { width: 0, height: 0 };
-    const w = rect.width || 120;
-    const h = rect.height || 120;
+    layers.runnerGlow.clear();
+    layers.runnerGlow.beginFill(COLORS.gold, 1);
+    layers.runnerGlow.drawCircle(0, 0, 10);
+    layers.runnerGlow.endFill();
+    layers.runnerGlow.alpha = 0.06;
 
-    // Create Pixi application
-    try {
-      app = new PIXI.Application({
-        width: w,
-        height: h,
-        backgroundAlpha: 0,
-        antialias: true,
-        resolution: window.devicePixelRatio || 1,
-        autoDensity: true,
-        autoStart: false
-      });
-
-      while (containerEl.firstChild) containerEl.removeChild(containerEl.firstChild);
-      containerEl.appendChild(app.view);
-      containerEl.style.position = containerEl.style.position || "relative";
-      containerEl.style.overflow = "visible";
-      app.view.style.position = 'absolute';
-      app.view.style.inset = '0';
-      app.view.style.width = '100%';
-      app.view.style.height = '100%';
-      app.view.style.display = 'block';
-      app.view.style.opacity = '1';
-      app.view.style.pointerEvents = 'none';
-      app.view.style.zIndex = '50';
-      containerEl.style.position = containerEl.style.position || 'relative';
-
-      // Create ONE root container for all graphics
-      rootContainer = new PIXI.Container();
-      app.stage.addChild(rootContainer);
-      app.stage.visible = true;
-      app.stage.alpha = 1;
-      rootContainer.visible = true;
-      rootContainer.alpha = 1;
-      app.stage.sortableChildren = true;
-      rootContainer.sortableChildren = true;
-
-      // Build graphics layers
-      buildLayers();
-      
-      // Layout root with correct position/transforms
-      layoutRoot();
-      mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
-      resizeSwingPath(app, rootContainer, containerEl);
-      layoutRoot();
-      mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
-
-      resizeObserver = new ResizeObserver(() => {
-        resizeSwingPath(app, rootContainer, containerEl);
-        layoutRoot();
-        mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
-      });
-      resizeObserver.observe(containerEl);
-
-      onWindowResize = () => {
-        resizeSwingPath(app, rootContainer, containerEl);
-        layoutRoot();
-        mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
-      };
-      window.addEventListener('resize', onWindowResize);
-
-      mounted = true;
-      
-      // Initial draw state
-      currentHead01 = 0.5;
-      currentIntensity01 = 0.5;
-
-      renderFrame(0);
-      return true;
-    } catch (err) {
-      console.error("[SwingPathPixi] Init failed:", err);
-      return false;
-    }
+    layers.runner.clear();
+    layers.runner.beginFill(COLORS.white, 0.96);
+    layers.runner.drawCircle(0, 0, 7);
+    layers.runner.endFill();
+    layers.runner.beginFill(COLORS.white, 0.58);
+    layers.runner.drawCircle(-2, -2, 2.2);
+    layers.runner.endFill();
+    layers.runner.filters = null;
+    layers.runner.cacheAsBitmap = true;
   }
 
-  function renderFrame(dtMs) {
-    if (!app) return;
-    const dtSec = Number.isFinite(dtMs) ? dtMs / 1000 : 0;
-    updatePulse(dtSec);
-    drawRibbon(currentHead01);
-    drawSweet(currentSweetStart01, currentSweetEnd01);
-    drawStriations(currentHead01);
-    drawHead(currentHead01, currentIntensity01);
+  function drawFrame() {
+    if (!app || !layers) return;
+
+    const layout = computeLayout();
+    const s0 = Math.min(sweetStart01, sweetEnd01);
+    const s1 = Math.max(sweetStart01, sweetEnd01);
+    const inSweet = runnerT >= s0 && runnerT <= s1;
+
+    // Calm tube base: darker shell + inner graphite + subtle rim.
+    layers.baseOuter.clear();
+    layers.baseOuter.lineStyle(16, COLORS.black, 0.24);
+    drawArcSegment(layers.baseOuter, layout, 0, 1);
+
+    layers.baseInner.clear();
+    layers.baseInner.lineStyle(12, COLORS.graphite, 0.24);
+    drawArcSegment(layers.baseInner, layout, 0, 1);
+
+    layers.rimArc.clear();
+    layers.rimArc.lineStyle(6, COLORS.white, 0.18);
+    drawArcSegment(layers.rimArc, layout, 0, 1);
+
+    // Sweet window: short gold segment near top-middle with soft glow.
+    layers.sweetGlow.clear();
+    layers.sweetGlow.lineStyle(14, COLORS.gold, 0.14);
+    drawArcSegment(layers.sweetGlow, layout, s0, s1);
+
+    layers.sweetArc.clear();
+    layers.sweetArc.lineStyle(8, COLORS.gold, 0.62);
+    drawArcSegment(layers.sweetArc, layout, s0, s1);
+
+    // Energy ribbon near runner, trailing along movement direction.
+    const trail = 0.11 + intensity01 * 0.09;
+    const e0 = clamp01(runnerT - trail);
+    const e1 = clamp01(runnerT);
+    layers.energyArc.clear();
+    layers.energyArc.lineStyle(5, COLORS.gold, 0.55 + intensity01 * 0.25);
+    drawArcSegment(layers.energyArc, layout, e0, e1, 48);
+
+    // Runner ball + subtle under-glow.
+    const p = pointOnArc(layout, runnerT);
+    const px = snapHalf(p.x);
+    const py = snapHalf(p.y);
+    layers.runnerGlow.position.set(px, py);
+    layers.runnerGlow.scale.set(inSweet ? 1.15 : 0.95);
+    layers.runnerGlow.alpha = inSweet ? 0.16 : 0.06;
+
+    layers.runner.position.set(px, py);
+
+    if (DEBUG_PATH_BOUNDS) {
+      layers.debug.clear();
+      layers.debug.lineStyle(1, 0xff4466, 0.9);
+      layers.debug.drawRect(0, 0, layout.w, layout.h);
+      layers.debug.beginFill(0x44d4ff, 0.95);
+      layers.debug.drawCircle(layout.cx, layout.cy, 3);
+      layers.debug.endFill();
+    }
+
     app.render();
   }
 
-  /**
-   * Build graphics layers in correct draw order
-   */
-  function buildLayers() {
-    // 1) Glow layer (lowest, additive)
-    glowGfx = new PIXI.Graphics();
-    glowGfx.blendMode = PIXI.BLEND_MODES.ADD;
-    rootContainer.addChild(glowGfx);
-
-    // 2) Sweet spot layer
-    sweetGfx = new PIXI.Graphics();
-    rootContainer.addChild(sweetGfx);
-
-    // 3) Main ribbon layer
-    ribbonGfx = new PIXI.Graphics();
-    rootContainer.addChild(ribbonGfx);
-
-    // 4) Striation layer (energy texture)
-    striationGfx = new PIXI.Graphics();
-    striationGfx.blendMode = PIXI.BLEND_MODES.ADD;
-    rootContainer.addChild(striationGfx);
-
-    // 5) Head layer (top)
-    headGfx = new PIXI.Graphics();
-    rootContainer.addChild(headGfx);
+  function stepRunner(dtMs) {
+    const dt = Number.isFinite(dtMs) && dtMs > 0 ? dtMs : 16.67;
+    const alpha = 1 - Math.pow(1 - FOLLOW_LERP, dt / 16.67);
+    runnerT += (targetT - runnerT) * alpha;
+    runnerT = clamp01(runnerT);
   }
 
-  /**
-   * Draw sweet spot segment on arc
-   * All coordinates relative to LOCAL (0,0)
-   * Uses line segments via getArcPoint for consistent DIR_X handling
-   */
-  function drawSweet(sweetStart01, sweetEnd01) {
-    if (!sweetGfx) return;
-    
-    sweetGfx.clear();
-    
-    // Draw sweet spot as line segments (consistent with DIR_X)
-    const segments = 20;
-    const step = (sweetEnd01 - sweetStart01) / segments;
-    
-    // Outer glow
-    sweetGfx.lineStyle(12, COLORS.ribbon, CONFIG.sweetGlowAlpha);
-    for (let i = 0; i < segments; i++) {
-      const t1 = sweetStart01 + step * i;
-      const t2 = sweetStart01 + step * (i + 1);
-      const p1 = getArcPoint(t1);
-      const p2 = getArcPoint(t2);
-      sweetGfx.moveTo(p1.x, p1.y);
-      sweetGfx.lineTo(p2.x, p2.y);
-    }
-    
-    // Core segment
-    sweetGfx.lineStyle(5, COLORS.ribbonBright, CONFIG.sweetAlpha);
-    for (let i = 0; i < segments; i++) {
-      const t1 = sweetStart01 + step * i;
-      const t2 = sweetStart01 + step * (i + 1);
-      const p1 = getArcPoint(t1);
-      const p2 = getArcPoint(t2);
-      sweetGfx.moveTo(p1.x, p1.y);
-      sweetGfx.lineTo(p2.x, p2.y);
-    }
+  function resizeTo(width, height) {
+    if (!app) return;
+    app.renderer.resize(width, height);
+    app.view.style.width = "100%";
+    app.view.style.height = "100%";
+    drawFrame();
   }
 
-  /**
-   * Draw the energy ribbon arc
-   * All coordinates relative to LOCAL (0,0)
-   */
-  function drawRibbon(headPos01) {
-    if (!ribbonGfx || !glowGfx) return;
-    
-    ribbonGfx.clear();
-    glowGfx.clear();
-    
-    const n = CONFIG.TRAIL_POINTS;
-    const points = [];
-    
-    // Sample points along the ribbon (local coords around 0,0)
-    for (let i = 0; i < n; i++) {
-      const s = i / (n - 1);
-      const t = clamp01(headPos01 - (1 - s) * CONFIG.TRAIL_LEN);
-      const pt = getArcPoint(t);
-      points.push({ x: pt.x, y: pt.y, s, t });
-    }
-    
-    // Draw glow layer (wider, more transparent)
-    for (let i = 0; i < n - 1; i++) {
-      const sMid = (points[i].s + points[i + 1].s) / 2;
-      const width = getWidth(sMid, pulseMul) * 1.8;
-      const alpha = getAlpha(sMid) * 0.35;
-      
-      glowGfx.lineStyle(width, COLORS.ribbon, alpha);
-      glowGfx.moveTo(points[i].x, points[i].y);
-      glowGfx.lineTo(points[i + 1].x, points[i + 1].y);
-    }
-    
-    // Draw main ribbon
-    for (let i = 0; i < n - 1; i++) {
-      const sMid = (points[i].s + points[i + 1].s) / 2;
-      
-      // Apply pulse multiplier to last 25% of ribbon
-      const pulseFactor = sMid > 0.75 ? pulseMul : 1;
-      const width = getWidth(sMid, pulseFactor);
-      const alpha = getAlpha(sMid);
-      
-      ribbonGfx.lineStyle(width, COLORS.ribbon, alpha);
-      ribbonGfx.moveTo(points[i].x, points[i].y);
-      ribbonGfx.lineTo(points[i + 1].x, points[i + 1].y);
-    }
-
-    return points;
-  }
-
-  /**
-   * Draw subtle striations (energy texture) near the head
-   */
-  function drawStriations(headPos01) {
-    if (!striationGfx) return;
-    
-    striationGfx.clear();
-    
-    const count = CONFIG.striationCount;
-    
-    for (let i = 0; i < count; i++) {
-      const s = 0.70 + (i / (count - 1)) * 0.28;
-      const t = clamp01(headPos01 - (1 - s) * CONFIG.TRAIL_LEN);
-      
-      const pt = getArcPoint(t);
-      const tangent = getArcTangent(t);
-      
-      const len = 4 + (i % 3) * 2;
-      const alpha = CONFIG.striationAlphaMin + 
-        (CONFIG.striationAlphaMax - CONFIG.striationAlphaMin) * (i / (count - 1));
-      
-      striationGfx.lineStyle(1.5, COLORS.ribbonBright, alpha);
-      striationGfx.moveTo(pt.x - tangent.x * len, pt.y - tangent.y * len);
-      striationGfx.lineTo(pt.x + tangent.x * len, pt.y + tangent.y * len);
-    }
-  }
-
-  /**
-   * Draw the head ball with glow
-   * All coordinates relative to LOCAL (0,0)
-   */
-  function drawHead(headPos01, intensity01) {
-    if (!headGfx) return;
-    
-    headGfx.clear();
-    
-    const pt = getArcPoint(headPos01);
-    const radius = CONFIG.headRadius * (1 + (pulseMul - 1) * 0.5);
-    const glowRadius = CONFIG.headGlowRadius * pulseMul;
-    
-    // Outer halo
-    headGfx.beginFill(COLORS.ribbon, 0.15 + intensity01 * 0.15);
-    headGfx.drawCircle(pt.x, pt.y, glowRadius * 1.4);
-    headGfx.endFill();
-    
-    // Inner glow
-    headGfx.beginFill(COLORS.ribbonBright, 0.25 + intensity01 * 0.2);
-    headGfx.drawCircle(pt.x, pt.y, glowRadius);
-    headGfx.endFill();
-    
-    // Main ball
-    headGfx.beginFill(COLORS.pearl, 0.95);
-    headGfx.drawCircle(pt.x, pt.y, radius);
-    headGfx.endFill();
-    
-    // Highlight — offset follows DIR_X
-    headGfx.beginFill(COLORS.white, 0.55);
-    headGfx.drawCircle(pt.x + CONFIG.DIR_X * -2, pt.y - 2, radius * 0.35);
-    headGfx.endFill();
-  }
-
-  /**
-   * Update pulse animation
-   */
-  function updatePulse(dtSec) {
-    if (!pulseActive) {
-      pulseMul = 1;
-      return;
-    }
-    
-    pulseT += dtSec;
-    
-    if (pulseT >= CONFIG.pulseDuration) {
-      pulseActive = false;
-      pulseT = 0;
-      pulseMul = 1;
-      return;
-    }
-    
-    const k = clamp01(1 - pulseT / CONFIG.pulseDuration);
-    pulseMul = 1 + CONFIG.pulseIntensity * Math.sin((1 - k) * Math.PI) * k;
-  }
-
-  /**
-   * Update the overlay
-   */
-  function update(data = {}) {
-    if (!mounted || !app) return;
-    
-    const {
-      headPos01 = 0.5,
-      sweetStart01 = 0.41,
-      sweetEnd01 = 0.59,
-      intensity01 = 0.5,
-      dtMs = 16
-    } = data;
-    
-    // Update state used by draw
-    currentHead01 = headPos01;
-    currentIntensity01 = intensity01;
-
-    currentSweetStart01 = sweetStart01;
-    currentSweetEnd01 = sweetEnd01;
-    renderFrame(dtMs);
-  }
-
-  /**
-   * Resize to fit container
-   */
   function resize() {
-    if (!app || !app.view.parentElement) return;
-    
-    // Rebuild layers
-    rootContainer.removeChildren();
-    buildLayers();
-    
-    // Re-layout root with new dimensions
-    resizeSwingPath(app, rootContainer, app.view.parentElement);
-    layoutRoot();
-    mirrorXKeepInBounds(rootContainer, app.renderer.width, app.renderer.height);
-    
-    renderFrame(0);
+    if (!app) return;
+    const size = getElementSize(resizeTargetEl || hostEl);
+    const width = Math.max(1, size.width);
+    const height = Math.max(1, size.height);
+    resizeTo(width, height);
   }
 
-  /**
-   * Destroy and cleanup
-   */
+  function resolveResizeTarget(mountEl) {
+    const cardBody =
+      mountEl?.closest?.(".metricCard--path")?.querySelector?.(":scope > .metricCard__body") ||
+      mountEl?.closest?.(".metricCard--path")?.querySelector?.(".metricCard__body");
+    return (
+      cardBody ||
+      mountEl?.closest?.(".metricCard__body") ||
+      mountEl?.closest?.(".swing-metric__body") ||
+      mountEl
+    );
+  }
+
+  function initSwingPathPixi(opts = {}) {
+    const mountEl = opts.containerEl || document.getElementById("pathPixi");
+    if (!mountEl) return false;
+    if (!ensurePixi()) return false;
+
+    destroy();
+
+    hostEl = mountEl;
+    hostEl.classList.add("metricStage", "metricStage--pixi");
+    hostEl.setAttribute("aria-hidden", "true");
+    resizeTargetEl = resolveResizeTarget(hostEl);
+    hostEl.style.position = hostEl.style.position || "relative";
+
+    const size = getElementSize(resizeTargetEl || hostEl);
+    const width = Math.max(1, size.width || 120);
+    const height = Math.max(1, size.height || 120);
+
+    app = new PIXI.Application({
+      width,
+      height,
+      backgroundAlpha: 0,
+      antialias: true,
+      autoDensity: true,
+      resolution: window.devicePixelRatio || 1,
+      autoStart: false
+    });
+
+    clearChildren(hostEl);
+    hostEl.appendChild(app.view);
+    app.view.style.position = "absolute";
+    app.view.style.inset = "0";
+    app.view.style.width = "100%";
+    app.view.style.height = "100%";
+    app.view.style.display = "block";
+    app.view.style.pointerEvents = "none";
+
+    root = new PIXI.Container();
+    pathStage = new PIXI.Container();
+    root.addChild(pathStage);
+    app.stage.addChild(root);
+
+    targetT = 0.5;
+    runnerT = 0.5;
+    sweetStart01 = 0.40;
+    sweetEnd01 = 0.60;
+    intensity01 = 0.5;
+
+    buildLayers();
+    drawFrame();
+    resize();
+
+    if (typeof ResizeObserver === "function") {
+      resizeObserver = new ResizeObserver((entries) => {
+        if (!entries?.length || !app) {
+          resize();
+          return;
+        }
+        const cr = entries[0].contentRect;
+        const width = Math.max(1, Math.floor(cr?.width || 1));
+        const height = Math.max(1, Math.floor(cr?.height || 1));
+        resizeTo(width, height);
+      });
+      resizeObserver.observe(resizeTargetEl || hostEl);
+    }
+
+    onWindowResize = () => resize();
+    window.addEventListener("resize", onWindowResize);
+
+    mounted = true;
+    return true;
+  }
+
+  function update(data = {}) {
+    if (!mounted) return;
+
+    targetT = clamp01(Number.isFinite(data.headPos01) ? data.headPos01 : targetT);
+    sweetStart01 = clamp01(Number.isFinite(data.sweetStart01) ? data.sweetStart01 : sweetStart01);
+    sweetEnd01 = clamp01(Number.isFinite(data.sweetEnd01) ? data.sweetEnd01 : sweetEnd01);
+    intensity01 = clamp01(Number.isFinite(data.intensity01) ? data.intensity01 : intensity01);
+
+    stepRunner(data.dtMs);
+    drawFrame();
+  }
+
   function destroy() {
     if (resizeObserver) {
       resizeObserver.disconnect();
       resizeObserver = null;
     }
     if (onWindowResize) {
-      window.removeEventListener('resize', onWindowResize);
+      window.removeEventListener("resize", onWindowResize);
       onWindowResize = null;
     }
     if (app) {
       app.destroy(true, { children: true, texture: true, baseTexture: true });
       app = null;
     }
-    rootContainer = null;
-    glowGfx = null;
-    ribbonGfx = null;
-    striationGfx = null;
-    sweetGfx = null;
-    headGfx = null;
+
+    hostEl = null;
+    resizeTargetEl = null;
+    root = null;
+    pathStage = null;
+    layers = null;
     mounted = false;
-    pulseActive = false;
-    pulseT = 0;
-    pulseMul = 1;
+    targetT = 0.5;
+    runnerT = 0.5;
+    sweetStart01 = 0.40;
+    sweetEnd01 = 0.60;
+    intensity01 = 0.5;
   }
 
-  // Export to window
+  window.initSwingPathPixi = initSwingPathPixi;
   window.SwingPathPixi = {
-    init,
+    init: initSwingPathPixi,
     update,
     resize,
     destroy
   };
-
 })();

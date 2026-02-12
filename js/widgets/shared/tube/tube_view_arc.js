@@ -2,6 +2,10 @@ function clamp01(v) {
   return Math.max(0, Math.min(1, Number(v) || 0));
 }
 
+function clamp(v, min, max) {
+  return Math.max(min, Math.min(max, Number(v) || 0));
+}
+
 function lerp(a, b, t) {
   return a + (b - a) * t;
 }
@@ -12,7 +16,7 @@ function easeOutQuad(t) {
 }
 
 export function createTubeViewArc({
-  arcPathD = "M10 70 A50 50 0 0 1 110 70",
+  arcPathD = "M18 70 A44 44 0 0 1 102 70",
   viewBox = "0 0 120 90"
 } = {}) {
   let mountEl = null;
@@ -29,6 +33,7 @@ export function createTubeViewArc({
   let smoothX = null;
   let smoothY = null;
   let onResize = null;
+  let debugSnapshot = null;
 
   function setState(state) {
     if (!viewEl) return;
@@ -68,7 +73,7 @@ export function createTubeViewArc({
 
     const svgRect = svgEl.getBoundingClientRect();
     const stageRect = stageEl.getBoundingClientRect();
-    if (!svgRect.width || !svgRect.height) return;
+    if (!svgRect.width || !svgRect.height || !stageRect.width || !stageRect.height) return;
 
     const sx = svgRect.width / vb.width;
     const sy = svgRect.height / vb.height;
@@ -91,8 +96,27 @@ export function createTubeViewArc({
       smoothY = lerp(smoothY, targetY, k);
     }
 
-    runnerEl.style.left = `${smoothX.toFixed(2)}px`;
-    runnerEl.style.top = `${smoothY.toFixed(2)}px`;
+    const runnerRect = runnerEl.getBoundingClientRect();
+    const runnerSize = Number.isFinite(runnerRect.width) && runnerRect.width > 0
+      ? runnerRect.width
+      : 22;
+    const half = runnerSize / 2;
+    const left = clamp(smoothX - half, -half, stageRect.width - half);
+    const top = clamp(smoothY - half, -half, stageRect.height - half);
+
+    runnerEl.style.left = `${left.toFixed(2)}px`;
+    runnerEl.style.top = `${top.toFixed(2)}px`;
+    runnerEl.style.setProperty("transform", visualState === "hold" ? "scale(1.05)" : "none", "important");
+    debugSnapshot = {
+      stageW: stageRect.width,
+      stageH: stageRect.height,
+      left,
+      top,
+      centerX: smoothX,
+      centerY: smoothY,
+      runnerSize,
+      runner01: effective01
+    };
     mountEl?.classList.toggle("is-perfect", absA <= 0.25);
   }
 
@@ -158,6 +182,10 @@ export function createTubeViewArc({
     render();
   }
 
+  function getDebugSnapshot() {
+    return debugSnapshot ? { ...debugSnapshot } : null;
+  }
+
   function destroy() {
     if (!mountEl) return;
     mountEl.innerHTML = "";
@@ -180,5 +208,5 @@ export function createTubeViewArc({
     }
   }
 
-  return { mount, setProgress01, setRunner01, setState, destroy };
+  return { mount, setProgress01, setRunner01, setState, getDebugSnapshot, destroy };
 }

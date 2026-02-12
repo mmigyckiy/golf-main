@@ -62,6 +62,122 @@
       if(e.key === "s") dbg().forceSourceOver = !dbg().forceSourceOver;
       console.log("[RENDER DEBUG]", JSON.stringify(dbg()));
     });
+
+    /* =========================================
+       PATH PICK DEBUG (opt-in)
+       Usage:
+         window.__PATH_PICK__ = true; location.reload();
+         Then click inside SWING PATH card to see the real DOM chain + top rendering layer.
+    ========================================= */
+    (function initPathPickDebug(){
+      try{
+        if (!window.__PATH_PICK__) return;
+        if (window.__PATH_PICK_INIT__) return;
+        window.__PATH_PICK_INIT__ = true;
+
+        const css = `
+          .__pickA{ outline:3px solid rgba(255,0,0,.85)!important; outline-offset:-2px!important; }
+          .__pickB{ outline:3px solid rgba(0,255,120,.75)!important; outline-offset:-2px!important; }
+          .__pickC{ outline:3px solid rgba(80,160,255,.85)!important; outline-offset:-2px!important; }
+        `;
+        const st = document.createElement("style");
+        st.id = "__PATH_PICK_STYLE__";
+        st.textContent = css;
+        document.head.appendChild(st);
+
+        const clean = () => {
+          document.querySelectorAll(".__pickA,.__pickB,.__pickC")
+            .forEach(n => n.classList.remove("__pickA","__pickB","__pickC"));
+        };
+
+        const brief = (el) => {
+          if (!el) return null;
+          const r = el.getBoundingClientRect();
+          const cs = getComputedStyle(el);
+          return {
+            tag: el.tagName.toLowerCase(),
+            id: el.id || "",
+            cls: (el.className && String(el.className).replace(/\s+/g," ").trim()) || "",
+            w: Math.round(r.width), h: Math.round(r.height),
+            bgImg: cs.backgroundImage !== "none" ? cs.backgroundImage.slice(0,70)+"…" : "none",
+            bgCol: cs.backgroundColor,
+            radius: cs.borderRadius,
+            shadow: cs.boxShadow !== "none" ? cs.boxShadow.slice(0,70)+"…" : "none",
+            pos: cs.position, z: cs.zIndex, opacity: cs.opacity,
+            overflow: cs.overflow,
+            pe: cs.pointerEvents
+          };
+        };
+
+        const inSwingPathZone = (el) => {
+          if (!el) return false;
+          return !!(
+            el.closest?.(".swing-metric--path") ||
+            el.closest?.("#pathPixi") ||
+            el.closest?.(".alignment-ring") ||
+            el.closest?.("#alignmentRing") ||
+            el.closest?.("#swingMetricsRow")
+          );
+        };
+
+        window.addEventListener("click", (e) => {
+          clean();
+          const x = e.clientX;
+          const y = e.clientY;
+          const topEl = document.elementFromPoint(x, y);
+
+          if (!inSwingPathZone(topEl)) {
+            console.log("[PATH PICK] Not in Swing Path zone", topEl);
+            return;
+          }
+
+          const chain = [];
+          let cur = topEl;
+          for (let i = 0; i < 12 && cur; i += 1){
+            chain.push(cur);
+            cur = cur.parentElement;
+          }
+
+          if (chain[0]) chain[0].classList.add("__pickA");
+          if (chain[1]) chain[1].classList.add("__pickB");
+          if (chain[2]) chain[2].classList.add("__pickC");
+
+          // Find card container candidate: radius + (bg or shadow)
+          let card = null;
+          for (const el of chain){
+            const cs = getComputedStyle(el);
+            const hasRadius = cs.borderRadius && cs.borderRadius !== "0px";
+            const hasBg = cs.backgroundImage !== "none" || (cs.backgroundColor && cs.backgroundColor !== "rgba(0, 0, 0, 0)");
+            const hasShadow = cs.boxShadow && cs.boxShadow !== "none";
+            if (hasRadius && (hasBg || hasShadow)) {
+              card = el;
+              break;
+            }
+          }
+
+          // Detect top render layer (canvas/svg) inside path cell
+          const pathCell = topEl.closest?.(".swing-metric--path") || topEl.closest?.("#swingMetricsRow");
+          const canvas = pathCell?.querySelector?.("canvas");
+          const svg = pathCell?.querySelector?.("svg");
+
+          console.log("[PATH PICK] point", { x, y });
+          console.log("[PATH PICK] topEl", brief(chain[0]));
+          console.log("[PATH PICK] cardCandidate", card ? brief(card) : null);
+          console.log("[PATH PICK] renderLayer", {
+            hasCanvas: !!canvas,
+            hasSvg: !!svg,
+            canvasRect: canvas ? canvas.getBoundingClientRect() : null,
+            svgRect: svg ? svg.getBoundingClientRect() : null
+          });
+          console.table(chain.map(brief).filter(Boolean));
+        }, true);
+
+        console.log("[PATH PICK] enabled. Click inside Swing Path.");
+      }catch(err){
+        console.warn("[PATH PICK] init failed", err);
+      }
+    })();
+
     const ctx = canvas.getContext("2d");
     let dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
     let w = 0, h = 0;

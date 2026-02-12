@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/ui_tokens.css" />
   <link rel="stylesheet" href="css/metric_card.css" />
   <link rel="stylesheet" href="css/tube.css" />
+  <link rel="stylesheet" href="css/swing_metrics.css" />
   <link rel="stylesheet" href="css/style.css" />
   <!-- PixiJS for premium swing metrics overlay -->
   <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.x/dist/pixi.min.js"></script>
@@ -183,15 +184,6 @@
                     <div class="metricCard__title">SWING PATH</div>
                     <div class="metricCard__body" id="pathMount">
                       <div id="pathPixi" aria-hidden="true"></div>
-                      <div class="alignment-ring" id="alignmentRing">
-                        <svg class="alignment-ring__svg" id="alignmentSvg" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
-                          <path class="alignment-ring__base" id="alignmentBase" d=""></path>
-                          <path class="alignment-ring__sweet" id="alignmentSweet" d=""></path>
-                          <circle class="alignment-ring__ball" id="alignmentBall" cx="100" cy="186" r="6"></circle>
-                          <circle class="alignment-ring__runner" id="alignmentRunner" cx="100" cy="186" r="7"></circle>
-                        </svg>
-                        <div class="align-target-tick" aria-hidden="true"></div>
-                      </div>
                     </div>
                     <div class="metricCard__footer" id="pathFooter">
                       <div class="metricCard__value">—</div>
