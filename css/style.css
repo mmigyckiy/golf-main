@@ -5949,7 +5949,10 @@ body {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  justify-content: space-between;
+  /* Don't stretch vertical gaps on tall screens */
+  justify-content: flex-start;
+  /* Controlled spacing instead of "space-between" */
+  gap: clamp(16px, 2.2vh, 28px);
   height: 100%;
   min-height: 0;
   max-height: 100%;
@@ -5996,6 +5999,9 @@ body {
    ======================================== */
 html, body {
   height: 100%;
+  margin: 0;
+  overflow-y: auto;   /* allow vertical scroll */
+  overflow-x: hidden; /* prevent horizontal drift */
 }
 
 body {
@@ -6003,8 +6009,8 @@ body {
 }
 
 #uiFitViewport{
-  height: 100vh;
-  overflow: hidden;          /* kill vertical scroll */
+  min-height: 100vh;
+  overflow: visible; /* do not block page scroll */
   display: flex;
   justify-content: center;   /* center horizontally */
   align-items: flex-start;   /* keep top aligned */
@@ -6201,4 +6207,42 @@ main{
 #mainPanel .panelCard::after {
   border-radius: inherit;
 }
+#appShell,
+#appBody,
+#uiFitViewport {
+  height: 100vh;
+  min-height: 0; /* allow children to scroll */
+}
 
+#appBody {
+  overflow: hidden; /* keep page clean; panels scroll inside */
+}
+
+/* Panels must be scroll containers */
+#sidePanel,
+aside#sidePanel.sidePanel.gc-sidepanel,
+#mainPanel,
+main#mainPanel.mainPanel.gc-main {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+/* ==============================
+   Full-page scroll mode (NO UI FIT)
+   ============================== */
+html, body {
+  height: auto !important;
+  overflow-y: auto !important;
+}
+
+#uiFitViewport {
+  width: 100% !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+#uiFit {
+  transform: none !important;
+  transform-origin: initial !important;
+}
