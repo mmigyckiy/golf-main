@@ -460,3 +460,53 @@
   max-width: 100% !important;
   display: block;
 }
+
+/* =========================
+   Layout Collapse Guard
+   ========================= */
+#mainPanel .powerCard__controls .gc-swingControl {
+  height: auto;
+  min-height: 300px;
+  align-items: stretch;
+}
+
+#mainPanel .powerCard__controls #swingMetricsRow {
+  height: auto;
+  min-height: 300px;
+  align-content: start;
+  overflow: visible;
+}
+
+#mainPanel .powerCard__controls #swingMetricsRow > [data-widget] {
+  min-height: 300px;
+}
+
+#mainPanel #swingMetricsRow .metricCard {
+  min-height: 300px;
+}
+
+.powerCard__controls{
+  margin-top: 16px;
+}
+
+/* --- FIX: restore metric titles visibility inside Swing Metrics row --- */
+#swingMetricsRow{
+  padding-top: 18px;              /* space for titles */
+  overflow: visible;              /* avoid clipping titles */
+}
+
+#swingMetricsRow .metricCard{
+  overflow: visible;              /* titles must not be clipped */
+}
+
+#swingMetricsRow .metricCard__title{
+  position: relative;
+  z-index: 5;                     /* above vignette/bloom layers */
+  min-height: 34px;
+  padding: 16px 16px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  visibility: visible;
+  opacity: 1;
+}

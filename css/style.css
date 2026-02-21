@@ -5868,6 +5868,47 @@ body {
   padding: clamp(12px, 1.4vw, 20px);
 }
 
+/* ================================
+   SWING CONTROLS CONTAINER FIX
+   Ensure inner control background
+   respects card border radius
+   ================================ */
+
+.powerCard__controls {
+  border-radius: 46px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.powerCard__controls .gc-swingControl {
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+/* ================================
+   SWING PATH footer: keep "ALIGNMENT"
+   attached to the Path widget (no drifting)
+   ================================ */
+
+#swingMetricsRow .metricCard--path{
+  position: relative;
+}
+
+#swingMetricsRow .metricCard--path .metricCard__footer{
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 18px;         /* подтянуть вверх/вниз тут */
+  margin: 0;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* reserve space so footer doesn't overlap content */
+#swingMetricsRow .metricCard--path .metricCard__body{
+  padding-bottom: 56px;
+}
+
 #mainPanel .gc-controls__row--buttons.gc-controls__row--primary,
 #mainPanel .gc-swingControl {
   flex: 1 1 auto;
@@ -5948,3 +5989,216 @@ body {
 #swingMetricsRow .metricCard--attack .metricCard__body {
   overflow: visible;
 }
+
+/* ========================================
+   Fit-to-Screen Viewport Wrapper
+   Keeps the full UI inside viewport height
+   ======================================== */
+html, body {
+  height: 100%;
+}
+
+body {
+  overflow: hidden;
+}
+
+#uiFitViewport{
+  height: 100vh;
+  overflow: hidden;          /* kill vertical scroll */
+  display: flex;
+  justify-content: center;   /* center horizontally */
+  align-items: flex-start;   /* keep top aligned */
+}
+
+#uiFit{
+  transform-origin: top center;
+  will-change: transform;
+}
+#uiRoot{
+  display: contents; /* Prevent uiRoot from affecting layout height */
+}
+/* =========================================================
+   Layout override: make Power + Swing Metrics block stretch
+   (safe: does not change widget internals, only container sizing)
+   ========================================================= */
+
+.powerCard{
+  width: 100%;
+  max-width: none;
+  justify-self: stretch;
+  align-self: stretch;
+}
+
+.powerCard__controls{
+  width: 100%;
+  max-width: none;
+  flex: 1 1 auto;
+}
+
+.gc-swingControl{
+  width: 100%;
+  max-width: none;
+}
+
+#swingMetricsRow{
+  width: 100%;
+  max-width: none;
+}
+/* =========================================================
+   FULLSCREEN LAYOUT (no scroll): stretch main dashboard blocks
+   Safe: container-only, does not modify widget internals
+   ========================================================= */
+
+html, body{
+  height: 100%;
+}
+
+body{
+  margin: 0;
+  min-height: 100vh;
+  overflow: hidden; /* цель: все помещается в экран */
+}
+
+/* Try common top-level app wrappers */
+#uiFitViewport,
+#uiFit,
+#app,
+.app,
+.page,
+.layout,
+.gc-app,
+.gc-root{
+  height: 100%;
+}
+
+/* Main 2-column dashboard container (best-effort selectors) */
+.dashboard,
+.dashboardGrid,
+.gc-dashboard,
+.gc-layout,
+.mainLayout,
+.mainGrid,
+.contentGrid,
+.content{
+  height: 100%;
+}
+
+/* If your main grid is the body direct layout, this helps too */
+main{
+  height: 100%;
+}
+
+/* Make the row with LEFT+RIGHT blocks stretch */
+.dashboard,
+.dashboardGrid,
+.gc-dashboard,
+.gc-layout,
+.mainLayout,
+.mainGrid,
+.contentGrid{
+  align-content: stretch;
+  align-items: stretch;
+}
+
+/* Left large block (Power card + swing metrics) */
+.powerCard{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* allow children to flex without overflow */
+}
+
+.powerCard__controls{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.gc-swingControl{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+#swingMetricsRow{
+  height: 100%;
+  min-height: 0;
+}
+
+/* Right column: challenge + leaderboard should fill height */
+.rightColumn,
+.sidebar,
+.panelRight,
+.dashboardRight,
+.gc-right{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Make leaderboard take remaining space */
+.leaderboardCard,
+.leaderboard,
+.leaderboardPanel,
+.gc-leaderboard{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ===============================
+   MAIN_PANEL_RADIUS_FIX
+   Ensure main background matches card radius
+   =============================== */
+
+#mainPanel {
+  border-radius: 46px;
+  overflow: hidden;
+}
+
+
+/* ===============================
+   RIGHT_CARDS_RADIUS_CLIP_FIX
+   Fix sharp inner corners by clipping card contents
+   =============================== */
+
+/* Main panel already clipped, but side cards may have inner layers */
+#mainPanel .dailyChallenge,
+#mainPanel .leaderboard,
+#mainPanel .dailyChallengeCard,
+#mainPanel .leaderboardCard,
+#mainPanel .sideCard,
+#mainPanel .rightCard,
+#mainPanel .gc-card,
+#mainPanel .gc-sideCard,
+#mainPanel .panelCard,
+#mainPanel [class*="challenge"],
+#mainPanel [class*="leaderboard"] {
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+/* If those cards use pseudo-layers, force them to respect radius too */
+#mainPanel .dailyChallenge::before,
+#mainPanel .leaderboard::before,
+#mainPanel .dailyChallengeCard::before,
+#mainPanel .leaderboardCard::before,
+#mainPanel .sideCard::before,
+#mainPanel .rightCard::before,
+#mainPanel .gc-card::before,
+#mainPanel .gc-sideCard::before,
+#mainPanel .panelCard::before,
+#mainPanel .dailyChallenge::after,
+#mainPanel .leaderboard::after,
+#mainPanel .dailyChallengeCard::after,
+#mainPanel .leaderboardCard::after,
+#mainPanel .sideCard::after,
+#mainPanel .rightCard::after,
+#mainPanel .gc-card::after,
+#mainPanel .gc-sideCard::after,
+#mainPanel .panelCard::after {
+  border-radius: inherit;
+}
+

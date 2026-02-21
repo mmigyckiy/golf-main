@@ -21,7 +21,9 @@
   <div class="gc-ambient gc-ambient--one" aria-hidden="true"></div>
   <div class="gc-ambient gc-ambient--two" aria-hidden="true"></div>
   <div class="gc-ambient gc-ambient--grain" aria-hidden="true"></div>
-  <div id="appShell" class="appShell gc-shell">
+  <div id="uiFitViewport">
+    <div id="uiFit">
+      <div id="appShell" class="appShell gc-shell">
     <!-- Top Club Header -->
     <header id="appHeader" class="appHeader gc-topbar gc-panel gc-panel--hero drivix-card drivix-card--strong" aria-label="Drivix top bar">
       <div id="memberBackdrop" class="gc-backdrop gc-hidden" aria-hidden="true"></div>
@@ -161,9 +163,6 @@
               <canvas id="flight3dCanvas" class="gc-field__canvas"></canvas>
             </div>
 
-            <footer class="gc-footer">
-              <span>Drivix — Designed for Distance</span>
-            </footer>
           </div>
           <div class="powerCard__controls">
             <div class="gc-controls__row gc-controls__row--buttons gc-controls__row--primary">
@@ -175,7 +174,6 @@
                       <div id="swingTempoControl" class="metricWidgetHost" aria-label="Swing tempo"></div>
                     </div>
                     <div class="metricCard__footer" id="tempoFooter">
-                      <div class="metricCard__value" id="tempoValueLabel">0%</div>
                       <div class="metricCard__hint" id="swingTempoPct">0%</div>
                     </div>
                   </div>
@@ -238,6 +236,8 @@
       </aside>
     </div>
 
+      </div>
+    </div>
   </div>
   <!-- Scripts (keep paths consistent with your project) -->
   <script src="js/flight_aviatorlike.js"></script>

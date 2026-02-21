@@ -651,6 +651,17 @@ function getSwingMetricsLayout(){
   };
 }
 
+function removeFirstTempoValueLabelIfDuplicate(){
+  const all = document.querySelectorAll("#tempoValueLabel");
+  if (all.length > 1) {
+    all[0].remove();
+    console.log("First tempoValueLabel removed");
+    return true;
+  }
+  console.warn("Only one tempoValueLabel found");
+  return false;
+}
+
 let pathStructureDebugLogged = false;
 
 function ensureSwingPathCardStructure({ clearStage = false } = {}){
@@ -2467,6 +2478,7 @@ function resetPlayer(){
 }
 
 function initUI(){
+  removeFirstTempoValueLabelIfDuplicate();
   ensureAnim();
   ensureSwingPathCardStructure();
   state.ui = state.ui || {};
@@ -2629,6 +2641,64 @@ const flight = {
   reset: () => flight.engine?.destroy?.()
 };
 
+function applyUiFit() {
+  const vp = document.getElementById("uiFitViewport");
+  const fit = document.getElementById("uiFit");
+  if (!vp || !fit) return;
+
+  // Viewport = window frame (no scroll)
+  vp.style.position = vp.style.position || "relative";
+  vp.style.width = "100vw";
+  vp.style.height = "100vh";
+  vp.style.overflow = "hidden";
+
+  // Design canvas size (edit these if you want)
+  const DESIGN_W = Number(fit.dataset.designW || 1440);
+  const DESIGN_H = Number(fit.dataset.designH || 900);
+
+  // Make #uiFit a stable, fixed-size canvas
+  fit.style.position = fit.style.position || "relative";
+  fit.style.width = DESIGN_W + "px";
+  fit.style.height = DESIGN_H + "px";
+  fit.style.transformOrigin = "top left";
+  fit.style.willChange = "transform";
+
+  const vpRect = vp.getBoundingClientRect();
+  const availW = Math.max(1, vpRect.width);
+  const availH = Math.max(1, vpRect.height);
+
+  const scale = Math.min(1, availW / DESIGN_W, availH / DESIGN_H);
+
+  // Center horizontally inside viewport
+  const dx = Math.max(0, (availW - DESIGN_W * scale) / 2);
+
+  fit.style.transform = `translateX(${dx}px) scale(${scale})`;
+}
+
+
+function initUiFitScaler(){
+  let rafId = 0;
+  const queueFit = () => {
+    if(rafId){
+      cancelAnimationFrame(rafId);
+    }
+    rafId = requestAnimationFrame(() => {
+      rafId = 0;
+      applyUiFit();
+    });
+  };
+
+  window.addEventListener("resize", queueFit, { passive: true });
+  window.addEventListener("orientationchange", queueFit, { passive: true });
+
+  // Run now + two RAF passes to capture post-mount layout settling.
+  queueFit();
+  requestAnimationFrame(() => {
+    queueFit();
+    requestAnimationFrame(queueFit);
+  });
+}
+
 window.addEventListener("DOMContentLoaded", () => {
   console.log("[BOOT] app.js loaded", { href: location.href, ts: performance.now() });
   document.documentElement.setAttribute("data-theme", "night");
@@ -2646,7 +2716,9 @@ window.addEventListener("DOMContentLoaded", () => {
   }catch(err){
     console.error("[LD] renderer init failed", err);
   }
+  document.getElementById("__dbg_overlay")?.remove();
   initUI();
+  initUiFitScaler();
   
   const bestSrc = document.querySelector("#uiBestYd, #bestValue, #bestDistance, [data-best-distance]");
   const youBest = document.querySelector("#youBestInline");
@@ -2781,3 +2853,90 @@ window.DRIVIX_DUMP = function(){
     console.warn("[PATH PICK] init failed", err);
   }
 })();
+
+/* =========================================
+   SWING LAYER MARKER (opt-in)
+   Usage:
+     window.__SWING_LAYER_DEBUG__ = true; location.reload();
+     or run: window.markSwingLayers();
+========================================= */
+(function initSwingLayerMarker(){
+  const run = () => {
+    const bg1 = document.querySelector(".gc-swingControl");
+    const bg2 = document.querySelector("#swingMetricsRow");
+    const wrap = document.querySelector(".powerCard__controls");
+
+    const mark = (el, color, label) => {
+      if (!el) {
+        console.warn("missing:", label);
+        return;
+      }
+      el.style.outline = `2px solid ${color}`;
+      el.style.outlineOffset = "-2px";
+      console.log(label, el, el.getBoundingClientRect());
+    };
+
+    mark(wrap, "#ffd166", "powerCard__controls (wrap)");
+    mark(bg1, "#06d6a0", ".gc-swingControl (outer?)");
+    mark(bg2, "#118ab2", "#swingMetricsRow (grid)");
+  };
+
+  window.markSwingLayers = run;
+
+  if (window.__SWING_LAYER_DEBUG__) {
+    if (document.readyState === "loading") {
+      window.addEventListener("DOMContentLoaded", run, { once: true });
+    } else {
+      run();
+    }
+  }
+})();
+
+/* =========================================
+   SWING CONTAINER DUMP (opt-in)
+   Usage:
+     window.__SWING_CONTAINER_DEBUG__ = true; location.reload();
+     or run: window.dumpSwingContainers();
+========================================= */
+(function initSwingContainerDump(){
+  const run = () => {
+    const wrap = document.querySelector(".powerCard__controls");
+    const rowPrimary = document.querySelector(".gc-controls__row--primary");
+    const swing = document.querySelector(".gc-swingControl");
+
+    const dump = (el, name) => {
+      if (!el) {
+        console.warn("missing:", name);
+        return;
+      }
+      const cs = getComputedStyle(el);
+      console.log(name, {
+        pos: cs.position,
+        top: cs.top,
+        transform: cs.transform,
+        marginTop: cs.marginTop,
+        translate: cs.translate,
+        display: cs.display,
+        height: cs.height,
+        overflow: cs.overflow
+      });
+    };
+
+    dump(wrap, "powerCard__controls");
+    dump(rowPrimary, ".gc-controls__row--primary");
+    dump(swing, ".gc-swingControl");
+  };
+
+  window.dumpSwingContainers = run;
+
+  if (window.__SWING_CONTAINER_DEBUG__) {
+    if (document.readyState === "loading") {
+      window.addEventListener("DOMContentLoaded", run, { once: true });
+    } else {
+      run();
+    }
+  }
+})();
+
+window.addEventListener("resize", applyUiFit);
+window.addEventListener("DOMContentLoaded", applyUiFit);
