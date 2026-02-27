@@ -2641,35 +2641,6 @@ const flight = {
   reset: () => flight.engine?.destroy?.()
 };
 
-function applyUiFit() {
-  // NOTE: Legacy applyUiFit disabled (it conflicts with stable fitter below).
-  // Kept as a no-op to avoid reference errors if some old code still calls it.
-}
-
-
-function initUiFitScaler(){
-  let rafId = 0;
-  const queueFit = () => {
-    if(rafId){
-      cancelAnimationFrame(rafId);
-    }
-    rafId = requestAnimationFrame(() => {
-      rafId = 0;
-      applyUiFit();
-    });
-  };
-
-  window.addEventListener("resize", queueFit, { passive: true });
-  window.addEventListener("orientationchange", queueFit, { passive: true });
-
-  // Run now + two RAF passes to capture post-mount layout settling.
-  queueFit();
-  requestAnimationFrame(() => {
-    queueFit();
-    requestAnimationFrame(queueFit);
-  });
-}
-
 window.addEventListener("DOMContentLoaded", () => {
   console.log("[BOOT] app.js loaded", { href: location.href, ts: performance.now() });
   document.documentElement.setAttribute("data-theme", "night");
@@ -2689,7 +2660,6 @@ window.addEventListener("DOMContentLoaded", () => {
   }
   document.getElementById("__dbg_overlay")?.remove();
   initUI();
-  initUiFitScaler();
   
   const bestSrc = document.querySelector("#uiBestYd, #bestValue, #bestDistance, [data-best-distance]");
   const youBest = document.querySelector("#youBestInline");
@@ -2907,60 +2877,4 @@ window.DRIVIX_DUMP = function(){
       run();
     }
   }
-})();
-
-// Legacy listeners removed on purpose (stable fitter owns scaling).
-// =========================================================
-// UI FIT (stable): prevent horizontal "slide to the right"
-// - measure viewport via getBoundingClientRect (no 100vw drift)
-// - center via flex on #uiFitViewport
-// - apply scale only (no translateX)
-// =========================================================
-(function ensureStableUiFit(){
-  // Design canvas size: content is authored at this size and scaled as a whole.
-  const DESIGN_W = 1260;
-  const DESIGN_H = 467;
-
-  function stableApplyUiFit() {
-    const vp  = document.getElementById("uiFitViewport");
-    const fit = document.getElementById("uiFit");
-    if (!vp || !fit) return;
-
-    // Make viewport a clipping container
-    vp.style.position = "relative";
-    vp.style.width = "100vw";
-    vp.style.height = "100vh";
-    vp.style.overflow = "hidden";
-
-    // Ensure design canvas has stable dimensions (so scrollWidth/Height are predictable)
-    fit.style.width = DESIGN_W + "px";
-    fit.style.height = DESIGN_H + "px";
-
-    const r = vp.getBoundingClientRect();
-    const vpW = Math.max(1, Math.floor(r.width));
-    const vpH = Math.max(1, Math.floor(r.height));
-
-    // Fit both width and height; never upscale above 1 unless you explicitly want it
-    const s = Math.min(1, vpW / DESIGN_W, vpH / DESIGN_H);
-    const dx = Math.max(0, Math.round((vpW - DESIGN_W * s) / 2));
-
-    // Expose scale to CSS (optional but useful)
-    document.documentElement.style.setProperty("--ui-scale", String(s));
-
-    fit.style.transformOrigin = "top left";
-    fit.style.transform = `translate3d(${dx}px, 0, 0) scale(${s})`;
-  }
-
-  // Export for debugging from console
-  window.stableApplyUiFit = stableApplyUiFit;
-
-  const rafApply = () => requestAnimationFrame(stableApplyUiFit);
-  window.addEventListener("DOMContentLoaded", rafApply);
-  window.addEventListener("resize", rafApply);
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener("resize", rafApply);
-  }
-
-  // Run once immediately for cases where script executes after DOM ready.
-  try{ stableApplyUiFit(); }catch(_){}
 })();

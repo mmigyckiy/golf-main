@@ -1,0 +1,143 @@
+/* css/overrides.css
+   OWNER: Overrides / Hotfix layer (last loaded on purpose).
+   RULES:
+   - Only put surgical fixes here while legacy CSS still exists.
+   - Every block MUST have a short WHY comment.
+   - Prefer scoping to an area: #appHeader, #swingMetricsRow, #sidePanel, #mainPanel, etc.
+*/
+
+/* Example template:
+   WHY: Keep topbar profile from forcing 520px width (legacy constraint).
+   header#appHeader .topbar-profile.compact { min-width: 0 !important; }
+*/
+
+
+/* =========================================
+   FIX: Right column spacing (no stretch)
+   ========================================= */
+
+aside#sidePanel.sidePanel.gc-sidepanel{
+  justify-content: flex-start !important;
+  gap: 16px !important;
+  height: auto !important;
+  align-content: flex-start !important;
+}
+
+
+/* =========================================
+   FIX: Restore card skin (colors + shadow)
+   ========================================= */
+
+.drivix-card{
+  background: linear-gradient(180deg, var(--card-bg-1), var(--card-bg-2)) !important;
+  border: 1px solid var(--card-border) !important;
+  box-shadow: var(--card-shadow), var(--card-inner) !important;
+  border-radius: var(--card-r) !important;
+}
+
+.gc-card,
+.gc-sidecard{
+  background: var(--gc-panel-bg) !important;
+  border: 1px solid var(--gc-panel-border) !important;
+  box-shadow: inset 0 1px 0 var(--gc-panel-inner), var(--gc-shadow) !important;
+}
+
+
+/* =========================================
+   FIX: Header bottom spacing
+   ========================================= */
+
+header#appHeader{
+  margin-bottom: 24px !important;
+}
+
+
+/* =========================================
+   SidePanel TEXT ONLY fix (no layout / no radius)
+   ========================================= */
+
+/* Daily Challenge + Leaderboard containers (safe scope) */
+#sidePanel [class*="challenge"],
+#sidePanel [class*="leaderboard"]{
+  color: rgba(255,255,255,.86);
+}
+
+/* Headings */
+#sidePanel [class*="challenge"] h1,
+#sidePanel [class*="challenge"] h2,
+#sidePanel [class*="challenge"] h3,
+#sidePanel [class*="leaderboard"] h1,
+#sidePanel [class*="leaderboard"] h2,
+#sidePanel [class*="leaderboard"] h3{
+  color: rgba(255,255,255,.92);
+}
+
+/* Small labels / kicker text */
+#sidePanel [class*="challenge"] [class*="kicker"],
+#sidePanel [class*="challenge"] [class*="title"],
+#sidePanel [class*="leaderboard"] [class*="kicker"],
+#sidePanel [class*="leaderboard"] [class*="title"]{
+  color: rgba(255,255,255,.60);
+}
+
+/* Paragraph / secondary text */
+#sidePanel [class*="challenge"] p,
+#sidePanel [class*="leaderboard"] p{
+  color: rgba(255,255,255,.72);
+}
+
+#sidePanel [class*="challenge"] *,
+#sidePanel [class*="leaderboard"] *{
+  opacity: 1;
+  filter: none;
+}
+
+
+/* =========================================
+   FIX: Daily Challenge text too dark
+   (touch ONLY typography; no radius/shadows)
+   ========================================= */
+
+#sidePanel .dailyChallenge,
+#sidePanel .dailyChallengeCard,
+#sidePanel [class*="dailyChallenge"],
+#sidePanel [class*="challenge"]{
+  color: rgba(255,255,255,.86);
+}
+
+/* Heading */
+#sidePanel .dailyChallenge h1,
+#sidePanel .dailyChallenge h2,
+#sidePanel .dailyChallengeCard h1,
+#sidePanel .dailyChallengeCard h2,
+#sidePanel [class*="dailyChallenge"] h1,
+#sidePanel [class*="dailyChallenge"] h2{
+  color: rgba(255,255,255,.92);
+}
+
+/* Description */
+#sidePanel .dailyChallenge p,
+#sidePanel .dailyChallengeCard p,
+#sidePanel [class*="dailyChallenge"] p{
+  color: rgba(255,255,255,.72);
+}
+
+/* If filter/opacity is applied elsewhere, force text elements only */
+#sidePanel .dailyChallenge :is(h1,h2,h3,p,span,small,button,div),
+#sidePanel .dailyChallengeCard :is(h1,h2,h3,p,span,small,button,div),
+#sidePanel [class*="dailyChallenge"] :is(h1,h2,h3,p,span,small,button,div){
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+/* WHY: Daily card has no "challenge" class in HTML, so substring-based fixes miss it.
+   Scope this to only the first side-panel card (Daily Challenge), keep card visuals untouched. */
+#sidePanel > .gc-card.gc-sidecard.drivix-card:first-child .gc-card__title{
+  color: rgba(255,255,255,.92);
+}
+
+#sidePanel > .gc-card.gc-sidecard.drivix-card:first-child .gc-card__text{
+  color: rgba(255,255,255,.72);
+  opacity: 1;
+}

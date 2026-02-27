@@ -1,0 +1,23 @@
+/* css/debug_overlay.css
+   Enable by running in DevTools console:
+   document.body.dataset.debug = "1"
+   Disable:
+   delete document.body.dataset.debug
+*/
+
+body[data-debug="1"] #uiFitViewport { outline: 2px solid #ffd166; outline-offset: -2px; }
+body[data-debug="1"] #uiFit        { outline: 2px solid #06d6a0; outline-offset: -2px; }
+
+body[data-debug="1"] #appShell { outline: 2px solid #00d9ff; outline-offset: -2px; }
+body[data-debug="1"] #appBody  { outline: 2px solid #8ecae6; outline-offset: -2px; }
+
+body[data-debug="1"] #appHeader { outline: 2px solid #ff006e; outline-offset: -2px; }
+body[data-debug="1"] #mainPanel { outline: 2px solid #fb5607; outline-offset: -2px; }
+body[data-debug="1"] #sidePanel { outline: 2px solid #8338ec; outline-offset: -2px; }
+
+body[data-debug="1"] #swingMetricsRow { outline: 2px solid #118ab2; outline-offset: -2px; }
+body[data-debug="1"] .metricCard { outline: 1px dashed rgba(255,255,255,0.35); outline-offset: -1px; }
+
+body[data-debug="1"] .metricCard__title  { outline: 1px dashed rgba(255,200,0,0.55); outline-offset: -1px; }
+body[data-debug="1"] .metricCard__body   { outline: 1px dashed rgba(0,255,200,0.45); outline-offset: -1px; }
+body[data-debug="1"] .metricCard__footer { outline: 1px dashed rgba(120,160,255,0.45); outline-offset: -1px; }

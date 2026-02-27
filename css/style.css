@@ -266,7 +266,9 @@ body::after{
   margin-left: auto;
   padding: 14px 18px;
   border-radius: var(--hud-radius);
-  min-width: 520px;
+  min-width: 0;
+  width: fit-content;
+  max-width: min(320px, 100%);
   align-self: center;
 }
 .topbar-profile .tp-row{
@@ -1540,22 +1542,6 @@ hr,
   --attack-size: 90px;
 }
 
-#swingMetricsRow{
-  display: grid;
-  grid-template-columns: 1fr 1.6fr 1fr;
-  column-gap: clamp(28px, 4vw, 56px);
-  row-gap: 24px;
-  padding: 0;
-  align-items: start;
-  justify-items: center;
-  width: 100%;
-  max-width: 760px;
-  margin-left: auto;
-  margin-right: auto;
-  overflow: visible;
-  position: relative;
-  min-height: 220px;
-}
 #uiRoot{
   width: 100%;
   height: 100%;
@@ -1564,13 +1550,6 @@ hr,
   align-items: center;
   justify-content: center;
 }
-#swingMetricsRow > *{
-  min-width: 0;
-  width: 100%;
-  display: grid;
-  justify-items: center;
-}
-
 /* Hide elements with is-hidden class */
 .swing-metrics-row.is-hidden{
   display: none !important;
@@ -1623,24 +1602,12 @@ hr,
   position: relative;
   z-index: 10;
 }
-#swingMetricsRow,
-#swingMetricsRow *{
-  box-sizing: border-box;
-}
 .gc-controls,
 .gc-controls__row--primary,
 .gc-swingControl{
   overflow: visible;
 }
 
-#swingMetricsRow > *{
-  width: 100%;
-  max-width: var(--metric-side-max);
-  text-align: center;
-}
-#swingMetricsRow > .swing-metric--path{
-  max-width: var(--metric-hero-max);
-}
 .swing-metrics-row > *{
   min-width: 0;
 }
@@ -2003,13 +1970,6 @@ body[data-ui-phase="idle"] .swing-metric--attack{
     --tempo-tube-h: 150px;
     --attack-size: 80px;
   }
-  #swingMetricsRow{
-    grid-template-columns: 1fr 1.4fr 1fr;
-    column-gap: 24px;
-    row-gap: 20px;
-    padding: 0;
-    max-width: 600px;
-  }
   .swing-metric__body{
     height: 160px;
   }
@@ -2029,15 +1989,6 @@ body[data-ui-phase="idle"] .swing-metric--attack{
     --tempo-tube-w: 32px;
     --tempo-tube-h: 120px;
     --attack-size: 70px;
-  }
-  #swingMetricsRow{
-    grid-template-columns: 1fr;
-    row-gap: 24px;
-    padding-inline: 16px;
-    max-width: 320px;
-  }
-  #swingMetricsRow > .swing-metric--path{
-    order: -1;
   }
   .swing-metric__body{
     min-height: 100px;
@@ -2301,44 +2252,10 @@ body[data-ui-phase="idle"] .swing-metric--attack{
 }
 
 /* === FIX: Attack Angle duplicated layers — keep ONLY circular plane === */
-#swingMetricsRow .swing-metric--attack{
-  position: relative;
-}
-
 /* Hide any legacy capsule/pill elements that don't exist in current markup */
-#swingMetricsRow .swing-metric--attack .attack-meter,
-#swingMetricsRow .swing-metric--attack .attack-angle__pill,
-#swingMetricsRow .swing-metric--attack .attack-angle__tube,
-#swingMetricsRow .swing-metric--attack .attack-angle__legacy,
-#swingMetricsRow .swing-metric--attack .attack-angle__vertical,
-#swingMetricsRow .swing-metric--attack .attack-angle__capsule{
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-}
-
 /* Make .attack-angle__meter a TRANSPARENT container (not display:none, as it holds children) */
-#swingMetricsRow .swing-metric--attack .attack-angle__meter{
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
 /* The circular plane IS .attack-angle__track — keep it visible */
-#swingMetricsRow .swing-metric--attack .attack-angle__track{
-  display: block;
-  visibility: visible;
-  opacity: 1;
-}
-
 /* Ensure driver SVG and center ball stay visible */
-#swingMetricsRow .swing-metric--attack .attack-driver,
-#swingMetricsRow .swing-metric--attack .attack-angle__runner,
-#swingMetricsRow .swing-metric--attack svg{
-  display: block;
-  visibility: visible;
-}
-
 /* Driver club overlay (shaft up, head down — vertical orientation) */
 .attack-driver{
   position: absolute;
@@ -2504,50 +2421,8 @@ body[data-ui-phase="idle"] .swing-metric--attack{
 }
 
 /* Swing Path impact */
-#swingMetricsRow.is-impact .alignment-ring__runner{
-  filter: 
-    drop-shadow(0 8px 18px rgba(0,0,0,0.55))
-    drop-shadow(0 0 12px rgba(216,200,166,0.35))
-    drop-shadow(0 0 20px rgba(216,200,166,0.20));
-  animation: impactPulse 0.22s ease-out;
-}
-#swingMetricsRow.is-impact .alignment-ring__sweet{
-  animation: none;
-  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.15)) drop-shadow(0 0 14px rgba(216,200,166,0.30));
-}
-
 /* Swing Tempo impact */
-#swingMetricsRow.is-impact .tempo-meter__fill{
-  box-shadow: 
-    inset 0 0 8px rgba(216,200,166,0.15),
-    0 0 18px rgba(216,200,166,0.25);
-}
-#swingMetricsRow.is-impact .tempo-meter__runner{
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.25),
-    0 10px 22px rgba(0,0,0,0.55),
-    0 0 16px rgba(216,200,166,0.30);
-  animation: impactPulse 0.22s ease-out;
-}
-
 /* Attack Angle impact */
-#swingMetricsRow.is-impact .attack-driver{
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.18)) drop-shadow(0 0 12px rgba(216,200,166,0.28));
-}
-#swingMetricsRow.is-impact .attack-driver__head{
-  filter: 
-    drop-shadow(0 8px 18px rgba(0,0,0,0.22))
-    drop-shadow(0 0 14px rgba(216,200,166,0.35));
-}
-#swingMetricsRow.is-impact .attack-angle__runner{
-  box-shadow:
-    0 1px 4px rgba(0,0,0,0.35),
-    0 0 12px rgba(255,255,255,0.12),
-    0 0 16px rgba(216,200,166,0.28);
-  animation: impactPulse 0.22s ease-out;
-}
-
-
 @keyframes ringTick{
   0%{ transform: scale(1); transform-origin: 60px 60px; }
   45%{ transform: scale(1.08); transform-origin: 60px 60px; }
@@ -3499,100 +3374,29 @@ kbd{
   .drivix-mark{ width: 44px; }
 }
 /* === Late-file overrides: use CSS variables for consistency === */
-#swingMetricsRow .alignment-ring__svg{ max-width: 220px; }
-#swingMetricsRow .swing-tempo-vertical{ max-width: var(--tempo-w); }
-#swingMetricsRow .attack-angle__meter{ max-width: var(--attack-size); }
-#swingMetricsRow .attack-angle__track{ max-width: var(--attack-size); }
-
 /* =========================================================
    Premium polish — Swing Widgets (no layout / no JS changes)
    ========================================================= */
 
 /* unify titles readability */
-#swingMetricsRow .swing-metric__title{
-  opacity: 0.82;
-  letter-spacing: 0.14em;
-  text-shadow: 0 1px 12px rgba(0,0,0,0.35);
-}
-
 /* give each widget a subtle "glass" pocket (no visible border) */
-#swingMetricsRow .swing-metric__body{
-  position: relative;
-  border-radius: 18px;
-}
-
 /* ensure SVG/controls sit above pocket */
-#swingMetricsRow .swing-metric__body > *{
-  position: relative;
-  z-index: 1;
-}
-
 /* -----------------------
    SWING PATH (hero polish)
    ----------------------- */
-#swingMetricsRow .swing-metric--path .alignment-ring::before{
-  /* reduce muddy blob: subtle vignette only */
-  opacity: 0.18;
+opacity: 0.18;
   filter: blur(4px);
 }
+*/
 
 /* base arc: clearer but still subtle */
-#swingMetricsRow .alignment-ring__base{
-  stroke: rgba(255,255,255,0.14) !important;
-  stroke-width: 11 !important;
-  stroke-linecap: round;
-}
-
 /* sweet spot: premium champagne + depth */
-#swingMetricsRow .alignment-ring__sweet{
-  stroke: rgba(216,200,166,0.78) !important;
-  stroke-width: 13 !important;
-  opacity: 0.85 !important;
-  filter: drop-shadow(0 2px 10px rgba(0,0,0,0.35));
-}
-
 /* moving runner: more "ball-like" */
-#swingMetricsRow .alignment-ring__runner{
-  fill: rgba(238,242,248,0.92) !important;
-  filter:
-    drop-shadow(0 6px 14px rgba(0,0,0,0.45))
-    drop-shadow(0 0 14px rgba(216,200,166,0.10));
-}
-
 /* target tick: brighter + cleaner */
-#swingMetricsRow .align-target-tick{
-  background: rgba(220,226,234,0.60) !important;
-  width: 2px !important;
-  height: 20px !important;
-  opacity: 0.9;
-}
-
 /* -----------------------
    SWING TEMPO (clean meter)
    ----------------------- */
-#swingMetricsRow .swing-metric--tempo .tempo-meter__tube{
-  background: linear-gradient(
-    to bottom,
-    rgba(255,255,255,0.06),
-    rgba(0,0,0,0.20)
-  ) !important;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.10),
-    0 10px 30px rgba(0,0,0,0.30);
-}
-
 /* fill: less "green slab", more premium graphite+champagne hint */
-#swingMetricsRow .swing-metric--tempo #swingTempoFill{
-  background: linear-gradient(
-    to top,
-    rgba(216,200,166,0.18),
-    rgba(216,200,166,0.32)
-  ) !important;
-  opacity: 0.85;
-  filter: drop-shadow(0 6px 18px rgba(0,0,0,0.35));
-  height: 70%;
-}
-
 #swingTempoControl:not(.is-ready) #swingTempoFill{
   height: 12% !important;
   opacity: 0.85;
@@ -3604,29 +3408,7 @@ kbd{
 }
 
 /* runner: looks like a puck */
-#swingMetricsRow .swing-metric--tempo #swingTempoRunner{
-  background: rgba(238,242,248,0.90) !important;
-  box-shadow:
-    0 10px 18px rgba(0,0,0,0.45),
-    inset 0 1px 0 rgba(255,255,255,0.35);
-}
-
-#swingMetricsRow .swing-metric--tempo.is-idle #swingTempoControl:not(.is-ready) #swingTempoFill{
-  height: 8% !important;
-  opacity: 0.45 !important;
-}
-
-#swingMetricsRow .swing-metric--tempo.is-idle #swingTempoRunner{
-  opacity: 0.55 !important;
-}
-
 /* % value: stronger contrast */
-#swingMetricsRow .swing-metric--tempo .swing-metric__value,
-#swingMetricsRow .swing-metric--tempo #tempoValueLabel{
-  color: rgba(216,200,166,0.92) !important;
-  text-shadow: 0 6px 22px rgba(0,0,0,0.40);
-}
-
 /* --- TEMPO SCALE: vertical 0-50-100 with ticks --- */
 .tempo-meter__scale{
   position: absolute;
@@ -3735,11 +3517,6 @@ kbd{
   height: var(--path-ring-size);
 }
 /* ensure widgets stay above the overlay */
-#swingMetricsRow > .swing-metric{
-  position: relative;
-  z-index: 2;
-}
-
 /* --- Swing Path Pixi mount + hide DOM arc when Pixi is active --- */
 .swing-metric--path .swing-metric__body{
   position: relative;
@@ -3769,58 +3546,12 @@ kbd{
 }
 
 /* track disc: subtle plane, reduced opacity to avoid "second layer" look */
-#swingMetricsRow .swing-metric--attack .attack-angle__track{
-  background: radial-gradient(circle at 50% 50%,
-    rgba(28,32,38,0.35) 0%,
-    rgba(18,22,28,0.50) 100%) !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.04),
-    inset 0 0 18px rgba(0,0,0,0.15),
-    0 10px 28px rgba(0,0,0,0.35) !important;
-  opacity: 0.18;
-}
-
 /* impact line: subtle horizontal reference */
-#swingMetricsRow .swing-metric--attack .attack-impact-line{
-  background: rgba(255,255,255,0.08) !important;
-  box-shadow: 0 0 8px rgba(255,255,255,0.04);
-}
-
 /* driver SVG: premium depth */
-#swingMetricsRow .swing-metric--attack .attack-driver{
-  filter:
-    drop-shadow(0 6px 14px rgba(0,0,0,0.40))
-    drop-shadow(0 0 6px rgba(216,200,166,0.08)) !important;
-}
-
 /* driver head: champagne premium */
-#swingMetricsRow .swing-metric--attack .attack-driver__head{
-  fill: rgba(216,200,166,0.50) !important;
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.30));
-}
-
 /* driver shaft: subtle */
-#swingMetricsRow .swing-metric--attack .attack-driver__shaft{
-  stroke: rgba(255,255,255,0.22) !important;
-  opacity: 0.65;
-}
-
 /* center runner ball: consistent with path */
-#swingMetricsRow .swing-metric--attack .attack-angle__runner{
-  background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.95), rgba(230,235,240,0.85)) !important;
-  box-shadow:
-    0 6px 16px rgba(0,0,0,0.50),
-    0 0 10px rgba(255,255,255,0.06) !important;
-}
-
 /* degrees: premium contrast */
-#swingMetricsRow .swing-metric--attack .swing-metric__value,
-#swingMetricsRow .swing-metric--attack #attackAngleValueLabel{
-  color: rgba(216,200,166,0.92) !important;
-  text-shadow: 0 6px 22px rgba(0,0,0,0.40);
-}
-
 /* =========================================================
    ATTACK ANGLE — RETICLE RESTYLE (single ring + crosshair)
    ========================================================= */
@@ -4066,31 +3797,8 @@ kbd{
 /* --- Attack Angle: remove extra backdrop layers that can wash over the arc --- */
 
 /* 1) Kill the widget-body "glass pocket" overlay ONLY for Attack Angle */
-#swingMetricsRow .swing-metric--attack .swing-metric__body::before,
-#swingMetricsRow .swing-metric--attack .swing-metric__body::after {
-  content: none !important;
-  opacity: 0 !important;
-  background: none !important;
-  filter: none !important;
-}
-
 /* 2) If the Attack track/disc exists, make it fully transparent (keeps layout, removes wash) */
-#swingMetricsRow .swing-metric--attack .attack-angle__track,
-#swingMetricsRow .swing-metric--attack .attack-angle__plane::before,
-#swingMetricsRow .swing-metric--attack .attack-angle__plane::after,
-#swingMetricsRow .swing-metric--attack .attack-angle::before,
-#swingMetricsRow .swing-metric--attack .attack-angle::after {
-  opacity: 0 !important;
-  background: none !important;
-  background-image: none !important;
-  filter: none !important;
-  box-shadow: none !important;
-}
-
 /* 3) Ensure arc is above any remaining backgrounds, but below the runner */
-#swingMetricsRow .swing-metric--attack .attack-angle__svg { position: relative; z-index: 2; }
-#swingMetricsRow .swing-metric--attack #attackAngleRunner { position: relative; z-index: 3; }
-
 /* Disable legacy visuals inside the new arc variant only */
 .attack-angle--arc .attack-angle__plane,
 .attack-angle--arc .aa-ring,
@@ -4111,33 +3819,10 @@ kbd{
   pointer-events: none !important;
 }
 [data-legacy="true"] *{
-  pointer-events: none !important;
-}
-#appShell,
-.appShell{
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+
 #appHeader{
-  flex: 0 0 auto;
-}
-#appBody,
-.appBody{
-  flex: 1 1 auto;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 22px;
-}
-#mainPanel,
-.mainPanel{
-  min-width: 0;
-}
-#sidePanel,
-.sidePanel{
-  min-width: 0;
-}
+
+
 #appDock,
 .appDock{
   display: none;
@@ -4150,16 +3835,10 @@ kbd{
   justify-content: center;
 }
 @media (max-width: 1100px){
-  #appBody,
-  .appBody{
-    grid-template-columns: minmax(0, 1fr) 300px;
-  }
+
 }
 @media (max-width: 960px){
-  #appBody,
-  .appBody{
-    grid-template-columns: 1fr;
-  }
+
   #appDock,
   .appDock{
     display: none;
@@ -4203,11 +3882,6 @@ kbd{
 }
 .powerCard__controls .swing-metric__title{
   opacity: 0.55;
-}
-#swingMetricsRow{
-  width: min(1180px, 100%);
-  margin: 0 auto;
-  padding: 0;
 }
 #uiRoot > *{
   height: 100%;
@@ -4782,66 +4456,13 @@ body.uidebug #uiRoot::before{
    Goal: all three widgets have одинаковую "длину"/высоту карточки
    ========================================================= */
 
-#swingMetricsRow,
-.swing-metrics-row{
-  align-items: stretch !important;
-}
-
 /* Each widget becomes a fixed-height card with 3 sections:
    title (fixed) + body (fixed) + footer (fixed) */
-#swingMetricsRow .swing-metric,
-.swing-metrics-row .swing-metric{
-  height: 320px;
-  display: flex;
-  flex-direction: column;
-}
-
 /* Fixed header height */
-#swingMetricsRow .swing-metric__title,
-.swing-metrics-row .swing-metric__title{
-  flex: 0 0 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 12px 0;
-}
-
 /* Fixed body height (у тебя уже ~220, фиксируем жёстко) */
-#swingMetricsRow .swing-metric__body,
-.swing-metrics-row .swing-metric__body{
-  flex: 0 0 220px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* Fixed footer height */
-#swingMetricsRow .swing-metric__footer,
-.swing-metrics-row .swing-metric__footer{
-  flex: 1 0 auto;
-  min-height: 56px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 8px 12px 14px;
-}
-
 /* Ensure Path doesn’t look "taller" because of extra label spacing */
-#swingMetricsRow .swing-metric--path .swing-metric__footer,
-.swing-metrics-row .swing-metric--path .swing-metric__footer{
-  min-height: 56px;
-}
-
 /* Optional: keep titles aligned even if one has extra margin somewhere */
-#swingMetricsRow .swing-metric__title,
-#swingMetricsRow .swing-metric__footer,
-.swing-metrics-row .swing-metric__title,
-.swing-metrics-row .swing-metric__footer{
-  margin: 0 !important;
-}
-
 /* ===================#attackAngle .aa-arcTrack--inner==================
    SWING TEMPO — reduce empty space, make tube taller
    (only Tempo widget)
@@ -4914,46 +4535,6 @@ body.uidebug #uiRoot::before{
   margin-top: -6px !important;
 }
 
-#swingMetricsRow .swing-metric--tempo #swingTempoFill{
-  background: linear-gradient(
-    to top,
-    rgba(216, 200, 166, 0.14) 0%,
-    rgba(216, 200, 166, 0.22) 55%,
-    rgba(216, 200, 166, 0.32) 100%
-  ) !important;
-  transition: height 220ms ease-out;
-  z-index: 2 !important;
-}
-
-#swingMetricsRow .swing-metric--tempo #swingTempoTube{
-  overflow: hidden !important;
-  border-radius: 999px !important;
-}
-
-#swingMetricsRow .swing-metric--tempo #swingTempoRunner{
-  bottom: var(--tempoRunnerY, 8px) !important;
-  top: auto !important;
-  height: 14px !important;
-  min-height: 14px !important;
-  max-height: 14px !important;
-  border-radius: 999px !important;
-  z-index: 3 !important;
-  background: linear-gradient(
-    to top,
-    rgba(216, 200, 166, 0.55) 0%,
-    rgba(216, 200, 166, 0.85) 60%,
-    rgba(216, 200, 166, 1.00) 100%
-  ) !important;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.10) inset,
-    0 -1px 0 rgba(0,0,0,0.20) inset,
-    0 10px 22px rgba(0,0,0,0.30);
-}
-
-#swingMetricsRow .swing-metric--tempo #swingTempoControl.is-hold #swingTempoRunner{
-  animation: tempoHoldPulse 700ms ease-in-out infinite;
-}
-
 @keyframes tempoHoldPulse{
   0%   { transform: translateY(0) scaleY(1);    filter: brightness(1);    opacity: 0.98; }
   50%  { transform: translateY(0) scaleY(1.03); filter: brightness(1.06); opacity: 1; }
@@ -4961,260 +4542,48 @@ body.uidebug #uiRoot::before{
 }
 
 /* === SWING TEMPO: FIX RUNNER AS KNOB (NO STRETCH) === */
-#swingMetricsRow .tempo-meter__runner{
-  height: 14px !important;
-  min-height: 14px !important;
-  max-height: 14px !important;
-
-  width: 70% !important;
-  left: 15% !important;
-
-  border-radius: 999px;
-  background: rgba(216, 200, 166, 0.95);
-
-  transform: none !important;
-  transition: bottom 0.12s ease-out, opacity 0.12s ease-out;
-
-  z-index: 3;
-}
-
 /* Fill - background indication only, not runner */
-#swingMetricsRow .tempo-meter__fill{
-  pointer-events: none;
-  z-index: 1;
-}
-
 /* === TEMPO footer typography: match ATTACK ANGLE readout style === */
-#swingMetricsRow .swing-metric--tempo #tempoValueLabel{
-  /* make footer stack like: dash (small) + percent (big) */
-  display: flex;
+display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 6px;
   text-align: center;
 }
+*/
 
 /* dash "—" line (usually first item inside tempoValueLabel) */
-#swingMetricsRow .swing-metric--tempo #tempoValueLabel > :first-child{
-  font-size: 12px;
-  line-height: 1;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  opacity: 0.55;
-}
-
 /* percent readout (slightly smaller - half step down) */
-#swingMetricsRow .swing-metric--tempo #swingTempoPct{
-  font-size: 16px;
-  line-height: 1.0;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: rgba(216, 200, 166, 0.92);
-}
-
 /* ===========================
    ATTACK ANGLE (Tempo Style)
    =========================== */
-#swingMetricsRow .swing-metric--attack .swing-metric__body{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 18px 4px;
-  min-height: 260px;
-}
-
-#swingMetricsRow .swing-metric--attack .aa-meter{
-  position: relative;
-  width: 100%;
-  max-width: 300px;
-  height: 230px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  pointer-events: none;
-}
-
-#swingMetricsRow .swing-metric--attack .aa-meter__stage{
-  position: relative;
-  width: 190px;
-  height: 210px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-#swingMetricsRow .swing-metric--attack .aa-arcSvg{
-  position: absolute;
-  left: 50%;
-  top: 42%;
-  transform: translate(-50%, -50%);
-  width: 190px;
-  height: 150px;
-  overflow: visible;
-  opacity: 1;
-  z-index: 2;
-  filter: none !important;
-}
-
-#swingMetricsRow .swing-metric--attack .aa-arcTrack,
-#swingMetricsRow .swing-metric--attack .aa-arcTrack.aa-arc{
-  fill: none !important;
-  stroke: rgba(216,200,166,0.55) !important;
-  stroke-width: 16 !important;
-  stroke-linecap: round !important;
-  stroke-linejoin: round !important;
-  filter: none !important;
-}
-
-#swingMetricsRow .swing-metric--attack .aa-arcInner{
-  fill: none !important;
-  stroke: rgba(0,0,0,0.18) !important;
-  stroke-width: 10 !important;
-  stroke-linecap: round !important;
-  opacity: 0.55 !important;
-  filter: none !important;
-}
-
-#swingMetricsRow .swing-metric--attack .aa-centerDot{
-  position: absolute;
-  left: 50%;
-  top: 64%;
-  transform: translate(-50%, -50%);
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: rgba(216,200,166,0.60);
-  opacity: 0.85;
-}
-
-#swingMetricsRow .swing-metric--attack #attackAngleRunner,
-#swingMetricsRow .swing-metric--attack #attackAngleRunner.aa-runner{
-  position: absolute !important;
-  width: 22px !important;
-  height: 22px !important;
-  border-radius: 999px !important;
-  background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.95), rgba(230,230,230,0.55) 55%, rgba(0,0,0,0.15) 100%) !important;
-  box-shadow: 0 8px 18px rgba(0,0,0,0.35) !important;
-  opacity: 0.95 !important;
-  z-index: 5 !important;
-}
-
-#swingMetricsRow .swing-metric--attack #attackAngleRunner::before,
-#swingMetricsRow .swing-metric--attack #attackAngleRunner::after{
-  content: none !important;
-  display: none !important;
-  background: none !important;
-  filter: none !important;
-  box-shadow: none !important;
-}
-
-#swingMetricsRow .swing-metric--attack .aa-meter__scale{
-  width: 52px;
-  height: 170px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: flex-start;
-  opacity: 0.90;
-}
-
-#swingMetricsRow .swing-metric--attack .aa-scale__label{
-  font-size: 16px;
-  letter-spacing: 0.06em;
-  color: rgba(216,200,166,0.75);
-  opacity: 0.9;
-}
-
-#swingMetricsRow .swing-metric--attack .aa-scale__tick{
-  width: 18px;
-  height: 2px;
-  border-radius: 999px;
-  background: rgba(216,200,166,0.20);
-  margin-left: 2px;
-}
-
-#swingMetricsRow .swing-metric--attack .aa-scale__tick--major{
-  width: 24px;
-  background: rgba(216,200,166,0.30);
-}
-
 /* Footer typography to match Tempo's calm style */
-#swingMetricsRow .swing-metric--attack #attackAngleReadout{
-  font-size: 26px !important;
-  letter-spacing: 0.06em !important;
-  color: rgba(216,200,166,0.80) !important;
-}
-
-#swingMetricsRow .swing-metric--attack .swing-metric__hint{
-  font-size: 13px;
-  letter-spacing: 0.18em;
-  opacity: 0.60;
-  margin-top: 2px;
-}
-
 /* Hide any legacy attack-angle layers if they still exist */
-#swingMetricsRow .swing-metric--attack .attack-angle__plane,
-#swingMetricsRow .swing-metric--attack .attack-angle__svg,
-#swingMetricsRow .swing-metric--attack .aa-ring,
-#swingMetricsRow .swing-metric--attack .aa-cross,
-#swingMetricsRow .swing-metric--attack .aa-arrow,
-#swingMetricsRow .swing-metric--attack .aa-glint,
-#swingMetricsRow .swing-metric--attack .aa-driver{
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-}
-
 /* === ATTACK ANGLE: expand visible stage inside widget (safe, CSS-only) === */
 
 /* 1) Give the BODY more room for the arc/ball scene */
-#swingMetricsRow .swing-metric--attack .swing-metric__body{
-  /* was effectively too tight; increase usable space */
-  padding-top: 10px !important;
+padding-top: 10px !important;
   padding-bottom: 6px !important;
 }
+*/
 
 /* 2) Expand the actual attack container inside body (IDs may vary, cover both) */
-#swingMetricsRow .swing-metric--attack #attackAngle,
-#swingMetricsRow .swing-metric--attack #attackAnglePlane,
-#swingMetricsRow .swing-metric--attack .attack-angle,
-#swingMetricsRow .swing-metric--attack .attack-angle__plane{
-  /* allow bigger scene */
-  height: 190px !important;
+height: 190px !important;
   max-height: none !important;
   overflow: visible !important;
 }
+*/
 
 /* 3) Reduce footer footprint a bit so body gets space */
-#swingMetricsRow .swing-metric--attack .swing-metric__footer{
-  padding-top: 6px !important;
-  padding-bottom: 6px !important;
-}
-
 /* 4) Slightly lift the readout to feel centered like Swing Tempo */
-#swingMetricsRow .swing-metric--attack #attackAngleValueLabel{
-  margin-top: -6px !important;
-}
-
 /* =========================
    ATTACK ANGLE: expand inner scene area (safe)
    ========================= */
 
 /* 1) Give the BODY more room for the scene (without changing the whole card height) */
-#swingMetricsRow .swing-metric--attack .swing-metric__body{
-  padding-top: 10px !important;
-  padding-bottom: 8px !important;
-}
-
 /* 2) Make the scene wrapper taller and centered */
-#swingMetricsRow .swing-metric--attack #attackAngle,
-#swingMetricsRow .swing-metric--attack #attackAnglePlane,
-#swingMetricsRow .swing-metric--attack .attack-angle,
-#swingMetricsRow .swing-metric--attack .attack-angle__plane{
-  /* expand to use the available body space */
-  width: 100% !important;
+width: 100% !important;
   height: 100% !important;
   min-height: 0 !important;
 
@@ -5226,120 +4595,37 @@ body.uidebug #uiRoot::before{
   /* prevent clipping while we scale */
   overflow: visible !important;
 }
+*/
 
 /* 3) Scale the actual drawing (SVG) up a bit inside the scene */
-#swingMetricsRow .swing-metric--attack svg{
-  width: min(92%, 340px) !important;
-  height: auto !important;
-  display: block !important;
-}
-
 /* 4) Keep the readout stable (do NOT let it be pushed down) */
-#swingMetricsRow .swing-metric--attack .swing-metric__footer{
-  margin-top: 0 !important;
-  padding-top: 6px !important;
-}
-
 /* =========================
    ATTACK ANGLE: value size
    ========================= */
 
 /* Main value: +0.0° */
-#swingMetricsRow .swing-metric--attack #attackAngleReadout,
-#swingMetricsRow .swing-metric--attack .attack-angle__value,
-#swingMetricsRow .swing-metric--attack .attack-angle__readout,
-#swingMetricsRow .swing-metric--attack .attack-angle__deg,
-#swingMetricsRow .swing-metric--attack .swing-metric__value{
-  font-size: 16px !important;
-  line-height: 1.1 !important;
-  letter-spacing: 0.06em;
-}
-
 /* Keep "DEGREES" visually secondary */
-#swingMetricsRow .swing-metric--attack .attack-angle__unit,
-#swingMetricsRow .swing-metric--attack .swing-metric__unit{
-  font-size: 11px;
-  opacity: 0.6;
-}
-
 /* =========================
    ATTACK ANGLE: remove unit label
    ========================= */
 
 /* Completely remove "DEGREES" text */
-#swingMetricsRow .swing-metric--attack .attack-angle__unit,
-#swingMetricsRow .swing-metric--attack .swing-metric__unit,
-#swingMetricsRow .swing-metric--attack .attack-angle__label,
-#swingMetricsRow .swing-metric--attack .swing-metric__hint{
-  display: none !important;
-}
-
 /* Ensure value (+0.0deg) is centered nicely after removal */
-#swingMetricsRow .swing-metric--attack .attack-angle__value,
-#swingMetricsRow .swing-metric--attack .attack-angle__readout,
-#swingMetricsRow .swing-metric--attack .swing-metric__value{
-  margin-bottom: 0 !important;
-}
-
 /* =========================
    ATTACK ANGLE - center value in card
    ========================= */
 
 /* Make attack widget body a centering context */
-#swingMetricsRow .swing-metric--attack .swing-metric__body{
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-}
-
 /* Center the numeric value itself */
-#swingMetricsRow .swing-metric--attack .swing-metric__value,
-#swingMetricsRow .swing-metric--attack .attack-angle__value,
-#swingMetricsRow .swing-metric--attack .attack-angle__readout{
-  margin: 0 !important;
-  padding: 0 !important;
-  text-align: center !important;
-}
-
 /* Safety: ensure no hidden unit or spacer affects layout */
-#swingMetricsRow .swing-metric--attack .attack-angle__unit,
-#swingMetricsRow .swing-metric--attack .swing-metric__unit{
-  display: none !important;
-}
-
 /* =========================
    ATTACK ANGLE: full-scene SVG scale fix
    ========================= */
 
 /* 1) Attack body must provide a stable layout box */
-#swingMetricsRow .swing-metric--attack .swing-metric__body{
-  position: relative !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
 /* 2) #attackAngle (aa-meter) fills the body and does not shrink */
-#swingMetricsRow .swing-metric--attack #attackAngle.aa-meter{
-  width: 100% !important;
-  height: 100% !important;
-  min-width: 0 !important;
-}
-
 /* 3) Force arc SVG to fill the attack container */
-#swingMetricsRow .swing-metric--attack #attackAngle.aa-meter svg{
-  width: 100% !important;
-  height: 100% !important;
-  display: block !important;
-}
-
 /* 4) Keep runner above SVG */
-#swingMetricsRow .swing-metric--attack #attackAngleRunner{
-  z-index: 5 !important;
-}
-
 /* === ATTACK ANGLE: widen card for better visual balance === */
 .swing-metric--attack {
   min-width: 200px;           /* was visually too narrow */
@@ -5357,95 +4643,47 @@ body.uidebug #uiRoot::before{
    so the Attack card cannot grow. Also the card itself is capped by max-width: 140px.
    This override widens the 3rd column and removes the cap for attack only. */
 
-#swingMetricsRow{
-  /* was: 0.95fr 1.55fr 0.95fr (or computed fixed px) */
-  grid-template-columns: 0.95fr 1.55fr 1.20fr !important;
+grid-template-columns: 0.95fr 1.55fr 1.20fr !important;
 }
+*/
 
-#swingMetricsRow .swing-metric--attack{
-  max-width: none !important;
-  width: 100% !important; /* fill the grid column */
 }
+*/
 
 /* ATTACK: make inner visuals larger + centered (Tempo-like framing) */
-#swingMetricsRow .swing-metric--attack .swing-metric__body{
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding-top: 10px !important;
-  padding-bottom: 10px !important;
-}
-
 /* the meter root (your #attackAngle is .aa-meter) */
-#swingMetricsRow .swing-metric--attack #attackAngle{
-  width: 100% !important;
-  max-width: 220px !important; /* visually like Tempo tube area */
-  height: 190px !important;
+height: 190px !important;
   position: relative !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
   justify-content: flex-start !important;
 }
+*/
 
 /* scale the svg up so arc is readable */
-#swingMetricsRow .swing-metric--attack #attackAngle svg{
-  width: 100% !important;
-  max-width: 220px !important;
-  height: 150px !important; /* key: arc becomes larger */
-  display: block !important;
+display: block !important;
   margin-top: 6px !important;
 }
+*/
 
 /* ATTACK: make +6/0/-6 scale horizontal under the arc (Tempo-like) */
-#swingMetricsRow .swing-metric--attack #attackAngle :is(.aa-scale, .aa-scaleV, .aa-ticks, .aa-tickScale, .attack-scale){
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  width: min(220px, 92%) !important;
-  margin: 8px auto 0 !important; /* under arc */
-  padding: 0 6px !important;
+padding: 0 6px !important;
   gap: 10px !important;
   opacity: 0.85 !important;
 }
+*/
 
 /* labels in the scale (+6 / 0 / -6) */
-#swingMetricsRow .swing-metric--attack #attackAngle :is(.aa-scale, .aa-scaleV, .aa-ticks, .aa-tickScale, .attack-scale) :is(.aa-label, .aa-scale__label, .label, span){
-  font-size: 14px !important;
-  letter-spacing: 0.08em !important;
-  text-transform: none !important;
-}
-
 /* tick marks (small dashes) - make them horizontal */
-#swingMetricsRow .swing-metric--attack #attackAngle :is(.aa-scale, .aa-scaleV, .aa-ticks, .aa-tickScale, .attack-scale) :is(.aa-tick, .tick, i, em, b){
-  display: block !important;
-  height: 2px !important;
-  width: 18px !important;
-  border-radius: 999px !important;
-  opacity: 0.45 !important;
-}
-
 /* If the old scale container was positioned on the right, neutralize it */
-#swingMetricsRow .swing-metric--attack #attackAngle :is(.aa-scale, .aa-scaleV, .aa-ticks, .aa-tickScale, .attack-scale){
-  position: static !important;
-  top: auto !important;
-  right: auto !important;
-  bottom: auto !important;
-  left: auto !important;
-  transform: none !important;
-}
-
 /* === ATTACK ANGLE: make +6 / 0 / -6 horizontal under the arc === */
-#swingMetricsRow .swing-metric--attack #attackAngle{
-  /* keep existing layout; just ensure a predictable positioning context */
-  position: relative;
+position: relative;
 }
+*/
 
 /* The scale itself */
-#swingMetricsRow .swing-metric--attack #attackAngle .aa-meter__scale{
-  /* was vertical; force horizontal */
-  display: flex !important;
+display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -5463,30 +4701,10 @@ body.uidebug #uiRoot::before{
 
   writing-mode: horizontal-tb !important;
 }
+*/
 
 /* Labels: reuse Tempo-like typography */
-#swingMetricsRow .swing-metric--attack #attackAngle .aa-meter__scale .aa-scale__label{
-  font-size: 14px !important;
-  letter-spacing: 0.08em !important;
-  opacity: 0.85 !important;
-}
-
 /* If there are tick lines inside scale and they were stacked vertically, keep them inline */
-#swingMetricsRow .swing-metric--attack #attackAngle .aa-meter__scale .aa-scale__tick{
-  display: inline-block !important;
-  vertical-align: middle !important;
-}
-
-#swingMetricsRow *,
-#attackAngle,
-#attackAnglePlane,
-#swingTempoTube,
-#swingTempoFill,
-#swingTempoRunner{
-  outline: none !important;
-}
-
-
 /* === FORCE DISABLE UI DEBUG OVERLAYS (cleanup) === */
 body.uidebug #uiRoot {
   outline: none !important;
@@ -5506,16 +4724,8 @@ body.uidebug .debug-outline {
 }
 
 
-
 /* === ATTACK ANGLE LAYOUT (match Swing Tempo) === */
 /* Card body should center the AA widget like Tempo */
-#swingMetricsRow .swing-metric--attack .swing-metric__body{
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  padding: 18px 14px 10px !important;
-}
-
 /* Main AA container: vertical stack centered */
 #attackAngle.aa-meter{
   width:100% !important;
@@ -5584,11 +4794,6 @@ body.uidebug .debug-outline {
 }
 
 /* Remove "DEGREES" label if still present somewhere */
-#swingMetricsRow .swing-metric--attack .aa-degrees,
-#swingMetricsRow .swing-metric--attack .degrees,
-#swingMetricsRow .swing-metric--attack [data-aa-degrees]{
-  display:none !important;
-}
 /* === /ATTACK ANGLE LAYOUT === */
 
 /* =========================================
@@ -5630,228 +4835,36 @@ body.uidebug .debug-outline {
    ================================ */
 
 /* reset */
-#swingMetricsRow #attackAngle .aa-arcSvg path{
-  fill: none !important;
-}
-
 /* kill ALL arc tracks by default */
-#swingMetricsRow #attackAngle .aa-arcSvg path.aa-arcTrack{
-  display: none !important;
-}
-
 /* 1) OUTER HALO (soft shadow around tube) */
-#swingMetricsRow #attackAngle .aa-arcSvg path.aa-arcTrack--outer{
-  display: block !important;
-  fill: none !important;
-  stroke: rgba(0,0,0,0.38) !important;
-  stroke-width: 30px !important;
-  stroke-linecap: round !important;
-  opacity: 1 !important;
-  filter: blur(1.2px) !important;
-}
-
 /* 2) TUBE BODY (main thick tube) */
-#swingMetricsRow #attackAngle .aa-arcSvg path.aa-arcTrack--inner,
-#swingMetricsRow #attackAngle .aa-arcSvg path[data-aa-arc="1"]{
-  display: block !important;
-  fill: none !important;
-  stroke: rgba(216, 200, 166, 0.78) !important;
-  stroke-width: 26px !important;
-  stroke-linecap: round !important;
-  opacity: 1 !important;
-  filter: none !important;
-}
-
 /* 3) RIM (thin dark edge to give depth) */
-#swingMetricsRow #attackAngle .aa-arcSvg path.aa-arcTrack--cut{
-  display: block !important;
-  fill: none !important;
-  stroke: rgba(0,0,0,0.22) !important;
-  stroke-width: 28px !important;
-  stroke-linecap: round !important;
-  opacity: 1 !important;
-  filter: none !important;
-}
-
 /* 4) HIGHLIGHT (thin inner light line like Swing tube shine) */
-#swingMetricsRow #attackAngle .aa-arcSvg{
-  overflow: visible;
-}
-#swingMetricsRow #attackAngle .aa-arcSvg path.aa-arcTrack--inner{
-  filter: drop-shadow(0px -1px 0px rgba(255,255,255,0.18)) !important;
-}
-
 /* Hide unused legacy layers */
-#swingMetricsRow #attackAngle .aa-arcSvg path.aa-arcTrack--rim,
-#swingMetricsRow #attackAngle .aa-arcSvg path.aa-arcTrack--hl{
-  display: none !important;
-  opacity: 0 !important;
-  stroke-width: 0 !important;
-}
-
 /* === Widget Architecture v2 (shared tube + metricCard) === */
-#swingMetricsRow [data-widget]{
-  display: flex !important;
-}
-
-#swingMetricsRow [data-widget] .metricCard__body{
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-#swingMetricsRow #pathMount.is-pixi-path #alignmentRing{
-  display: none !important;
-}
-
 /* Neutralize legacy node IDs if present */
-#swingMetricsRow #swingTempoTube,
-#swingMetricsRow #swingTempoFill,
-#swingMetricsRow #swingTempoRunner,
-#swingMetricsRow #attackAnglePlane{
-  display: none !important;
-}
-
 /* =========================================================
    ATTACK ANGLE — micro polish (easing, glow, hover, responsive)
    ========================================================= */
-#swingMetricsRow :is(.swing-metric--attack, [data-widget="attack"], .metricCard--attack){
-  --aa-stage-w: clamp(160px, 18vw, 220px);
-  --aa-ball: clamp(16px, 2.1vw, 22px);
-  --aa-arc-stroke: clamp(10px, 1.6vw, 16px);
-  --aa-arc-inner: calc(var(--aa-arc-stroke) - 4px);
-}
-
-#swingMetricsRow :is(.swing-metric--attack, [data-widget="attack"], .metricCard--attack) .aa-meter{
-  width: 100%;
-}
-
-#swingMetricsRow :is(.swing-metric--attack, [data-widget="attack"], .metricCard--attack) .aa-meter__stage{
-  width: var(--aa-stage-w);
-  margin: 0 auto;
-}
-
-#swingMetricsRow :is(.swing-metric--attack, [data-widget="attack"], .metricCard--attack) .aa-arcSvg{
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-#swingMetricsRow #attackAngle .aa-arcTrack--outer{
-  stroke-width: var(--aa-arc-stroke) !important;
-}
-
-#swingMetricsRow #attackAngle .aa-arcTrack--inner{
-  stroke-width: var(--aa-arc-inner) !important;
-}
-
-#swingMetricsRow #attackAngle #attackAngleRunner,
-#swingMetricsRow #attackAngle #attackAngleRunner.aa-runner{
-  width: var(--aa-ball) !important;
-  height: var(--aa-ball) !important;
-  border-radius: 999px !important;
-  will-change: transform, left, top, filter, opacity;
-  transition: filter 160ms ease, opacity 160ms ease;
-}
-
-#swingMetricsRow #attackAngle.is-perfect #attackAngleRunner,
-#swingMetricsRow #attackAngle.is-perfect #attackAngleRunner.aa-runner{
-  filter: drop-shadow(0 0 10px rgba(216, 200, 166, 0.22)) drop-shadow(0 0 18px rgba(216, 200, 166, 0.12));
-}
-
-#swingMetricsRow #attackAngle.is-perfect .aa-arcTrack--inner{
-  opacity: 0.98 !important;
-}
-
-#swingMetricsRow :is(.swing-metric--attack, [data-widget="attack"], .metricCard--attack):hover{
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
-    0 14px 40px rgba(0, 0, 0, 0.35);
-}
-
-#swingMetricsRow :is(.swing-metric--attack, [data-widget="attack"], .metricCard--attack):hover #attackAngle .aa-arcTrack--inner{
-  opacity: 1 !important;
-}
-
-#swingMetricsRow :is(.swing-metric--attack, [data-widget="attack"], .metricCard--attack):hover #attackAngle #attackAngleRunner,
-#swingMetricsRow :is(.swing-metric--attack, [data-widget="attack"], .metricCard--attack):hover #attackAngle #attackAngleRunner.aa-runner{
-  opacity: 0.98;
-}
-
 @media (prefers-reduced-motion: reduce){
-  #swingMetricsRow #attackAngle #attackAngleRunner,
-  #swingMetricsRow #attackAngle #attackAngleRunner.aa-runner{
-    transition: none !important;
   }
-}
 
 /* =========================================================
-   Viewport Lock Layout (no page scroll, internal sidebar scroll)
+   Responsive viewport layout (page-level scroll enabled)
    ========================================================= */
 html,
 body {
-  height: 100%;
+  height: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 body {
-  margin: 0;
-  overflow: hidden;
-}
 
-#appShell,
-.appShell {
-  height: 100vh;
-  height: 100dvh;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  padding: clamp(12px, 1.4vw, 20px);
-  gap: clamp(12px, 1.2vw, 18px);
-}
 
 #appHeader,
 .appHeader {
-  flex: 0 0 auto;
-  padding: clamp(12px, 1.4vw, 20px);
-  border-radius: clamp(18px, 2.2vw, 28px);
-}
 
-#appBody,
-.appBody,
-.appMain {
-  flex: 1 1 auto;
-  height: 100%;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(320px, 28vw, 420px);
-  gap: clamp(14px, 1.4vw, 22px);
-  row-gap: 0;
-  overflow: hidden;
-  align-items: stretch;
-  align-content: start;
-}
-
-#mainPanel,
-.mainPanel,
-.gc-main,
-.mainLeft {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  height: 100%;
-  min-height: 0;
-  gap: clamp(14px, 1.4vw, 22px);
-  margin-top: 0 !important;
-  padding-top: 0 !important;
-}
-
-#mainPanel > .powerCard,
-.powerCard {
-  flex: 1 1 auto;
-  min-height: 0;
-  border-radius: clamp(18px, 2.2vw, 28px);
-}
 
 .powerCard__main {
   flex: 1 1 auto;
@@ -5881,144 +4894,31 @@ body {
 }
 
 .powerCard__controls .gc-swingControl {
-  border-radius: inherit;
-  overflow: hidden;
-}
 
-/* ================================
-   SWING PATH footer: keep "ALIGNMENT"
-   attached to the Path widget (no drifting)
-   ================================ */
-
-#swingMetricsRow .metricCard--path{
-  position: relative;
-}
-
-#swingMetricsRow .metricCard--path .metricCard__footer{
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 18px;         /* подтянуть вверх/вниз тут */
-  margin: 0;
-  text-align: center;
-  pointer-events: none;
-}
-
-/* reserve space so footer doesn't overlap content */
-#swingMetricsRow .metricCard--path .metricCard__body{
-  padding-bottom: 56px;
-}
-
-#mainPanel .gc-controls__row--buttons.gc-controls__row--primary,
-#mainPanel .gc-swingControl {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-#mainPanel .gc-swingControl {
-  width: 100%;
-  max-width: none;
-}
-
-#mainPanel .gc-field {
-  flex: 0 1 auto;
-  min-height: 0;
-  height: clamp(220px, 34vh, 360px);
-  max-height: clamp(220px, 34vh, 360px);
-}
-
-#mainPanel .gc-field__canvas {
-  height: 100%;
-  max-height: 100%;
-}
-
-#mainPanel #swingMetricsRow,
-#mainPanel #swingMetricsRow > [data-widget] {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-#mainPanel #uiRoot {
-  min-height: 0;
-}
-
-#sidePanel,
-.sidePanel,
-.gc-sidepanel,
-.sideBar {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  /* Don't stretch vertical gaps on tall screens */
-  justify-content: flex-start;
-  /* Controlled spacing instead of "space-between" */
-  gap: clamp(16px, 2.2vh, 28px);
-  height: 100%;
-  min-height: 0;
-  max-height: 100%;
-  overflow: auto;
-  padding-right: 6px;
-  overscroll-behavior: contain;
-}
-
-#mainPanel > *,
-.mainLeft > *,
-#sidePanel > *,
-.sideBar > * {
-  flex-shrink: 0;
-}
-
-#mainPanel > *:first-child,
-.mainLeft > *:first-child {
-  margin-top: 0 !important;
-}
-
-#sidePanel .gc-card,
-#sidePanel .gc-sidecard {
-  border-radius: clamp(18px, 2.2vw, 28px);
-  padding: clamp(12px, 1.4vw, 20px);
-}
-
-#swingMetricsRow .metricCard {
-  min-height: 0;
-}
-
-#swingMetricsRow .metricCard__body {
-  min-height: 0;
-  overflow: hidden;
-}
-
-#swingMetricsRow .metricCard--tempo .metricCard__body,
-#swingMetricsRow .metricCard--attack .metricCard__body {
-  overflow: visible;
-}
 
 /* ========================================
-   Fit-to-Screen Viewport Wrapper
-   Keeps the full UI inside viewport height
+   UI fit wrappers as normal flow containers
    ======================================== */
 html, body {
-  height: 100%;
+  height: auto;
   margin: 0;
-  overflow-y: auto;   /* allow vertical scroll */
-  overflow-x: hidden; /* prevent horizontal drift */
-}
-
-body {
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 #uiFitViewport{
+  position: relative;
+  width: 100%;
   min-height: 100vh;
-  overflow: visible; /* do not block page scroll */
-  display: flex;
-  justify-content: center;   /* center horizontally */
-  align-items: flex-start;   /* keep top aligned */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 #uiFit{
-  transform-origin: top center;
-  will-change: transform;
+  width: 100%;
+  max-width: 1260px;
+  margin: 0 auto;
+  transform: none !important;
 }
 #uiRoot{
   display: contents; /* Prevent uiRoot from affecting layout height */
@@ -6046,35 +4946,30 @@ body {
   max-width: none;
 }
 
-#swingMetricsRow{
-  width: 100%;
-  max-width: none;
-}
 /* =========================================================
-   FULLSCREEN LAYOUT (no scroll): stretch main dashboard blocks
+   Dashboard stretch helpers (responsive scroll layout)
    Safe: container-only, does not modify widget internals
    ========================================================= */
 
 html, body{
-  height: 100%;
+  height: auto;
 }
 
 body{
   margin: 0;
   min-height: 100vh;
-  overflow: hidden; /* цель: все помещается в экран */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Try common top-level app wrappers */
-#uiFitViewport,
-#uiFit,
 #app,
 .app,
 .page,
 .layout,
 .gc-app,
 .gc-root{
-  height: 100%;
+  min-height: 100%;
 }
 
 /* Main 2-column dashboard container (best-effort selectors) */
@@ -6127,11 +5022,6 @@ main{
   display: flex;
 }
 
-#swingMetricsRow{
-  height: 100%;
-  min-height: 0;
-}
-
 /* Right column: challenge + leaderboard should fill height */
 .rightColumn,
 .sidebar,
@@ -6149,100 +5039,29 @@ main{
 .leaderboard,
 .leaderboardPanel,
 .gc-leaderboard{
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-}
-
-/* ===============================
-   MAIN_PANEL_RADIUS_FIX
-   Ensure main background matches card radius
-   =============================== */
-
-#mainPanel {
-  border-radius: 46px;
-  overflow: hidden;
-}
 
 
-/* ===============================
-   RIGHT_CARDS_RADIUS_CLIP_FIX
-   Fix sharp inner corners by clipping card contents
-   =============================== */
-
-/* Main panel already clipped, but side cards may have inner layers */
-#mainPanel .dailyChallenge,
-#mainPanel .leaderboard,
-#mainPanel .dailyChallengeCard,
-#mainPanel .leaderboardCard,
-#mainPanel .sideCard,
-#mainPanel .rightCard,
-#mainPanel .gc-card,
-#mainPanel .gc-sideCard,
-#mainPanel .panelCard,
-#mainPanel [class*="challenge"],
-#mainPanel [class*="leaderboard"] {
-  overflow: hidden;
-  border-radius: inherit;
-}
-
-/* If those cards use pseudo-layers, force them to respect radius too */
-#mainPanel .dailyChallenge::before,
-#mainPanel .leaderboard::before,
-#mainPanel .dailyChallengeCard::before,
-#mainPanel .leaderboardCard::before,
-#mainPanel .sideCard::before,
-#mainPanel .rightCard::before,
-#mainPanel .gc-card::before,
-#mainPanel .gc-sideCard::before,
-#mainPanel .panelCard::before,
-#mainPanel .dailyChallenge::after,
-#mainPanel .leaderboard::after,
-#mainPanel .dailyChallengeCard::after,
-#mainPanel .leaderboardCard::after,
-#mainPanel .sideCard::after,
-#mainPanel .rightCard::after,
-#mainPanel .gc-card::after,
-#mainPanel .gc-sideCard::after,
-#mainPanel .panelCard::after {
-  border-radius: inherit;
-}
-#appShell,
-#appBody,
-#uiFitViewport {
-  height: 100vh;
-  min-height: 0; /* allow children to scroll */
-}
-
-#appBody {
-  overflow: hidden; /* keep page clean; panels scroll inside */
-}
-
-/* Panels must be scroll containers */
-#sidePanel,
-aside#sidePanel.sidePanel.gc-sidepanel,
-#mainPanel,
-main#mainPanel.mainPanel.gc-main {
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-gutter: stable;
-}
 /* ==============================
-   Full-page scroll mode (NO UI FIT)
+   UI FIT architecture (single source of truth)
    ============================== */
 html, body {
   height: auto !important;
   overflow-y: auto !important;
+  overflow-x: hidden !important;
 }
 
 #uiFitViewport {
+  position: relative !important;
   width: 100% !important;
+  min-height: 100vh !important;
   height: auto !important;
-  overflow: visible !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
 }
 
 #uiFit {
+  width: 100% !important;
+  max-width: 1260px !important;
+  margin: 0 auto !important;
   transform: none !important;
-  transform-origin: initial !important;
 }
