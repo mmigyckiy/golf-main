@@ -1,3 +1,5 @@
+/* @layer widgets (auto-wrapped) */
+@layer widgets {
 #swingMetricsRow .tubeView {
   width: 100%;
   height: 100%;
@@ -250,4 +252,5 @@
 #swingMetricsRow .tubeArc__tick--major {
   width: 22px;
   background: rgba(216, 200, 166, 0.34);
+}
 }

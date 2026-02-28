@@ -1,3 +1,5 @@
+/* @layer overrides (auto-wrapped) */
+@layer overrides {
 /* css/debug_overlay.css
    Enable by running in DevTools console:
    document.body.dataset.debug = "1"
@@ -21,3 +23,4 @@ body[data-debug="1"] .metricCard { outline: 1px dashed rgba(255,255,255,0.35); o
 body[data-debug="1"] .metricCard__title  { outline: 1px dashed rgba(255,200,0,0.55); outline-offset: -1px; }
 body[data-debug="1"] .metricCard__body   { outline: 1px dashed rgba(0,255,200,0.45); outline-offset: -1px; }
 body[data-debug="1"] .metricCard__footer { outline: 1px dashed rgba(120,160,255,0.45); outline-offset: -1px; }
+}

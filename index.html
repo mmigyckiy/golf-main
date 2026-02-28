@@ -1,25 +1,30 @@
 <!doctype html>
 <html lang="en" data-theme="night">
 <head>
-  <meta charset="UTF-8" />
+  
+  <link rel="stylesheet" href="css/layers.css">
+  <link rel="stylesheet" href="css/ui_tokens.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/widgets.css">
+  <link rel="stylesheet" href="css/metric_card.css">
+  <link rel="stylesheet" href="css/tube.css">
+  <link rel="stylesheet" href="css/swing_metrics.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/debug_overlay.css">
+  <link rel="stylesheet" href="css/overrides.css">
+<meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Drivix — DISTANCE • TIMING • CONTROL</title>
   <meta name="application-name" content="Drivix" />
   <meta property="og:title" content="Drivix — DISTANCE • TIMING • CONTROL" />
   <meta name="description" content="Drivix is a premium long drive challenge inspired by golf's most powerful swing." />
 
-  <link rel="stylesheet" href="css/ui_tokens.css" />
-  <link rel="stylesheet" href="css/metric_card.css" />
-  <link rel="stylesheet" href="css/tube.css" />
-  <link rel="stylesheet" href="css/swing_metrics.css" />
-  <link rel="stylesheet" href="css/style.css" />
-  <!-- PixiJS for premium swing metrics overlay -->
+<!-- PixiJS for premium swing metrics overlay -->
   <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.x/dist/pixi.min.js"></script>
-  <link rel="stylesheet" href="css/layout.css">
-  <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/widgets.css">
-  <link rel="stylesheet" href="css/debug_overlay.css">
-  <link rel="stylesheet" href="css/overrides.css">
+
 </head>
 
 <body>
@@ -214,7 +219,7 @@
       </main>
 
       <aside id="sidePanel" class="sidePanel gc-sidepanel" aria-label="Club Panel">
-        <div class="gc-card gc-sidecard drivix-card">
+        <div class="gc-card gc-sidecard drivix-card daily-card">
           <div class="gc-card__kicker">DAILY CHALLENGE</div>
           <div class="gc-card__title">Fairway Precision</div>
           <div class="gc-card__text">Land a drive within the long-drive zone (≥ 260 yd) without crashing.</div>
@@ -224,7 +229,7 @@
           </div>
         </div>
 
-        <div class="gc-card gc-sidecard drivix-card">
+        <div class="gc-card gc-sidecard drivix-card leaderboard-card">
           <div class="gc-card__kicker">LEADERBOARD TODAY</div>
           <ol class="gc-leaderboard">
             <li><span class="name">E. Morgan</span><span class="val">318 yd</span></li>

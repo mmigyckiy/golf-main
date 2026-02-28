@@ -1,3 +1,5 @@
+/* @layer overrides (auto-wrapped) */
+@layer overrides {
 /* css/overrides.css
    OWNER: Overrides / Hotfix layer (last loaded on purpose).
    RULES:
@@ -10,6 +12,90 @@
    WHY: Keep topbar profile from forcing 520px width (legacy constraint).
    header#appHeader .topbar-profile.compact { min-width: 0 !important; }
 */
+
+/* =========================================================
+   Text-only fixes (NO layout/structure changes)
+   Goal: restore the small uppercase "kicker/label" text color
+   in: Player Profile, Power, Daily Challenge, Dist .. YD
+   ========================================================= */
+
+/* Shared kicker tone (matches original light UI) */
+:root{
+  --kicker-text: rgba(255,255,255,.55);
+  --kicker-text-strong: rgba(255,255,255,.62);
+}
+
+/* 1) Topbar: "PLAYER PROFILE" */
+#appHeader .topbar-profile .tp-kicker{
+  color: var(--kicker-text) !important;
+  opacity: 1 !important;
+}
+
+/* 2) Main panel: "POWER" label + "DIST 0 YD" corner meta
+   Use broad-but-scoped selectors inside #mainPanel only. */
+#mainPanel .powerCard :is(
+  .kicker,
+  .gc-kicker,
+  .powerCard__kicker,
+  .powerCard__label,
+  .powerCard__meta,
+  .powerCard__dist,
+  .powerCard__statLabel,
+  .powerCard__corner
+){
+  color: var(--kicker-text) !important;
+  opacity: 1 !important;
+}
+
+/* =========================================================
+   Power card text restore (TEXT ONLY)
+   ========================================================= */
+
+/* Restore small uppercase labels inside power card */
+#mainPanel .powerCard :is(
+  .powerCard__kicker,
+  .powerCard__label,
+  .powerCard__meta,
+  .powerCard__dist,
+  .powerCard__statLabel
+){
+  color: rgba(255,255,255,.55) !important;
+  opacity: 1 !important;
+}
+
+/* Restore big numeric value */
+#mainPanel .powerCard :is(
+  .powerCard__value,
+  .powerCard__multiplier,
+  .powerCard__number
+){
+  color: rgba(255,255,255,.95) !important;
+  opacity: 1 !important;
+}
+
+/* Restore zone pill text only (NOT border/background) */
+#mainPanel .powerCard :is(
+  .zone-pill,
+  .powerCard__zone,
+  .longDriveZone
+){
+  color: rgba(255,255,255,.72) !important;
+  opacity: 1 !important;
+}
+
+/* 3) Side panel first card: "DAILY CHALLENGE" label
+   (Daily card is the first sidePanel card in current HTML) */
+#sidePanel > .gc-card.gc-sidecard.drivix-card:first-child :is(
+  .kicker,
+  .gc-kicker,
+  .gc-card__kicker,
+  .gc-card__eyebrow,
+  .gc-card__label,
+  .gc-card__titleSmall
+){
+  color: var(--kicker-text) !important;
+  opacity: 1 !important;
+}
 
 
 /* =========================================
@@ -140,4 +226,59 @@ header#appHeader{
 #sidePanel > .gc-card.gc-sidecard.drivix-card:first-child .gc-card__text{
   color: rgba(255,255,255,.72);
   opacity: 1;
+}
+
+  /* WHY: SidePanel widget text colors must be scoped to specific widgets, not .gc-card globally. */
+  #sidePanel .daily-card .gc-card__title{ color: rgba(255,255,255,.92); }
+  #sidePanel .daily-card .gc-card__text { color: rgba(255,255,255,.72); opacity: 1; }
+
+  #sidePanel > .gc-card.gc-sidecard.drivix-card:first-child :is(h1, h2, h3, h4, [class*="title"]),
+  #sidePanel > .gc-card.gc-sidecard.drivix-card:nth-child(2) :is(h1, h2, h3, h4, [class*="title"]) {
+    color: rgba(255,255,255,.92) !important;
+    opacity: 1 !important;
+  }
+
+  #sidePanel > .gc-card.gc-sidecard.drivix-card:first-child :is(p, span, strong, [class*="text"], [class*="desc"], [class*="sub"]),
+  #sidePanel > .gc-card.gc-sidecard.drivix-card:nth-child(2) :is(p, span, strong, [class*="text"], [class*="desc"], [class*="sub"]) {
+    color: rgba(255,255,255,.72) !important;
+    opacity: 1 !important;
+  }
+
+  #sidePanel > .gc-card.gc-sidecard.drivix-card:first-child :is(small, [class*="label"], [class*="sub"]),
+  #sidePanel > .gc-card.gc-sidecard.drivix-card:nth-child(2) :is(small, [class*="label"], [class*="sub"]) {
+    color: rgba(255,255,255,.55) !important;
+    opacity: 1 !important;
+  }
+}
+/* =========================================================
+   TEXT ONLY: restore faded labels inside Power card
+   Targets "DIST .. YD", "POWER", and other small meta labels.
+   Does NOT touch layout (no width/height/padding/margins/radius/bg).
+   ========================================================= */
+
+/* 1) Small meta labels (DIST/POWER/YD/etc) */
+#mainPanel :is(.powerCard, .gc-power, [class*="power"] ) :is(
+  [class*="dist"],
+  [class*="kicker"],
+  [class*="meta"],
+  [class*="label"],
+  [class*="unit"],
+  [class*="yd"],
+  [class*="mph"]
+){
+  color: rgba(255,255,255,.62) !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+/* 2) Big numbers (the value itself) */
+#mainPanel :is(.powerCard, .gc-power, [class*="power"] ) :is(
+  [class*="value"],
+  [class*="num"],
+  [class*="number"],
+  [class*="mult"]
+){
+  color: rgba(255,255,255,.95) !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
 }
