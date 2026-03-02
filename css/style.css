@@ -1541,7 +1541,7 @@ hr,
   --path-svg-size: min(220px, 42vw);
   --ring-glow-size: min(200px, 40vw);
 
-  --attack-size: 90px;
+  --attack-size: var(--arc-size);
 }
 
 #uiRoot{
@@ -1970,7 +1970,7 @@ body[data-ui-phase="idle"] .swing-metric--attack{
     --tempo-h: 150px;
     --tempo-tube-w: 36px;
     --tempo-tube-h: 150px;
-    --attack-size: 80px;
+    --attack-size: var(--arc-size);
   }
   .swing-metric__body{
     height: 160px;
@@ -1990,7 +1990,7 @@ body[data-ui-phase="idle"] .swing-metric--attack{
     --tempo-h: 120px;
     --tempo-tube-w: 32px;
     --tempo-tube-h: 120px;
-    --attack-size: 70px;
+    --attack-size: var(--arc-size);
   }
   .swing-metric__body{
     min-height: 100px;

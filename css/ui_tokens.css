@@ -1,3 +1,30 @@
+/* Shared arc size token for Swing Path + Attack Angle widgets. */
+:root {
+  --metric-scale: 1;
+  --arc-size: clamp(160px, 13vw, 210px);
+  --arc-svg-w: 100%;
+  --arc-stroke-outer: 10px;
+  --arc-stroke-inner: 8px;
+  --arc-track: rgba(0, 0, 0, 0.46);
+  --arc-active: rgba(216, 200, 166, 0.86);
+  --arc-glow: rgba(216, 200, 166, 0.22);
+  --arc-track-opacity: 0.42;
+  --arc-glow-opacity: 0.18;
+  --arc-highlight-color: rgba(216, 200, 166, 0.86);
+  --ball-size: 20px;
+  --ball-dimple: rgba(0, 0, 0, 0.24);
+  --ball-dimple-dark: rgba(0, 0, 0, 0.36);
+  --ball-hi: rgba(245, 238, 220, 0.98);
+  --ball-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+  --tempo-w: clamp(54px, 4.6vw, 72px);
+  --arc-stroke: clamp(3px, 0.35vw, 5px);
+  --title-size: clamp(11px, 0.95vw, 13px);
+  --value-size: clamp(22px, 1.9vw, 28px);
+  --hint-size: clamp(10px, 0.9vw, 12px);
+  --text-strong: rgba(255, 255, 255, 0.92);
+  --text-muted: rgba(255, 255, 255, 0.70);
+}
+
 #swingMetricsRow {
   --accent: rgba(216, 200, 166, 1);
   --accent-soft: rgba(216, 200, 166, 0.22);

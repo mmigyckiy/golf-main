@@ -1,3 +1,4 @@
+/* All hotfixes go here, do not patch style.css directly. */
 /* @layer overrides (auto-wrapped) */
 @layer overrides {
 /* css/overrides.css
@@ -281,4 +282,892 @@ header#appHeader{
   color: rgba(255,255,255,.95) !important;
   opacity: 1 !important;
   text-shadow: none !important;
+}
+
+/* =========================================================
+   FIX: Align left (mainPanel) and right (sidePanel) blocks
+   on the same top baseline. Layout-only (no card visuals).
+   ========================================================= */
+
+/* Parent that contains BOTH columns in this project */
+#appBody.appBody.gc-layout{
+  align-items: flex-start !important;   /* for flex layouts */
+  align-content: flex-start !important; /* for grid layouts */
+}
+
+/* Force both columns to start from the same top edge */
+main#mainPanel,
+aside#sidePanel{
+  align-self: flex-start !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Remove any implicit top offset on the first side card */
+aside#sidePanel > .gc-card:first-child{
+  margin-top: 0 !important;
+}
+
+/* =========================================================
+   Widget Sizing v1
+   Harmonize widget/card typography + pill padding only.
+   Scope: #mainPanel, #swingMetricsRow, #sidePanel
+   ========================================================= */
+
+:root{
+  --w-font-title: clamp(20px, 1.45vw, 26px);
+  --w-font-kicker: clamp(11px, 0.82vw, 13px);
+  --w-font-body: clamp(14px, 0.98vw, 16px);
+  --w-font-value: clamp(18px, 1.25vw, 22px);
+  --w-font-value-lg: clamp(42px, 3vw, 56px);
+  --w-pad-card: clamp(14px, 1vw, 18px);
+  --w-gap-card: clamp(10px, 0.85vw, 14px);
+  --w-pill-font: clamp(11px, 0.82vw, 12px);
+  --w-pill-pad-y: clamp(5px, 0.45vw, 7px);
+  --w-pill-pad-x: clamp(10px, 0.9vw, 13px);
+}
+
+/* Side panel: Daily Challenge + Leaderboard text hierarchy */
+#sidePanel :is(.daily-card, .leaderboard-card) .gc-card__kicker{
+  font-size: var(--w-font-kicker) !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.08em !important;
+}
+
+#sidePanel .daily-card .gc-card__title{
+  font-size: var(--w-font-title) !important;
+  line-height: 1.15 !important;
+}
+
+#sidePanel .daily-card .gc-card__text{
+  font-size: var(--w-font-body) !important;
+  line-height: 1.45 !important;
+}
+
+#sidePanel .daily-card .gc-badge{
+  font-size: var(--w-pill-font) !important;
+  line-height: 1.1 !important;
+  letter-spacing: 0.06em !important;
+  padding: var(--w-pill-pad-y) var(--w-pill-pad-x) !important;
+}
+
+#sidePanel .leaderboard-card .gc-leaderboard li,
+#sidePanel .leaderboard-card .gc-leaderboard li :is(.name, .val),
+#sidePanel .leaderboard-card .gc-minirow :is(.muted, .val){
+  font-size: var(--w-font-body) !important;
+  line-height: 1.35 !important;
+}
+
+/* Power card: POWER label, x-value, DIST readout, WIND pill */
+#mainPanel :is(.gc-flightHud__label, .gc-power__label){
+  font-size: var(--w-font-kicker) !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.08em !important;
+}
+
+#mainPanel :is(#hudX, .gc-flightHud__x, #coef, .gc-power__value){
+  font-size: var(--w-font-value-lg) !important;
+  line-height: 1 !important;
+}
+
+#mainPanel .gc-flightHud__stat.distText .k,
+#mainPanel .gc-flightHud__stat.distText .u{
+  font-size: var(--w-font-kicker) !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.06em !important;
+}
+
+#mainPanel .gc-flightHud__stat.distText .v{
+  font-size: var(--w-font-value) !important;
+  line-height: 1.1 !important;
+}
+
+#mainPanel :is(.wind-hud, .swing-wind){
+  padding: var(--w-pill-pad-y) var(--w-pill-pad-x) !important;
+}
+
+#mainPanel :is(.wind-hud__label, .wind-hud__val, .wind-hud__arrow, .swing-wind__label, .swing-wind__val, .swing-wind__arrow){
+  font-size: var(--w-pill-font) !important;
+  line-height: 1.1 !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* Swing metrics row: titles + footer labels/values + readouts */
+#swingMetricsRow .metricCard__title{
+  font-size: var(--w-font-kicker) !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.08em !important;
+}
+
+#swingMetricsRow .metricCard__hint{
+  font-size: var(--w-pill-font) !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0.06em !important;
+}
+
+#swingMetricsRow :is(.metricCard__value, #attackAngleReadout, #attackAngleValueLabel){
+  font-size: var(--w-font-value) !important;
+  line-height: 1.1 !important;
+}
+
+#swingMetricsRow #swingTempoPct{
+  font-size: var(--w-font-value) !important;
+  line-height: 1.1 !important;
+  letter-spacing: 0 !important;
+}
+
+/* =========================================================
+   SWING WIDGET TYPOGRAPHY NORMALIZATION
+   WHY: Swing widgets text visually too dominant vs other UI.
+   SCOPE: #swingMetricsRow only.
+   ========================================================= */
+
+/* 1) Widget titles */
+#swingMetricsRow .gc-card__title,
+#swingMetricsRow .widget-title,
+#swingMetricsRow h3,
+#swingMetricsRow .metricCard__title{
+  font-size: clamp(12px, 0.9vw, 14px) !important;
+  letter-spacing: 0.18em !important;
+  opacity: .75 !important;
+}
+
+/* 2) Footer labels (ALIGNMENT, hints) */
+#swingMetricsRow .alignment-label,
+#swingMetricsRow .gc-card__footer,
+#swingMetricsRow .metric-label,
+#swingMetricsRow .metricCard__hint{
+  font-size: clamp(11px, 0.8vw, 13px) !important;
+  opacity: .65 !important;
+}
+
+/* 3) Numeric percentage / key numeric readouts */
+#swingMetricsRow .metric-value,
+#swingMetricsRow .percent-value,
+#swingMetricsRow .swing-percent,
+#swingMetricsRow .metricCard__value,
+#swingMetricsRow #swingTempoPct,
+#swingMetricsRow #attackAngleReadout{
+  font-size: clamp(20px, 1.6vw, 26px) !important;
+  font-weight: 500 !important;
+}
+
+/* 4) Scale numbers (0 / 50 / 100) */
+#swingMetricsRow .scale-number,
+#swingMetricsRow .tick-label,
+#swingMetricsRow .tubeV__label,
+#swingMetricsRow .tubeArc__scaleLabel{
+  font-size: clamp(11px, 0.8vw, 13px) !important;
+  opacity: .55 !important;
+}
+
+/* =========================================================
+   SWING ARC VISUAL NORMALIZATION
+   WHY: Swing arcs too thick and visually heavy.
+   Make Swing Path arc match Attack Angle thickness.
+   SCOPE: #swingMetricsRow only.
+   ========================================================= */
+
+/* 1) Arc active stroke */
+#swingMetricsRow :is(
+  .alignment-ring__sweet,
+  .aa-arcTrack--inner,
+  .tubeArc__inner,
+  [data-aa-arc="1"]
+){
+  stroke-width: var(--arc-stroke-inner) !important;
+  stroke: var(--arc-highlight-color) !important;
+  filter: drop-shadow(0 0 4px rgba(216, 200, 166, var(--arc-glow-opacity))) !important;
+}
+
+/* 2) Arc background track */
+#swingMetricsRow :is(
+  .alignment-ring__base,
+  .aa-arcTrack--outer,
+  .tubeArc__outer
+){
+  stroke-width: var(--arc-stroke-outer) !important;
+  opacity: var(--arc-track-opacity) !important;
+  filter: none !important;
+}
+
+/* 4) Reduce central knob/marker size slightly */
+#swingMetricsRow .arc-knob,
+#swingMetricsRow .swing-dot{
+  transform: scale(.9);
+}
+
+#swingMetricsRow .tubeArc__runner,
+#swingMetricsRow #attackAngleRunner,
+#swingMetricsRow .aa-runner{
+  scale: .9;
+}
+
+/* =========================================================
+   FLIGHT DOMINANCE + CONTROLS COMPACT SCALE
+   WHY: Keep flight/power area dominant and widgets smaller/consistent.
+   OWNER: Layout + widget sizing overrides must stay in this file.
+   ========================================================= */
+
+:root{
+  --widget-stroke-thin: 4px;
+  --widget-stroke: 6px;
+  --widget-scale: 0.78;
+}
+
+/* Left/right top baseline + tighter header->content spacing */
+#appBody.appBody.gc-layout{
+  align-items: flex-start !important;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 390px) !important;
+  gap: clamp(14px, 1.5vw, 22px) !important;
+}
+
+#mainPanel.mainPanel.gc-main,
+#sidePanel.sidePanel.gc-sidepanel{
+  align-self: flex-start !important;
+  margin-top: 0 !important;
+}
+
+header#appHeader{
+  margin-bottom: clamp(12px, 1.05vw, 18px) !important;
+}
+
+#sidePanel.sidePanel.gc-sidepanel{
+  justify-content: flex-start !important;
+  gap: clamp(10px, 1vw, 14px) !important;
+}
+
+/* Power card vertical ratio: main area ~65%, controls ~35% */
+#mainPanel .powerCard{
+  display: flex;
+  flex-direction: column;
+  min-height: clamp(620px, 74vh, 860px);
+}
+
+#mainPanel .powerCard__main{
+  flex: 1 1 65%;
+  min-height: clamp(360px, 52vh, 560px);
+}
+
+#mainPanel .powerCard__controls{
+  flex: 0 1 35%;
+  min-height: clamp(220px, 30vh, 330px);
+  padding: clamp(10px, 1.05vw, 16px) clamp(12px, 1.2vw, 18px) !important;
+}
+
+#mainPanel .powerCard__controls .gc-swingControl{
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+/* Controls widgets: smaller + consistent without changing structure */
+#mainPanel #swingMetricsRow{
+  --metric-side-max: clamp(110px, 10vw, 132px);
+  --metric-hero-max: clamp(220px, 23vw, 280px);
+  min-height: clamp(180px, 25vh, 250px) !important;
+  max-width: 660px !important;
+  padding: clamp(12px, 1.2vw, 16px) !important;
+}
+
+#mainPanel #swingMetricsRow > [data-widget],
+#mainPanel #swingMetricsRow .metricCard{
+  min-height: clamp(160px, 22vh, 220px) !important;
+}
+
+#mainPanel #swingMetricsRow .metricCard--path .metricCard__body{
+  min-height: clamp(180px, 25vh, 245px) !important;
+}
+
+/* Swing Path fallback ring (when SVG layer is present) */
+#mainPanel #swingMetricsRow :is(#alignmentRing, .alignment-ring){
+  max-width: var(--arc-size) !important;
+  max-height: var(--arc-size) !important;
+  margin-inline: auto;
+}
+
+#mainPanel #swingMetricsRow .alignment-ring__base{
+  stroke-width: var(--arc-stroke-outer) !important;
+}
+
+#mainPanel #swingMetricsRow .alignment-ring__sweet{
+  stroke-width: var(--arc-stroke-inner) !important;
+}
+
+/* Tempo tube reduced by ~20-25% */
+#mainPanel #swingMetricsRow .tubeV__tube{
+  width: clamp(24px, 2.15vw, 30px) !important;
+}
+
+#mainPanel #swingMetricsRow .tubeV__label{
+  font-size: clamp(10px, 0.72vw, 12px) !important;
+}
+
+/* Attack arc thickness matched to shared widget stroke token */
+#mainPanel #swingMetricsRow :is(.tubeArc__inner, .aa-arcTrack--inner, [data-aa-arc="1"]){
+  stroke-width: var(--widget-stroke) !important;
+}
+
+#mainPanel #swingMetricsRow :is(.tubeArc__outer, .aa-arcTrack--outer){
+  stroke-width: calc(var(--widget-stroke) + 2px) !important;
+  opacity: .33 !important;
+}
+
+#mainPanel #swingMetricsRow .tubeArc__stage{
+  width: calc(var(--widget-scale) * 100%) !important;
+  max-width: 185px !important;
+}
+
+/* Debug breakdown panel (JS-rendered content) */
+#skillBreakdownDebug{
+  display: none;
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 1200;
+  max-width: min(560px, calc(100vw - 24px));
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(8, 12, 16, 0.78);
+  color: rgba(236, 240, 244, 0.94);
+  font-size: 11px;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+
+body[data-debug="1"] #skillBreakdownDebug{
+  display: block;
+}
+
+/* Controls compact mode for short viewports */
+@media (max-height: 800px){
+  :root{
+    --widget-scale: 0.72;
+    --widget-stroke-thin: 3px;
+    --widget-stroke: 5px;
+  }
+
+  #mainPanel .powerCard{
+    min-height: clamp(540px, 68vh, 700px);
+  }
+
+  #mainPanel .powerCard__main{
+    min-height: clamp(320px, 44vh, 480px);
+  }
+
+  #mainPanel .powerCard__controls{
+    min-height: clamp(185px, 25vh, 280px);
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+
+  #mainPanel #swingMetricsRow{
+    --metric-side-max: clamp(98px, 9vw, 120px);
+    --metric-hero-max: clamp(200px, 21vw, 248px);
+    min-height: clamp(160px, 22vh, 215px) !important;
+  }
+
+  #mainPanel #swingMetricsRow .tubeV__tube{
+    width: clamp(20px, 1.85vw, 26px) !important;
+  }
+}
+
+/* =========================================================
+   LEFT COLUMN REBALANCE (POWER DOMINANT)
+   Scope: #mainPanel only. Right column untouched.
+   ========================================================= */
+
+/* 1-2) Left column main container as vertical flex */
+#mainPanel,
+#mainPanel.mainPanel.gc-main{
+  display: flex;
+  flex-direction: column;
+}
+
+/* 3) Power card block ~68% */
+#mainPanel .gc-power,
+#mainPanel .power-card{
+  flex: 0 0 68%;
+}
+
+/* Alias for current structure so this applies in existing markup */
+#mainPanel .powerCard__main{
+  flex: 0 0 68% !important;
+}
+
+/* 4) Control area fills the rest */
+#mainPanel .controls-card,
+#mainPanel #swingMetricsRow{
+  flex: 1;
+  padding-top: 16px;
+}
+
+/* Alias for current structure so this applies in existing markup */
+#mainPanel .powerCard__controls{
+  flex: 1 1 auto !important;
+}
+
+/* 5) Control card internal padding */
+#swingMetricsRow .gc-card{
+  padding: 24px 28px !important;
+}
+
+/* Alias for current widget cards */
+#swingMetricsRow .metricCard{
+  padding: 24px 28px !important;
+}
+
+/* --- Readability recovery: Swing Metrics only --- */
+#swingMetricsRow,
+#swingMetricsRow .metricCard,
+#swingMetricsRow .metricCard__body {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/* Titles */
+#swingMetricsRow .metricCard__title,
+#swingMetricsRow .metricCard__title * {
+  color: rgba(255,255,255,0.60) !important;
+  opacity: 1 !important;
+}
+
+/* Key numeric labels + scales */
+#swingMetricsRow .metricCard__footer,
+#swingMetricsRow .metricCard__footer *,
+#swingMetricsRow .tubeV__label,
+#swingMetricsRow .tubeV__tick,
+#swingMetricsRow [id*="Pct"],
+#swingMetricsRow [id*="Value"],
+#swingMetricsRow [data-aa-degrees],
+#swingMetricsRow .aa-scale__label,
+#swingMetricsRow .aa-scale__tick {
+  color: rgba(255,255,255,0.72) !important;
+  opacity: 1 !important;
+}
+
+/* Gold accent stays readable */
+#swingMetricsRow .gold,
+#swingMetricsRow .metricCard__value.gold {
+  color: rgba(216,199,154,0.85) !important;
+}
+
+/* --- Gentle resizing (NOT global) --- */
+/* Keep arc SVGs unscaled to prevent tiny rendering */
+#swingMetricsRow [data-widget="attack"] .tubeArc__svg,
+#swingMetricsRow [data-widget="path"] .alignment-ring__svg {
+  transform: none !important;
+}
+
+/* Tempo tube: slightly shorter and thinner feel */
+#swingMetricsRow .tubeV__tube {
+  transform: scaleX(0.92) !important;
+  transform-origin: center !important;
+}
+#swingMetricsRow .tubeV {
+  height: 88% !important;
+}
+
+/* =========================================
+   ATTACK ANGLE ARC SIZE FIX (SCOPED)
+   Keep Attack arc comparable to Swing Path without touching
+   Swing Path / Tempo or overall layout structure.
+   ========================================= */
+
+/* 1) Attack-only size token */
+#swingMetricsRow [data-widget="attack"],
+#swingMetricsRow .metricCard--attack {
+  --attack-size: var(--arc-size) !important;
+  --aa-stage-w: var(--attack-size) !important;
+}
+
+/* 2) Remove Attack card clamp only */
+#swingMetricsRow [data-widget="attack"],
+#swingMetricsRow .metricCard--attack {
+  width: auto !important;
+  max-width: none !important;
+}
+
+/* 3) Keep Attack arc container visible */
+#swingMetricsRow [data-widget="attack"] .attack-angle,
+#swingMetricsRow .metricCard--attack .attack-angle,
+#swingMetricsRow [data-widget="attack"] #attackAngle,
+#swingMetricsRow .metricCard--attack #attackAngle {
+  overflow: visible !important;
+}
+
+/* 4) Disable extra Attack SVG scaling and let it fill container */
+#swingMetricsRow [data-widget="attack"] svg.tubeArc__svg,
+#swingMetricsRow .metricCard--attack svg.tubeArc__svg {
+  transform: none !important;
+  width: 100% !important;
+  height: auto !important;
+  display: block !important;
+}
+
+/* =========================================================
+   METRICS SIZING DESIGN SYSTEM (SCOPED)
+   WHY: Neutralize legacy per-widget overrides and keep one
+   token-based sizing system across Path/Tempo/Attack.
+   ========================================================= */
+
+#swingMetricsRow [data-widget="path"] {
+  --path-size: var(--arc-size) !important;
+}
+
+#swingMetricsRow [data-widget="attack"],
+#swingMetricsRow .metricCard--attack {
+  --attack-size: var(--arc-size) !important;
+  --aa-stage-w: var(--attack-size) !important;
+}
+
+#swingMetricsRow [data-widget="path"] .metricCard__body,
+#swingMetricsRow [data-widget="attack"] .metricCard__body {
+  max-width: var(--arc-size) !important;
+  margin-inline: auto !important;
+}
+
+#swingMetricsRow [data-widget="tempo"] .tubeV,
+#swingMetricsRow [data-widget="tempo"] .tubeView {
+  width: var(--tempo-w) !important;
+  max-width: var(--tempo-w) !important;
+}
+
+#swingMetricsRow .metricCard__title {
+  font-size: var(--title-size) !important;
+  color: var(--text-muted) !important;
+  letter-spacing: 0.08em !important;
+  opacity: 1 !important;
+}
+
+#swingMetricsRow .metricCard__value,
+#swingMetricsRow .metricCard__value *,
+#swingMetricsRow #swingTempoPct,
+#swingMetricsRow #attackAngleReadout {
+  font-size: var(--value-size) !important;
+  color: var(--text-strong) !important;
+  line-height: 1.05 !important;
+}
+
+#swingMetricsRow .metricCard__hint {
+  font-size: var(--hint-size) !important;
+  color: var(--text-muted) !important;
+  opacity: 1 !important;
+}
+
+#swingMetricsRow :is(.alignment-ring__base, .tubeArc__outer, .aa-arcTrack--outer) {
+  stroke-width: var(--arc-stroke-outer) !important;
+  opacity: var(--arc-track-opacity) !important;
+}
+
+#swingMetricsRow :is(.alignment-ring__sweet, .tubeArc__inner, .aa-arcTrack--inner, [data-aa-arc="1"]) {
+  stroke-width: var(--arc-stroke-inner) !important;
+  stroke: var(--arc-highlight-color) !important;
+}
+
+#swingMetricsRow [data-widget="path"] .alignment-ring__svg,
+#swingMetricsRow [data-widget="attack"] .tubeArc__svg,
+#swingMetricsRow [data-widget="tempo"] .tubeV__tube {
+  transform: none !important;
+}
+
+#swingMetricsRow .tubeV {
+  height: 100% !important;
+}
+
+/* WHY: Attack arc was rendered tiny due to inherited transform scaling and constrained stage width; enforce 100% width and remove transform; widen path d. */
+#swingMetricsRow [data-widget="attack"] .tubeArc__stage,
+#swingMetricsRow [data-widget="attack"] .tubeArc,
+#swingMetricsRow [data-widget="attack"] .tubeView--arc {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+#swingMetricsRow [data-widget="attack"] .tubeArc__svg {
+  transform: none !important;
+  width: 100% !important;
+  height: auto !important;
+  display: block !important;
+}
+
+#swingMetricsRow [data-widget="attack"] .tubeArc__svg .tubeArc__outer,
+#swingMetricsRow [data-widget="attack"] .tubeArc__svg .tubeArc__inner {
+  d: path("M4 70 A56 56 0 0 1 116 70");
+}
+
+/* =========================================================
+   ATTACK RUNNER IMPACT FX (VISUAL-ONLY)
+   WHY: Add feel on hold/release without changing attack math.
+   Scope: Attack runner inside #swingMetricsRow attack widget.
+   ========================================================= */
+
+#swingMetricsRow [data-widget="attack"] #attackAngleRunner,
+#swingMetricsRow [data-widget="attack"] .tubeArc__runner,
+#swingMetricsRow .metricCard--attack #attackAngleRunner,
+#swingMetricsRow .metricCard--attack .tubeArc__runner{
+  will-change: transform, filter, opacity;
+  transition: filter 120ms ease, opacity 120ms ease;
+  backface-visibility: hidden;
+}
+
+#swingMetricsRow [data-widget="attack"] #attackAngleRunner,
+#swingMetricsRow .metricCard--attack #attackAngleRunner{
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255,255,255,.95) 0 18%, rgba(255,255,255,0) 19% 100%),
+    radial-gradient(circle at 50% 55%, rgba(0,0,0,.12) 0 55%, rgba(0,0,0,0) 56% 100%),
+    radial-gradient(circle at 60% 70%, rgba(255,255,255,.22) 0 60%, rgba(255,255,255,0) 61% 100%),
+    radial-gradient(circle at 45% 40%, rgba(245,238,220,.98) 0 62%, rgba(210,200,170,.95) 63% 100%),
+    radial-gradient(circle at 0 0, rgba(0,0,0,.10) 0 70%, rgba(0,0,0,0) 71% 100%),
+    radial-gradient(circle, rgba(0,0,0,.24) 18%, rgba(0,0,0,0) 19%);
+
+  background-size:
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    7px 7px;
+
+  background-blend-mode: screen, multiply, screen, normal, multiply, normal;
+
+  box-shadow:
+    0 10px 22px rgba(0,0,0,.35),
+    inset 0 -3px 6px rgba(0,0,0,.22),
+    inset 0 2px 6px rgba(255,255,255,.18);
+
+  outline: 1px solid rgba(255,255,255,.18);
+  outline-offset: -1px;
+}
+
+#swingMetricsRow [data-widget="attack"] #attackAngleRunner.__holdFX,
+#swingMetricsRow [data-widget="attack"] .tubeArc__runner.__holdFX,
+#swingMetricsRow .metricCard--attack #attackAngleRunner.__holdFX,
+#swingMetricsRow .metricCard--attack .tubeArc__runner.__holdFX{
+  animation: attackRunnerHoldTension 560ms ease-in-out infinite alternate;
+}
+
+#swingMetricsRow [data-widget="attack"] #attackAngleRunner.__popFX,
+#swingMetricsRow [data-widget="attack"] .tubeArc__runner.__popFX,
+#swingMetricsRow .metricCard--attack #attackAngleRunner.__popFX,
+#swingMetricsRow .metricCard--attack .tubeArc__runner.__popFX{
+  animation: attackRunnerReleasePop 220ms cubic-bezier(0.22, 0.86, 0.2, 1) 1 both;
+}
+
+#swingMetricsRow [data-widget="attack"] #attackAngleRunner.__blurFX,
+#swingMetricsRow [data-widget="attack"] .tubeArc__runner.__blurFX,
+#swingMetricsRow .metricCard--attack #attackAngleRunner.__blurFX,
+#swingMetricsRow .metricCard--attack .tubeArc__runner.__blurFX{
+  filter: blur(0.8px) saturate(1.04);
+  opacity: 0.96;
+}
+
+#swingMetricsRow [data-widget="attack"] #attackAngleRunner.__perfectFX:not(.__popFX),
+#swingMetricsRow [data-widget="attack"] .tubeArc__runner.__perfectFX:not(.__popFX),
+#swingMetricsRow .metricCard--attack #attackAngleRunner.__perfectFX:not(.__popFX),
+#swingMetricsRow .metricCard--attack .tubeArc__runner.__perfectFX:not(.__popFX){
+  animation: attackRunnerPerfectVibe 200ms linear 1;
+}
+
+#swingMetricsRow [data-widget="attack"] #attackAngleRunner.__popFX.__perfectFX,
+#swingMetricsRow [data-widget="attack"] .tubeArc__runner.__popFX.__perfectFX,
+#swingMetricsRow .metricCard--attack #attackAngleRunner.__popFX.__perfectFX,
+#swingMetricsRow .metricCard--attack .tubeArc__runner.__popFX.__perfectFX{
+  animation:
+    attackRunnerReleasePop 220ms cubic-bezier(0.22, 0.86, 0.2, 1) 1 both,
+    attackRunnerPerfectVibe 200ms linear 1;
+}
+
+@keyframes attackRunnerHoldTension{
+  0% { transform: translate(-50%, -50%) scale(0.98); }
+  100% { transform: translate(-50%, -50%) scale(1.05); }
+}
+
+@keyframes attackRunnerReleasePop{
+  0% { transform: translate(-50%, -50%) scale(0.95); }
+  55% { transform: translate(-50%, -50%) scale(1.10); }
+  100% { transform: translate(-50%, -50%) scale(1.00); }
+}
+
+@keyframes attackRunnerPerfectVibe{
+  0%, 100% { transform: translate(-50%, -50%); }
+  20% { transform: translate(calc(-50% - 1.4px), -50%); }
+  40% { transform: translate(calc(-50% + 1.6px), -50%); }
+  60% { transform: translate(calc(-50% - 1.2px), -50%); }
+  80% { transform: translate(calc(-50% + 1.1px), -50%); }
+}
+
+/* =========================================================
+   PATH = ATTACK ARC THEME LOCK
+   WHY: Keep Swing Path visually identical to Attack Angle.
+   Scope: #swingMetricsRow only, visual-only.
+   ========================================================= */
+
+#swingMetricsRow :is([data-widget="attack"], [data-widget="path"]) :is(.tubeArc, .tubeArc__stage) {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+#swingMetricsRow [data-widget="path"] :is(.alignment-ring__svg, #alignmentSvg),
+#swingMetricsRow [data-widget="attack"] .tubeArc__svg {
+  width: 100% !important;
+  height: auto !important;
+  display: block !important;
+  max-width: none !important;
+  transform: none !important;
+}
+
+#swingMetricsRow [data-widget="path"] .alignment-ring::before,
+#swingMetricsRow [data-widget="path"] .alignment-ring::after {
+  content: none !important;
+  display: none !important;
+}
+
+#swingMetricsRow [data-widget="path"] :is(.alignment-ring__ball, #alignmentBall),
+#swingMetricsRow [data-widget="path"] :is(.alignment-ring__notch, .alignment-ring__marker) {
+  display: none !important;
+}
+
+#swingMetricsRow [data-widget="path"] :is(#alignmentBase, .alignment-ring__base),
+#swingMetricsRow [data-widget="attack"] :is(.tubeArc__outer, .aa-arcTrack--outer) {
+  stroke: var(--arc-track) !important;
+  stroke-width: var(--arc-stroke-outer) !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  opacity: 0.75 !important;
+  filter: none !important;
+}
+
+#swingMetricsRow [data-widget="path"] :is(#alignmentSweet, .alignment-ring__sweet),
+#swingMetricsRow [data-widget="attack"] :is(.tubeArc__inner, .aa-arcTrack--inner, [data-aa-arc="1"]) {
+  stroke: var(--arc-active) !important;
+  stroke-width: var(--arc-stroke-inner) !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 8px var(--arc-glow)) !important;
+}
+
+#swingMetricsRow [data-widget="path"] :is(#alignmentRunner, .alignment-ring__runner),
+#swingMetricsRow [data-widget="attack"] :is(#attackAngleRunner, .tubeArc__runner) {
+  width: var(--ball-size) !important;
+  height: var(--ball-size) !important;
+  filter:
+    drop-shadow(0 10px 22px rgba(0, 0, 0, 0.35))
+    drop-shadow(0 0 8px var(--arc-glow)) !important;
+}
+
+/* =========================================================
+   SWING PATH + ATTACK VISUAL PARITY LOCK
+   WHY: Match Path arc/runner visuals to Attack (visual-only).
+   Scope: #swingMetricsRow only. No layout/logic changes.
+   ========================================================= */
+
+#swingMetricsRow{
+  --arc-outer-stroke: rgba(0, 0, 0, 0.46);
+  --arc-inner-stroke: rgba(216, 200, 166, 0.86);
+  --arc-outer-w: 10px;
+  --arc-inner-w: 8px;
+  --golf-ball-size: 20px;
+  --golf-ball-hi: rgba(245, 238, 220, 0.98);
+  --golf-ball-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+  --golf-ball-dimple: rgba(0, 0, 0, 0.24);
+  --golf-ball-dimple2: rgba(0, 0, 0, 0.12);
+}
+
+/* Attack arc */
+#swingMetricsRow [data-widget="attack"] .tubeArc__outer{
+  stroke: var(--arc-outer-stroke) !important;
+  stroke-width: var(--arc-outer-w) !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  opacity: .75 !important;
+}
+
+#swingMetricsRow [data-widget="attack"] .tubeArc__inner{
+  stroke: var(--arc-inner-stroke) !important;
+  stroke-width: var(--arc-inner-w) !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 10px rgba(0,0,0,.35)) drop-shadow(0 0 8px rgba(216,200,166,.22)) !important;
+}
+
+/* Attack runner golf-ball skin (keep existing positioning logic untouched) */
+#swingMetricsRow [data-widget="attack"] :is(#attackAngleRunner, .tubeArc__runner){
+  width: var(--golf-ball-size) !important;
+  height: var(--golf-ball-size) !important;
+  border-radius: 999px !important;
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255,255,255,.95) 0 18%, rgba(255,255,255,0) 19% 100%),
+    radial-gradient(circle at 50% 55%, var(--golf-ball-dimple2) 0 55%, rgba(0,0,0,0) 56% 100%),
+    radial-gradient(circle at 60% 70%, rgba(255,255,255,.22) 0 60%, rgba(255,255,255,0) 61% 100%),
+    radial-gradient(circle at 45% 40%, var(--golf-ball-hi) 0 62%, rgba(210,200,170,.95) 63% 100%),
+    radial-gradient(circle at 0 0, rgba(0,0,0,.10) 0 70%, rgba(0,0,0,0) 71% 100%),
+    radial-gradient(circle, var(--golf-ball-dimple) 18%, rgba(0,0,0,0) 19%) !important;
+  background-size:
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    7px 7px !important;
+  background-blend-mode: screen, multiply, screen, normal, multiply, normal !important;
+  box-shadow:
+    var(--golf-ball-shadow),
+    inset 0 -3px 6px rgba(0,0,0,.22),
+    inset 0 2px 6px rgba(255,255,255,.18) !important;
+}
+
+/* Path arc (alignment ring selectors + scoped fallbacks) */
+#swingMetricsRow [data-widget="path"] :is(#alignmentBase, .alignment-ring__base, [id*="alignmentBase"], [class*="alignment-ring__base"]){
+  stroke: var(--arc-outer-stroke) !important;
+  stroke-width: var(--arc-outer-w) !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  opacity: .75 !important;
+  filter: none !important;
+}
+
+#swingMetricsRow [data-widget="path"] :is(#alignmentSweet, .alignment-ring__sweet, [id*="alignmentSweet"], [class*="alignment-ring__sweet"]){
+  stroke: var(--arc-inner-stroke) !important;
+  stroke-width: var(--arc-inner-w) !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 10px rgba(0,0,0,.35)) drop-shadow(0 0 8px rgba(216,200,166,.22)) !important;
+}
+
+/* Path runner golf-ball look (supports div/svg runner variants) */
+#swingMetricsRow [data-widget="path"] :is(#alignmentRunner, .alignment-ring__runner, [id*="alignment"][id*="Runner"], [class*="alignment-ring"][class*="runner"], [class*="runner"]){
+  width: var(--golf-ball-size) !important;
+  height: var(--golf-ball-size) !important;
+  border-radius: 999px !important;
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255,255,255,.95) 0 18%, rgba(255,255,255,0) 19% 100%),
+    radial-gradient(circle at 50% 55%, var(--golf-ball-dimple2) 0 55%, rgba(0,0,0,0) 56% 100%),
+    radial-gradient(circle at 60% 70%, rgba(255,255,255,.22) 0 60%, rgba(255,255,255,0) 61% 100%),
+    radial-gradient(circle at 45% 40%, var(--golf-ball-hi) 0 62%, rgba(210,200,170,.95) 63% 100%),
+    radial-gradient(circle at 0 0, rgba(0,0,0,.10) 0 70%, rgba(0,0,0,0) 71% 100%),
+    radial-gradient(circle, var(--golf-ball-dimple) 18%, rgba(0,0,0,0) 19%) !important;
+  background-size:
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    7px 7px !important;
+  background-blend-mode: screen, multiply, screen, normal, multiply, normal !important;
+  box-shadow:
+    var(--golf-ball-shadow),
+    inset 0 -3px 6px rgba(0,0,0,.22),
+    inset 0 2px 6px rgba(255,255,255,.18) !important;
+  fill: var(--golf-ball-hi) !important;
+  stroke: rgba(255,255,255,.18) !important;
+  stroke-width: 1.2 !important;
+  r: calc(var(--golf-ball-size) * 0.5) !important;
 }

@@ -255,7 +255,8 @@ function render() {
   if (!__aaGeomCache) __aaGeomCache = __aaGetGeom();
   const root = els.container || document.getElementById("attackAngle");
   const runner = els.ball || document.getElementById("attackAngleRunner");
-  if (runner) {
+  const hasModernAttackRunner = !!document.querySelector('#swingMetricsRow [data-widget="attack"] .tubeArc__runner');
+  if (runner && !hasModernAttackRunner) {
     const MIN_DEG = -6;
     const MAX_DEG = 6;
     // AA: ball position is bound to arc path geometry (deg -6..+6 => left..right)

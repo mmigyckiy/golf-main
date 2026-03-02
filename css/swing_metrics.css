@@ -91,8 +91,15 @@
   width: 100%;
 }
 
-#swingMetricsRow > [data-widget="path"] {
+#swingMetricsRow > [data-widget="path"],
+#swingMetricsRow .metricCard--path[data-widget="path"] {
+  --path-size: var(--arc-size);
   max-width: var(--metric-hero-max);
+}
+
+#swingMetricsRow > [data-widget="attack"],
+#swingMetricsRow .metricCard--attack[data-widget="attack"] {
+  --attack-size: var(--arc-size);
 }
 
 #swingMetricsRow > [data-widget="attack"],
@@ -148,7 +155,33 @@
 }
 
 #swingMetricsRow .metricCard--path .metricCard__body {
-  min-height: 300px;
+  width: var(--path-size);
+  height: var(--path-size);
+  min-height: var(--path-size);
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+#swingMetricsRow [data-widget="path"] .metricCard__body,
+#swingMetricsRow [data-widget="attack"] .metricCard__body {
+  max-width: var(--arc-size);
+  margin-inline: auto;
+}
+
+#swingMetricsRow .metricCard--path :is(#alignmentRing, .alignment-ring) {
+  width: min(var(--path-size), 100%);
+  height: min(var(--path-size), 100%);
+  max-width: none;
+}
+
+#swingMetricsRow [data-widget="path"] .alignment-ring__svg,
+#swingMetricsRow [data-widget="path"] #alignmentSvg,
+#swingMetricsRow [data-widget="attack"] .tubeArc__svg {
+  width: var(--arc-svg-w);
+  height: auto;
+  max-width: none;
+  display: block;
+  transform: none !important;
 }
 
 /* =========================
@@ -173,11 +206,21 @@
 }
 
 #swingMetricsRow .metricCard--tempo #swingTempoPct {
-  font-size: 16px;
+  font-size: var(--value-size);
   line-height: 1;
   font-weight: 600;
   letter-spacing: 0.04em;
   color: rgba(216, 200, 166, 0.92);
+}
+
+#swingMetricsRow [data-widget="tempo"] {
+  --tempo-widget-w: var(--tempo-w);
+}
+
+#swingMetricsRow [data-widget="tempo"] .tubeV,
+#swingMetricsRow [data-widget="tempo"] .tubeView {
+  width: var(--tempo-widget-w);
+  max-width: var(--tempo-widget-w);
 }
 
 /* =========================
@@ -284,26 +327,50 @@
     rgba(216, 200, 166, 0.04) 55%,
     transparent 70%
   );
-  filter: blur(12px);
-  opacity: 0.55;
+  filter: blur(8px);
+  opacity: 0.38;
   animation: swingPathBreath 3s ease-in-out infinite;
 }
 
 @keyframes swingPathBreath {
   0%,
   100% {
-    opacity: 0.5;
+    opacity: 0.34;
   }
   50% {
-    opacity: 0.65;
+    opacity: 0.44;
   }
+}
+
+#swingMetricsRow [data-widget="path"] :is(#alignmentBase, .alignment-ring__base) {
+  stroke: rgba(0, 0, 0, 0.46);
+  stroke-width: var(--arc-stroke-outer);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: var(--arc-track-opacity);
+  filter: none;
+  vector-effect: non-scaling-stroke;
+}
+
+#swingMetricsRow [data-widget="path"] :is(#alignmentSweet, .alignment-ring__sweet) {
+  stroke: var(--arc-highlight-color);
+  stroke-width: var(--arc-stroke-inner);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.96;
+  filter: drop-shadow(0 0 4px rgba(216, 200, 166, var(--arc-glow-opacity)));
+  vector-effect: non-scaling-stroke;
+}
+
+#swingMetricsRow [data-widget="path"] :is(#alignmentRunner, #alignmentBall, .alignment-ring__runner, .alignment-ring__ball) {
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.34));
 }
 
 /* =========================
    Attack
    ========================= */
 #swingMetricsRow .metricCard--attack {
-  --aa-stage-w: clamp(160px, 18vw, 220px);
+  --aa-stage-w: var(--attack-size);
   --aa-ball: clamp(16px, 2.1vw, 22px);
 }
 
@@ -338,10 +405,32 @@
   overflow: visible;
 }
 
+/* WHY: Attack arc looked visually compressed by inherited sizing/scaling.
+   Keep this strictly scoped to the Attack widget so Path/Tempo remain unchanged. */
+#swingMetricsRow [data-widget="attack"] .tubeArc__stage,
+#swingMetricsRow [data-widget="attack"] .tubeArc,
+#swingMetricsRow [data-widget="attack"] .tubeView--arc {
+  width: 100%;
+  max-width: 100%;
+}
+
+#swingMetricsRow [data-widget="attack"] .tubeArc__svg {
+  transform: none !important;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  display: block;
+}
+
+#swingMetricsRow [data-widget="attack"] .tubeArc__outer,
+#swingMetricsRow [data-widget="attack"] .tubeArc__inner {
+  d: path("M4 70 A56 56 0 0 1 116 70");
+}
+
 #swingMetricsRow .metricCard--attack .tubeArc__outer,
 #swingMetricsRow .metricCard--attack .aa-arcTrack--outer {
   stroke: rgba(0, 0, 0, 0.38);
-  stroke-width: 30;
+  stroke-width: var(--arc-stroke);
   stroke-linecap: round;
   opacity: 1;
   filter: blur(1.2px);
@@ -351,7 +440,7 @@
 #swingMetricsRow .metricCard--attack .aa-arcTrack--inner,
 #swingMetricsRow .metricCard--attack [data-aa-arc="1"] {
   stroke: rgba(216, 200, 166, 0.78);
-  stroke-width: 26;
+  stroke-width: var(--arc-stroke);
   stroke-linecap: round;
   opacity: 1;
   filter: drop-shadow(0 -1px 0 rgba(255, 255, 255, 0.18));
@@ -383,7 +472,7 @@
 }
 
 #attackAngleReadout {
-  font-size: 16px;
+  font-size: var(--value-size);
   letter-spacing: 0.08em;
 }
 

@@ -6,13 +6,36 @@ function clamp(v, min, max) {
   return Math.max(min, Math.min(max, Number(v) || 0));
 }
 
-function lerp(a, b, t) {
-  return a + (b - a) * t;
+function svgPointToOffsetParent(svgEl, point, offsetParent) {
+  if (!svgEl || !point || !offsetParent) return null;
+  if (typeof svgEl.createSVGPoint !== "function") return null;
+  const ctm = svgEl.getScreenCTM?.();
+  if (!ctm) return null;
+  const svgPoint = svgEl.createSVGPoint();
+  svgPoint.x = point.x;
+  svgPoint.y = point.y;
+  const screenPoint = svgPoint.matrixTransform(ctm);
+  if (!Number.isFinite(screenPoint.x) || !Number.isFinite(screenPoint.y)) return null;
+  const parentRect = offsetParent.getBoundingClientRect();
+  return {
+    x: screenPoint.x - parentRect.left,
+    y: screenPoint.y - parentRect.top
+  };
 }
 
-function easeOutQuad(t) {
-  const c = clamp01(t);
-  return 1 - (1 - c) * (1 - c);
+function fallbackSvgPointToOffsetParent(svgEl, point, offsetParent) {
+  if (!svgEl || !point || !offsetParent) return null;
+  const vb = svgEl.viewBox?.baseVal;
+  if (!vb || vb.width <= 0 || vb.height <= 0) return null;
+  const svgRect = svgEl.getBoundingClientRect();
+  if (!svgRect.width || !svgRect.height) return null;
+  const parentRect = offsetParent.getBoundingClientRect();
+  const sx = svgRect.width / vb.width;
+  const sy = svgRect.height / vb.height;
+  return {
+    x: (point.x - vb.x) * sx + (svgRect.left - parentRect.left),
+    y: (point.y - vb.y) * sy + (svgRect.top - parentRect.top)
+  };
 }
 
 export function createTubeViewArc({
@@ -28,11 +51,11 @@ export function createTubeViewArc({
   let mounted = false;
   let progress01 = 0;
   let runner01 = 0.5;
+  let currentValueDeg = 0;
   let armedOnce = false;
   let visualState = "idle";
-  let smoothX = null;
-  let smoothY = null;
   let onResize = null;
+  let resizeRafId = 0;
   let debugSnapshot = null;
 
   function setState(state) {
@@ -59,70 +82,53 @@ export function createTubeViewArc({
     }
   }
 
-  function positionRunner() {
+  function updateAttackRunnerPosition(valueDeg) {
     if (!mounted || !pathInnerEl || !runnerEl || !svgEl || !stageEl) return;
-    const total = pathInnerEl.getTotalLength?.();
+    const pathEl =
+      svgEl.querySelector(".tubeArc__inner") ||
+      svgEl.querySelector(".tubeArc__outer") ||
+      pathInnerEl;
+    if (!pathEl) return;
+
+    const normalizedDeg = Number.isFinite(valueDeg) ? clamp(valueDeg, -6, 6) : null;
+    const t = Number.isFinite(normalizedDeg)
+      ? clamp01((6 - normalizedDeg) / 12)
+      : clamp01(progress01);
+
+    const total = pathEl.getTotalLength?.();
     if (!Number.isFinite(total) || total <= 0) return;
-    const isIdle = visualState === "idle" || visualState === "ready" || !visualState;
-    if (!armedOnce && !isIdle) armedOnce = true;
-    const normalized01 = Number.isFinite(runner01) ? clamp01(runner01) : 0.5;
-    const effective01 = (!armedOnce && isIdle) ? 0.5 : normalized01;
-    const point = pathInnerEl.getPointAtLength(total * effective01);
-    const vb = svgEl.viewBox?.baseVal;
-    if (!vb || vb.width <= 0 || vb.height <= 0) return;
 
-    const svgRect = svgEl.getBoundingClientRect();
-    const stageRect = stageEl.getBoundingClientRect();
-    if (!svgRect.width || !svgRect.height || !stageRect.width || !stageRect.height) return;
+    const point = pathEl.getPointAtLength(total * t);
+    const runnerParent = runnerEl.offsetParent || stageEl || runnerEl.parentElement;
+    if (!runnerParent) return;
 
-    const sx = svgRect.width / vb.width;
-    const sy = svgRect.height / vb.height;
-    const targetX = (point.x - vb.x) * sx + (svgRect.left - stageRect.left);
-    const targetY = (point.y - vb.y) * sy + (svgRect.top - stageRect.top);
+    const targetPoint =
+      svgPointToOffsetParent(svgEl, point, runnerParent) ||
+      fallbackSvgPointToOffsetParent(svgEl, point, runnerParent);
+    if (!targetPoint) return;
 
-    const attackDeg = effective01 * 12 - 6;
-    const absA = Math.abs(attackDeg);
-    const tEnd = clamp01(absA / 6);
-    const k = lerp(0.20, 0.12, easeOutQuad(tEnd));
+    runnerEl.style.left = `${targetPoint.x}px`;
+    runnerEl.style.top = `${targetPoint.y}px`;
 
-    if (!armedOnce) {
-      smoothX = targetX;
-      smoothY = targetY;
-    } else if (smoothX == null || smoothY == null) {
-      smoothX = targetX;
-      smoothY = targetY;
-    } else {
-      smoothX = lerp(smoothX, targetX, k);
-      smoothY = lerp(smoothY, targetY, k);
-    }
-
-    const runnerRect = runnerEl.getBoundingClientRect();
-    const runnerSize = Number.isFinite(runnerRect.width) && runnerRect.width > 0
-      ? runnerRect.width
-      : 22;
-    const half = runnerSize / 2;
-    const left = clamp(smoothX - half, -half, stageRect.width - half);
-    const top = clamp(smoothY - half, -half, stageRect.height - half);
-
-    runnerEl.style.left = `${left.toFixed(2)}px`;
-    runnerEl.style.top = `${top.toFixed(2)}px`;
-    runnerEl.style.setProperty("transform", visualState === "hold" ? "scale(1.05)" : "none", "important");
+    const parentRect = runnerParent.getBoundingClientRect();
+    const resolvedDeg = Number.isFinite(normalizedDeg) ? normalizedDeg : clamp(6 - (t * 12), -6, 6);
+    currentValueDeg = resolvedDeg;
+    runner01 = t;
     debugSnapshot = {
-      stageW: stageRect.width,
-      stageH: stageRect.height,
-      left,
-      top,
-      centerX: smoothX,
-      centerY: smoothY,
-      runnerSize,
-      runner01: effective01
+      stageW: parentRect.width,
+      stageH: parentRect.height,
+      left: targetPoint.x,
+      top: targetPoint.y,
+      centerX: targetPoint.x,
+      centerY: targetPoint.y,
+      runner01: t
     };
-    mountEl?.classList.toggle("is-perfect", absA <= 0.25);
+    mountEl?.classList.toggle("is-perfect", Math.abs(resolvedDeg) <= 0.25);
   }
 
   function render() {
     if (!mounted) return;
-    positionRunner();
+    updateAttackRunnerPosition(currentValueDeg);
     if (viewEl) viewEl.style.setProperty("--arcProgress", `${clamp01(progress01)}`);
   }
 
@@ -164,21 +170,42 @@ export function createTubeViewArc({
     mounted = true;
     armedOnce = false;
     visualState = "idle";
-    smoothX = null;
-    smoothY = null;
+    currentValueDeg = 0;
     mountEl.classList.remove("is-perfect");
-    onResize = () => render();
+    onResize = () => {
+      if (resizeRafId) return;
+      resizeRafId = window.requestAnimationFrame(() => {
+        resizeRafId = 0;
+        updateAttackRunnerPosition(currentValueDeg);
+      });
+    };
     window.addEventListener("resize", onResize);
     render();
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        updateAttackRunnerPosition(currentValueDeg);
+      });
+    });
   }
 
   function setProgress01(v01) {
     progress01 = clamp01(v01);
+    currentValueDeg = clamp(6 - (progress01 * 12), -6, 6);
+    runner01 = progress01;
     render();
   }
 
   function setRunner01(v01) {
     runner01 = Number.isFinite(v01) ? clamp01(v01) : 0.5;
+    progress01 = runner01;
+    currentValueDeg = clamp(6 - (runner01 * 12), -6, 6);
+    render();
+  }
+
+  function setValueDeg(valueDeg) {
+    currentValueDeg = Number.isFinite(valueDeg) ? clamp(valueDeg, -6, 6) : 0;
+    runner01 = clamp01((6 - currentValueDeg) / 12);
+    progress01 = runner01;
     render();
   }
 
@@ -200,13 +227,13 @@ export function createTubeViewArc({
     mounted = false;
     armedOnce = false;
     visualState = "idle";
-    smoothX = null;
-    smoothY = null;
+    currentValueDeg = 0;
+    resizeRafId = 0;
     if (onResize) {
       window.removeEventListener("resize", onResize);
       onResize = null;
     }
   }
 
-  return { mount, setProgress01, setRunner01, setState, getDebugSnapshot, destroy };
+  return { mount, setProgress01, setRunner01, setValueDeg, setState, getDebugSnapshot, destroy };
 }

@@ -1,2 +1,11 @@
-/* Cascade layer order (lowest -> highest priority) */
-@layer tokens, base, layout, components, widgets, overrides;
+@layer tokens, base, layout, components, widgets, debug, overrides;
+@import url("./ui_tokens.css") layer(tokens);
+@import url("./style.css") layer(base);
+@import url("./layout.css") layer(layout);
+@import url("./components.css") layer(components);
+@import url("./widgets.css") layer(widgets);
+@import url("./metric_card.css") layer(widgets);
+@import url("./tube.css") layer(widgets);
+@import url("./swing_metrics.css") layer(widgets);
+@import url("./debug_overlay.css") layer(debug);
+@import url("./overrides.css") layer(overrides);

@@ -160,7 +160,7 @@
 }
 
 #swingMetricsRow .tubeView--arc .tubeArc {
-  width: min(250px, 100%);
+  width: min(var(--arc-size), 100%);
   height: 100%;
   min-height: 0;
   display: flex;
@@ -172,16 +172,19 @@
 
 #swingMetricsRow .tubeArc__stage {
   position: relative;
-  width: min(230px, 100%);
+  width: 100%;
+  max-width: none;
   aspect-ratio: 12 / 9;
   overflow: visible;
 }
 
 #swingMetricsRow .tubeArc__svg {
-  width: 100%;
-  height: 100%;
+  width: var(--arc-svg-w);
+  height: auto;
+  max-width: none;
   display: block;
   overflow: visible;
+  transform: none !important;
 }
 
 #swingMetricsRow .tubeArc__outer,
@@ -192,16 +195,19 @@
 }
 
 #swingMetricsRow .tubeArc__outer {
-  stroke: rgba(0, 0, 0, 0.4);
-  stroke-width: 22px;
-  opacity: 0.32;
-  filter: blur(1.6px);
+  stroke: rgba(0, 0, 0, 0.46);
+  stroke-width: var(--arc-stroke-outer);
+  opacity: var(--arc-track-opacity);
+  filter: none;
+  vector-effect: non-scaling-stroke;
 }
 
 #swingMetricsRow .tubeArc__inner {
-  stroke: rgba(216, 200, 166, 0.72);
-  stroke-width: 7px;
-  filter: none;
+  stroke: var(--arc-highlight-color);
+  stroke-width: var(--arc-stroke-inner);
+  opacity: 0.96;
+  filter: drop-shadow(0 0 4px rgba(216, 200, 166, var(--arc-glow-opacity)));
+  vector-effect: non-scaling-stroke;
 }
 
 #swingMetricsRow .tubeArc__runner {
@@ -252,5 +258,83 @@
 #swingMetricsRow .tubeArc__tick--major {
   width: 22px;
   background: rgba(216, 200, 166, 0.34);
+}
+
+/* Shared arc/runner theme for Attack + Swing Path */
+#swingMetricsRow :is(.metricCard--attack, .metricCard--path) .tubeArc__stage {
+  width: 100%;
+  max-width: none;
+}
+
+#swingMetricsRow :is(.metricCard--attack, .metricCard--path) .tubeArc__svg,
+#swingMetricsRow .metricCard--path :is(.alignment-ring__svg, #alignmentSvg) {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-width: none;
+  transform: none !important;
+}
+
+#swingMetricsRow .metricCard--attack :is(.tubeArc__outer, .aa-arcTrack--outer),
+#swingMetricsRow .metricCard--path :is(#alignmentBase, .alignment-ring__base) {
+  fill: none;
+  stroke: var(--arc-track);
+  stroke-width: var(--arc-stroke-outer);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.75;
+  filter: none;
+  vector-effect: non-scaling-stroke;
+}
+
+#swingMetricsRow .metricCard--attack :is(.tubeArc__inner, .aa-arcTrack--inner, [data-aa-arc="1"]),
+#swingMetricsRow .metricCard--path :is(#alignmentSweet, .alignment-ring__sweet) {
+  fill: none;
+  stroke: var(--arc-active);
+  stroke-width: var(--arc-stroke-inner);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 1;
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 8px var(--arc-glow));
+  vector-effect: non-scaling-stroke;
+}
+
+#swingMetricsRow .metricCard--attack :is(#attackAngleRunner, .tubeArc__runner),
+#swingMetricsRow .metricCard--path .tubeArc__runner {
+  width: var(--ball-size);
+  height: var(--ball-size);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.95) 0 18%, rgba(255, 255, 255, 0) 19% 100%),
+    radial-gradient(circle at 50% 55%, rgba(0, 0, 0, 0.12) 0 55%, rgba(0, 0, 0, 0) 56% 100%),
+    radial-gradient(circle at 60% 70%, rgba(255, 255, 255, 0.22) 0 60%, rgba(255, 255, 255, 0) 61% 100%),
+    radial-gradient(circle at 45% 40%, var(--ball-hi) 0 62%, rgba(210, 200, 170, 0.95) 63% 100%),
+    radial-gradient(circle at 0 0, rgba(0, 0, 0, 0.1) 0 70%, rgba(0, 0, 0, 0) 71% 100%),
+    radial-gradient(circle, var(--ball-dimple) 18%, rgba(0, 0, 0, 0) 19%);
+  background-size:
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    7px 7px;
+  background-blend-mode: screen, multiply, screen, normal, multiply, normal;
+  box-shadow:
+    var(--ball-shadow),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.22),
+    inset 0 2px 6px rgba(255, 255, 255, 0.18);
+  outline: 1px solid rgba(255, 255, 255, 0.18);
+  outline-offset: -1px;
+}
+
+#swingMetricsRow .metricCard--path :is(#alignmentRunner, .alignment-ring__runner) {
+  r: calc(var(--ball-size) * 0.5);
+  fill: var(--ball-hi);
+  stroke: rgba(255, 255, 255, 0.18);
+  stroke-width: 1.2;
+  filter:
+    drop-shadow(0 10px 22px rgba(0, 0, 0, 0.35))
+    drop-shadow(0 0 8px var(--arc-glow));
+  vector-effect: non-scaling-stroke;
 }
 }

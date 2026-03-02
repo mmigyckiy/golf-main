@@ -11,10 +11,11 @@
 // - getEnvWindFromSample(): no references found
 
 // == Config / Constants ==
-import { isWithinPerfectWindow, loadLongestToday, saveLongestToday, evaluateTarget, genCrashForRisk, getGrowthForRisk, showSignatureOverlay } from "./longdrive-extras.js";
+import { isWithinPerfectWindow, loadLongestToday, saveLongestToday, evaluateTarget, getGrowthForRisk, showSignatureOverlay } from "./longdrive-extras.js";
 import { clamp, clamp01 } from "./logic/rng.js";
 import { createShotSetup } from "./logic/shot_setup.js";
 import { computeLandingX } from "./logic/risk_engine.js";
+import { computeRoundMultiplier } from "./logic/skill_multiplier.js";
 import { renderTopbar } from "./ui/topbar.js";
 import { loadPlayerMental, applyAttemptMental, applyRecoveryOnRoundEnd } from "./logic/player_state.js";
 import { initWind, sampleWind } from "./logic/wind.js";
@@ -38,6 +39,8 @@ const RISK_K = 0.010;
 const RISK_P = 2.2;
 const DANGER_X_START = 2.2;
 const DANGER_X_FULL = 3.6;
+const ATTACK_PREVIEW_MAX_DEG = 6;
+const ATTACK_PREVIEW_PERIOD_MS = 2600;
 const DBG_PHYS = false;
 const REACT_UI = false;
 let widgetManager = null;
@@ -300,11 +303,16 @@ const state = {
     sweetSpotFinal: null,
     longDriveUnlocked: false,
     lockedX: null,
+    tempoScore: null,
     matchScore: null,
     faceAngleNorm: 0,
     bias: 0,
     faceAlignedAtRelease: false,
-    faceAlignedQuality01: 0
+    faceAlignedQuality01: 0,
+    skillInput: null,
+    skillBreakdown: null,
+    skillX: null,
+    skillXApplied: null
   },
   _lastWindHudAt: 0,
   _windFrozenOnce: false,
@@ -329,11 +337,19 @@ window.__DRIVIX_UI__._state = state;
 const ANALYTICS_STORAGE_KEY = "drivix.stats";
 const ANALYTICS_MAX = 12;
 const ANALYTICS_RELEASE_MAX = 8;
+const SKILL_SIGNAL_DEFAULTS = { tempoQuality: 0.5, pathQuality: 0.5, risk: 0.5 };
 const analytics = {
   recentDistances: [],
   recentSweet: [],
   recentRelease: []
 };
+
+if(typeof window !== "undefined"){
+  window.__skillSignals = {
+    ...SKILL_SIGNAL_DEFAULTS,
+    ...(window.__skillSignals || {})
+  };
+}
 
 // == Storage ==
 function loadFromStorage(){
@@ -808,11 +824,16 @@ function resetRoundState(reason = "manual"){
   state.round.sweetSpotFinal = null;
   state.round.longDriveUnlocked = false;
   state.round.lockedX = null;
+  state.round.tempoScore = null;
   state.round.quality = null;
   state.round.maxX = null;
   state.round.matchScore = null;
   state.round.faceAngleNorm = 0;
   state.round.bias = 0;
+  state.round.skillInput = null;
+  state.round.skillBreakdown = null;
+  state.round.skillX = null;
+  state.round.skillXApplied = null;
   state.round.faceAlignedAtRelease = false;
   state.round.faceAlignedQuality01 = 0;
   state.stability = 0;
@@ -857,6 +878,8 @@ function resetRoundState(reason = "manual"){
   state.ui = state.ui || {};
   state.ui.canStart = true;
   if (state.ui?.preview) state.ui.preview.attackDeg = 0;
+  setSkillSignals(SKILL_SIGNAL_DEFAULTS);
+  renderSkillBreakdownPanel();
   setButtons();
 }
 
@@ -1044,6 +1067,127 @@ function getAttackAngleSweet(){
   return { center: Number.isFinite(c) ? clamp01(c) : 0.5, width: Number.isFinite(w) ? w : 0.20 };
 }
 
+function setSkillSignals(next = {}){
+  const prev =
+    (typeof window !== "undefined" && window.__skillSignals)
+      ? window.__skillSignals
+      : SKILL_SIGNAL_DEFAULTS;
+  const merged = {
+    tempoQuality: clamp01(Number(next.tempoQuality ?? prev.tempoQuality ?? SKILL_SIGNAL_DEFAULTS.tempoQuality)),
+    pathQuality: clamp01(Number(next.pathQuality ?? prev.pathQuality ?? SKILL_SIGNAL_DEFAULTS.pathQuality)),
+    risk: clamp01(Number(next.risk ?? prev.risk ?? SKILL_SIGNAL_DEFAULTS.risk))
+  };
+  if(typeof window !== "undefined"){
+    window.__skillSignals = merged;
+  }
+  return merged;
+}
+
+function getTempoQualitySignal(){
+  if(Number.isFinite(state.round?.tempoScore)){
+    return clamp01(state.round.tempoScore);
+  }
+  const headPos = SwingControls.getTempoHeadPos();
+  const start = Number.isFinite(state.tempo?.windowStart) ? state.tempo.windowStart : 0.6;
+  const end = Number.isFinite(state.tempo?.windowEnd) ? state.tempo.windowEnd : 0.8;
+  return scoreNeedleInWindow(clamp01(Number.isFinite(headPos) ? headPos : 0.5), start, end);
+}
+
+function getPathQualitySignal(){
+  if(state.shot?.locked && Number.isFinite(state.shot?.components?.path)){
+    return clamp01(state.shot.components.path);
+  }
+  if((state.round?.state === "RUNNING" || state.round?.state === "ENDED") && Number.isFinite(state.round?.faceAlignedQuality01)){
+    return clamp01(state.round.faceAlignedQuality01);
+  }
+  const pathValue = getSwingPathValue01();
+  const sweet = getSwingPathSweet();
+  return scoreFromSweet(pathValue, sweet.center, sweet.width);
+}
+
+function getAttackRiskSignal(){
+  const degCandidates = [
+    state.shot?.attackDeg,
+    state.attackAngle?.valueDeg,
+    state.swingWidget?.attackDeg,
+    state.ui?.preview?.attackDeg
+  ];
+  for(const deg of degCandidates){
+    if(Number.isFinite(deg)){
+      return clamp01(Math.abs(deg) / 6);
+    }
+  }
+  const valueCandidates = [
+    state.attackAngle?.value01,
+    state.attack?.value,
+    state.attackAngle?.value
+  ];
+  for(const value of valueCandidates){
+    if(Number.isFinite(value)){
+      return clamp01(Math.abs(clamp01(value) - 0.5) * 2);
+    }
+  }
+  return state.riskMode === "aggressive" ? 0.65 : 0.35;
+}
+
+function collectSkillSignals(){
+  return setSkillSignals({
+    tempoQuality: getTempoQualitySignal(),
+    pathQuality: getPathQualitySignal(),
+    risk: getAttackRiskSignal()
+  });
+}
+
+function computeRoundSkillDecision(rng = Math.random){
+  const input = collectSkillSignals();
+  const result = computeRoundMultiplier(input, rng);
+  return { input, x: result.x, breakdown: result.breakdown };
+}
+
+let skillBreakdownPanelEl = null;
+
+function ensureSkillBreakdownPanel(){
+  if(typeof document === "undefined") return null;
+  if(skillBreakdownPanelEl && document.body?.contains(skillBreakdownPanelEl)){
+    return skillBreakdownPanelEl;
+  }
+  const el = document.createElement("div");
+  el.id = "skillBreakdownDebug";
+  el.setAttribute("aria-hidden", "true");
+  document.body?.appendChild(el);
+  skillBreakdownPanelEl = el;
+  return skillBreakdownPanelEl;
+}
+
+function renderSkillBreakdownPanel(){
+  if(typeof document === "undefined") return;
+  const debugOn = document.body?.dataset?.debug === "1";
+  if(!debugOn){
+    if(skillBreakdownPanelEl) skillBreakdownPanelEl.style.display = "none";
+    return;
+  }
+
+  const el = ensureSkillBreakdownPanel();
+  if(!el) return;
+  el.style.display = "block";
+
+  const b = state.round?.skillBreakdown;
+  const xRaw = Number(state.round?.skillX);
+  const xApplied = Number(state.round?.skillXApplied);
+  if(!b || !Number.isFinite(xRaw)){
+    const s = collectSkillSignals();
+    el.textContent = `SKILL waiting • tempo ${s.tempoQuality.toFixed(2)} • path ${s.pathQuality.toFixed(2)} • risk ${s.risk.toFixed(2)}`;
+    return;
+  }
+
+  el.textContent =
+    `x ${xRaw.toFixed(2)} (applied ${Number.isFinite(xApplied) ? xApplied.toFixed(2) : "—"})` +
+    ` | base ${Number(b.base).toFixed(3)}` +
+    ` | fail ${Number(b.failProb).toFixed(3)}` +
+    ` | jackpot ${Number(b.jackpotProb).toFixed(3)}` +
+    ` | mode ${b.mode}`;
+}
+
 function updateImpactQuality(){
   const swingV = getSwingPathValue01();
   const swingSweet = getSwingPathSweet();
@@ -1206,7 +1350,14 @@ function setBallFly(){
 }
 
 function genCrashX(){
-  return clamp(genCrashForRisk(state.riskMode), 1.05, getRoundMaxX());
+  const decision = computeRoundSkillDecision(Math.random);
+  const xRaw = Number.isFinite(decision?.x) ? decision.x : 1.05;
+  const xApplied = clamp(xRaw, 1.05, X_CAP);
+  state.round.skillInput = decision.input;
+  state.round.skillBreakdown = decision.breakdown;
+  state.round.skillX = xRaw;
+  state.round.skillXApplied = xApplied;
+  return xApplied;
 }
 
 // == UI Rendering ==
@@ -1592,7 +1743,11 @@ function beginHold(ts){
   state.phase = RoundPhase.ARMING;
   setUiPhaseAttr(state.phase);
   state.timestamps = state.timestamps || {};
-  state.timestamps.holdStartMs = Number.isFinite(ts) ? ts : performance.now();
+  state.timestamps.holdStartMs = now;
+  state.ui = state.ui || {};
+  state.ui.preview = state.ui.preview || {};
+  state.ui.preview.holdStartTs = now;
+  state.ui.preview.attackDeg = 0;
   state.tempo = state.tempo || {};
   state.tempo.active = true;
   state.tempo.locked = false;
@@ -1723,6 +1878,11 @@ function releaseSwing(ts, power = 0){
   const shotResult = evalShot(state.shot.tempo01, state.shot.path01, state.shot.attackDeg);
   state.shot.score01 = shotResult.score01;
   state.shot.components = shotResult.components;
+  setSkillSignals({
+    tempoQuality: clamp01(state.round.tempoScore),
+    pathQuality: clamp01(state.shot.components.path),
+    risk: getAttackRiskSignal()
+  });
   
   // Log shot data
   console.log("[SHOT]", {
@@ -1788,6 +1948,8 @@ function tick(ts){
     if (window.__DRIVIX_UI__) window.__DRIVIX_UI__._emit();
   };
   const dtMs = state.lastTs ? (ts - state.lastTs) : 16;
+  collectSkillSignals();
+  renderSkillBreakdownPanel();
   state._dbg = state._dbg || { t: 0 };
   if(!state._dbg.t || ts - state._dbg.t > 800){
     console.log("[TICK]", { phase: state.phase, ts, dtMs });
@@ -1803,8 +1965,12 @@ function tick(ts){
     updateWindHUD();
     updateImpactQuality();
 
-    const tSec = ts * 0.001;
-    const previewAttackDeg = Math.sin(tSec * 0.85) * 2.2;
+    const holdStartTs = Number.isFinite(state.ui?.preview?.holdStartTs)
+      ? state.ui.preview.holdStartTs
+      : (Number.isFinite(state.timestamps?.holdStartMs) ? state.timestamps.holdStartMs : ts);
+    const elapsedMs = Math.max(0, ts - holdStartTs);
+    const omega = (2 * Math.PI) / ATTACK_PREVIEW_PERIOD_MS;
+    const previewAttackDeg = clamp(ATTACK_PREVIEW_MAX_DEG * Math.sin(omega * elapsedMs), -ATTACK_PREVIEW_MAX_DEG, ATTACK_PREVIEW_MAX_DEG);
     state.ui.preview.attackDeg = previewAttackDeg;
     console.log("[PREVIEW] attackDeg", previewAttackDeg.toFixed(2));
 
@@ -1997,14 +2163,22 @@ function startRound(power = 0, ts){
   state.player.fatigue = clamp01(state.mental.data?.fatigue ?? state.player.fatigue ?? 0);
   console.log("[ROUND] start", { prev: prevState, power });
   const shot = genShotSetup(power);
+  const skillXApplied = genCrashX();
+  shot.landingX = skillXApplied;
+  shot.expectedX = skillXApplied;
   state.shotSetup = shot;
   state.power = power;
   state.round.setup = shot;
   state.round.wind = shot.windState;
   state.round.windInitialized = true;
   state.round.longDriveUnlocked = Math.random() < LONG_DRIVE_UNLOCK_PROB;
-  state.round.crashX = genCrashX();
-  console.log("[releaseSwing] crashX=", state.round.crashX);
+  state.round.maxX = skillXApplied;
+  state.round.crashX = skillXApplied;
+  console.log("[releaseSwing] skillX=", {
+    x: skillXApplied,
+    mode: state.round.skillBreakdown?.mode,
+    base: state.round.skillBreakdown?.base
+  });
   state.currentX = 1.0;
   state.prevX = 1.0;
   state.round.sweetSpotFinal = null;
@@ -2408,6 +2582,7 @@ function resetPlayer(){
   state.round.sweetSpot = null;
   state.round.sweetSpotFinal = null;
   state.round.longDriveUnlocked = false;
+  state.round.tempoScore = null;
   state.round.quality = null;
   state.round.maxX = null;
   state.round.matchScore = null;
@@ -2454,6 +2629,7 @@ function resetPlayer(){
   analytics.recentSweet = [];
   analytics.recentRelease = [];
   resetMultiplier(null);
+  setSkillSignals(SKILL_SIGNAL_DEFAULTS);
   profile = { ...defaultProfile, name: "Guest" };
   syncStateWithProfile();
   try{
@@ -2475,6 +2651,7 @@ function resetPlayer(){
   setBallIdle();
   updateModeUI();
   syncSwingUI();
+  renderSkillBreakdownPanel();
 }
 
 function initUI(){

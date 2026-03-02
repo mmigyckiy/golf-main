@@ -1,4 +1,23 @@
 /* @layer layout */
 @layer layout {
   /* App shell / panels / grids / flex layouts only */
+
+  /* =========================================================
+     Align main left panel and side panel on same top baseline
+     (NO card structure changes)
+     ========================================================= */
+
+  /* Main content row container */
+  #appShell .main-content,
+  #mainRow,
+  #contentRow,
+  #mainPanelRow {
+    align-items: flex-start;
+  }
+
+  /* Ensure both columns start at same top */
+  #mainPanel,
+  #sidePanel {
+    align-self: flex-start;
+  }
 }
