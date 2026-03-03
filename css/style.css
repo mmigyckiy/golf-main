@@ -4825,8 +4825,8 @@ body.uidebug .debug-outline {
 #attackAngle .aa-arcTrack--inner{
   display: block !important;
   fill: none !important;
-  stroke: rgba(216, 200, 166, 0.72) !important;
-  stroke-width: 6px !important;
+  stroke: rgba(216, 200, 166, 0.72); /* no !important — widgets layer overrides color */
+  stroke-width: 6px;
   stroke-linecap: round !important;
   opacity: 1 !important;
 }

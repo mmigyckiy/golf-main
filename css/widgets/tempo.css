@@ -35,7 +35,15 @@
 
 /* -------------------------
    Vertical tube sizing
+   Overrides the --tempo-w constraint from shared.css so the container
+   expands to the full card body width, giving the tube room to breathe.
    ------------------------- */
+#swingMetricsRow [data-widget="tempo"] .tubeView--vertical,
+#swingMetricsRow [data-widget="tempo"] .tubeV {
+  width: 100%;
+  max-width: 100%;
+}
+
 #swingMetricsRow .metricCard--tempo .tubeView--vertical {
   height: 100%;
   flex: 1 1 auto;
@@ -51,7 +59,11 @@
   align-items: stretch;
 }
 
+/* Tube fills remaining space after the scale ticks */
 #swingMetricsRow .metricCard--tempo .tubeView--vertical .tubeV__tube {
+  flex: 1 1 auto;
+  width: auto;
+  max-width: none;
   height: 100% !important;
 }
 
@@ -64,8 +76,8 @@
    Value label
    ------------------------- */
 #swingMetricsRow .metricCard--tempo #tempoValueLabel {
-  color: rgba(216, 200, 166, 0.92);
-  text-shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
+  color: var(--zone-good);
+  text-shadow: 0 0 14px var(--zone-good-glow), 0 6px 22px rgba(0, 0, 0, 0.4);
 }
 
 #swingMetricsRow .metricCard--tempo #swingTempoPct {
@@ -73,5 +85,53 @@
   line-height: 1;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: rgba(216, 200, 166, 0.92);
+  color: var(--zone-good);
+  text-shadow: 0 0 12px var(--zone-good-glow);
+}
+
+/* -------------------------
+   Green fill override
+   ------------------------- */
+#swingMetricsRow .metricCard--tempo .tubeV__fill {
+  background: linear-gradient(
+    to top,
+    rgba(74, 222, 128, 0.18) 0%,
+    rgba(74, 222, 128, 0.38) 55%,
+    rgba(74, 222, 128, 0.55) 100%
+  );
+}
+
+/* -------------------------
+   Green runner override
+   ------------------------- */
+#swingMetricsRow .metricCard--tempo .tubeV__runner {
+  background: linear-gradient(
+    to top,
+    rgba(74, 222, 128, 0.65) 0%,
+    rgba(74, 222, 128, 0.90) 60%,
+    var(--zone-good) 100%
+  );
+  box-shadow:
+    0 0 12px var(--zone-good-glow),
+    0 0 4px rgba(74, 222, 128, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+    0 6px 18px rgba(0, 0, 0, 0.34);
+}
+
+/* -------------------------
+   Sweet zone band on tube (65–85%)
+   ------------------------- */
+#swingMetricsRow .metricCard--tempo .tubeV__tube::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 65%;
+  height: 20%;
+  background: var(--zone-good-band);
+  border-top: 1px solid rgba(74, 222, 128, 0.30);
+  border-bottom: 1px solid rgba(74, 222, 128, 0.22);
+  pointer-events: none;
+  z-index: 1;
 }

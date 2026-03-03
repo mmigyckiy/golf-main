@@ -88,13 +88,34 @@
   opacity: .75;
 }
 
-#swingMetricsRow [data-widget="attack"] .tubeArc__inner {
-  stroke: var(--arc-inner-stroke);
-  stroke-width: var(--arc-inner-w);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  opacity: 1;
-  filter: drop-shadow(0 0 10px rgba(0,0,0,.35)) drop-shadow(0 0 8px rgba(216,200,166,.22));
+#swingMetricsRow [data-widget="attack"] .tubeArc__inner,
+#attackAngle .aa-arcTrack--inner {
+  stroke: var(--zone-good) !important;
+  stroke-width: var(--arc-inner-w) !important;
+  stroke-linecap: round !important;
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 8px var(--zone-good-glow)) drop-shadow(0 0 20px rgba(74, 222, 128, 0.18));
+}
+
+/* -------------------------
+   Sweet zone indicator at 0° (top-center of arc)
+   Arc "M4 70 A56 56 0 0 1 116 70" → 0° = (60,14) in viewBox 0 0 120 90
+   → ~14% from top, 50% from left
+   ------------------------- */
+#swingMetricsRow [data-widget="attack"] .tubeArc__stage::before {
+  content: "";
+  position: absolute;
+  top: 11%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--zone-good-soft) 0%, transparent 70%);
+  border: 1px solid rgba(74, 222, 128, 0.28);
+  box-shadow: 0 0 18px var(--zone-good-glow), 0 0 40px rgba(74, 222, 128, 0.12);
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* -------------------------
@@ -146,12 +167,13 @@
    Perfect state
    ------------------------- */
 #swingMetricsRow #attackAngle.is-perfect #attackAngleRunner {
-  filter: drop-shadow(0 0 10px rgba(216, 200, 166, 0.22)) drop-shadow(0 0 18px rgba(216, 200, 166, 0.12));
+  filter: drop-shadow(0 0 14px var(--zone-good)) drop-shadow(0 0 28px var(--zone-good-glow));
 }
 
 #swingMetricsRow #attackAngle.is-perfect .tubeArc__inner,
 #swingMetricsRow #attackAngle.is-perfect .aa-arcTrack--inner {
-  opacity: 0.98;
+  opacity: 1;
+  filter: drop-shadow(0 0 10px var(--zone-good)) drop-shadow(0 0 24px var(--zone-good-glow));
 }
 
 /* -------------------------
@@ -168,6 +190,7 @@
 #swingMetricsRow [data-widget="attack"] #attackAngleRunner.__holdFX,
 #swingMetricsRow .metricCard--attack #attackAngleRunner.__holdFX {
   animation: attackRunnerHoldTension 560ms ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 10px var(--zone-good-glow)) drop-shadow(0 0 4px rgba(74, 222, 128, 0.6));
 }
 
 #swingMetricsRow [data-widget="attack"] #attackAngleRunner.__popFX,

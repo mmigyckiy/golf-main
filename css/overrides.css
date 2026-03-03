@@ -404,7 +404,14 @@ body[data-debug="1"] #skillBreakdownDebug{
 }
 
 #mainPanel .powerCard__main{
-  flex: 0 0 68% !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+}
+
+/* gc-field fills the full main area — no dead space below the canvas */
+#mainPanel .gc-field {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
 }
 
 #mainPanel .controls-card,
@@ -414,7 +421,8 @@ body[data-debug="1"] #skillBreakdownDebug{
 }
 
 #mainPanel .powerCard__controls{
-  flex: 1 1 auto !important;
+  flex: 0 1 auto !important;
+  min-height: clamp(220px, 30vh, 330px) !important;
 }
 
 
