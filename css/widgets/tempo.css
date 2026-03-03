@@ -1,0 +1,77 @@
+/* ============================================================
+   SWING TEMPO WIDGET
+   ============================================================
+   Owns: everything inside [data-widget="tempo"] / .metricCard--tempo
+         The vertical tube (#swingTempoControl, .tubeView--vertical)
+         Percentage readout (#swingTempoPct)
+
+   Touch this file when:
+     → changing tube height, width, or color
+     → changing the percentage label style
+     → adjusting tube click interaction area
+   ============================================================ */
+
+/* -------------------------
+   Card layout
+   ------------------------- */
+#swingMetricsRow .metricCard--tempo .metricCard__body {
+  align-items: stretch;
+  width: 100%;
+}
+
+#swingMetricsRow #swingTempoControl {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+#swingMetricsRow .metricCard--tempo #tempoMount,
+#swingMetricsRow .metricCard--tempo #swingTempoControl {
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  max-width: 100%;
+}
+
+/* -------------------------
+   Vertical tube sizing
+   ------------------------- */
+#swingMetricsRow .metricCard--tempo .tubeView--vertical {
+  height: 100%;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+
+#swingMetricsRow .metricCard--tempo .tubeView--vertical .tubeV {
+  height: 100% !important;
+  max-height: none !important;
+  display: flex;
+  align-items: stretch;
+}
+
+#swingMetricsRow .metricCard--tempo .tubeView--vertical .tubeV__tube {
+  height: 100% !important;
+}
+
+#swingMetricsRow .metricCard--tempo #swingTempoControl {
+  width: 100%;
+  height: 100%;
+}
+
+/* -------------------------
+   Value label
+   ------------------------- */
+#swingMetricsRow .metricCard--tempo #tempoValueLabel {
+  color: rgba(216, 200, 166, 0.92);
+  text-shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
+}
+
+#swingMetricsRow .metricCard--tempo #swingTempoPct {
+  font-size: var(--value-size);
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(216, 200, 166, 0.92);
+}

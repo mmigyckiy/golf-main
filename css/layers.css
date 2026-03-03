@@ -3,9 +3,17 @@
 @import url("./style.css") layer(base);
 @import url("./layout.css") layer(layout);
 @import url("./components.css") layer(components);
-@import url("./widgets.css") layer(widgets);
-@import url("./metric_card.css") layer(widgets);
-@import url("./tube.css") layer(widgets);
-@import url("./swing_metrics.css") layer(widgets);
+
+/* Widget layer — one file per widget, plus shared base.
+   To style a widget: open its file directly.
+     shared.css  → card shell, grid, tube base, phase emphasis
+     attack.css  → Attack Angle widget
+     path.css    → Swing Path widget
+     tempo.css   → Swing Tempo widget */
+@import url("./widgets/shared.css") layer(widgets);
+@import url("./widgets/attack.css") layer(widgets);
+@import url("./widgets/path.css") layer(widgets);
+@import url("./widgets/tempo.css") layer(widgets);
+
 @import url("./debug_overlay.css") layer(debug);
 @import url("./overrides.css") layer(overrides);

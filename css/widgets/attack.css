@@ -1,0 +1,222 @@
+/* ============================================================
+   ATTACK ANGLE WIDGET
+   ============================================================
+   Owns: everything inside [data-widget="attack"] / .metricCard--attack
+         Runner FX animations (__holdFX, __popFX, __blurFX, __perfectFX)
+         Arc path shape (SVG d attribute override)
+         Golf-ball runner skin
+
+   Touch this file when:
+     → changing Attack arc shape, stroke weight, or color
+     → changing runner animation (pop, blur, perfect vibe)
+     → changing the degree readout label
+     → adjusting Attack card padding or inner layout
+   ============================================================ */
+
+/* -------------------------
+   Card layout
+   ------------------------- */
+#swingMetricsRow .metricCard--attack {
+  --aa-stage-w: var(--arc-size);
+  --aa-ball: clamp(16px, 2.1vw, 22px);
+}
+
+#swingMetricsRow .metricCard--attack .metricCard__body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 14px 10px;
+  width: 100%;
+}
+
+#swingMetricsRow .metricCard--attack #attackAngle {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+/* -------------------------
+   Arc container
+   ------------------------- */
+#swingMetricsRow .metricCard--attack .tubeArc,
+#swingMetricsRow [data-widget="attack"] .tubeArc__stage,
+#swingMetricsRow [data-widget="attack"] .tubeArc,
+#swingMetricsRow [data-widget="attack"] .tubeView--arc {
+  width: 100%;
+  max-width: none;
+}
+
+#swingMetricsRow .metricCard--attack .tubeArc__stage {
+  width: var(--aa-stage-w);
+  margin: 0 auto;
+}
+
+/* -------------------------
+   SVG sizing
+   ------------------------- */
+#swingMetricsRow [data-widget="attack"] .tubeArc__svg,
+#swingMetricsRow .metricCard--attack svg.tubeArc__svg {
+  transform: none !important;
+  width: 100% !important;
+  height: auto !important;
+  display: block !important;
+  max-width: 100% !important;
+}
+
+/* -------------------------
+   Arc path shape
+   (wider arc, centered, matches the card width)
+   ------------------------- */
+#swingMetricsRow [data-widget="attack"] .tubeArc__outer,
+#swingMetricsRow [data-widget="attack"] .tubeArc__inner,
+#swingMetricsRow [data-widget="attack"] .tubeArc__svg .tubeArc__outer,
+#swingMetricsRow [data-widget="attack"] .tubeArc__svg .tubeArc__inner {
+  d: path("M4 70 A56 56 0 0 1 116 70");
+}
+
+/* -------------------------
+   Arc strokes
+   ------------------------- */
+#swingMetricsRow [data-widget="attack"] .tubeArc__outer {
+  stroke: var(--arc-outer-stroke);
+  stroke-width: var(--arc-outer-w);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .75;
+}
+
+#swingMetricsRow [data-widget="attack"] .tubeArc__inner {
+  stroke: var(--arc-inner-stroke);
+  stroke-width: var(--arc-inner-w);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 1;
+  filter: drop-shadow(0 0 10px rgba(0,0,0,.35)) drop-shadow(0 0 8px rgba(216,200,166,.22));
+}
+
+/* -------------------------
+   Runner — golf-ball skin
+   ------------------------- */
+#swingMetricsRow [data-widget="attack"] :is(#attackAngleRunner, .tubeArc__runner),
+#swingMetricsRow .metricCard--attack #attackAngleRunner,
+#swingMetricsRow .metricCard--attack .tubeArc__runner {
+  width: var(--golf-ball-size);
+  height: var(--golf-ball-size);
+  border-radius: 999px;
+  will-change: transform, left, top, filter, opacity;
+  transition: filter 160ms ease, opacity 160ms ease;
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255,255,255,.95) 0 18%, rgba(255,255,255,0) 19% 100%),
+    radial-gradient(circle at 50% 55%, var(--golf-ball-dimple2) 0 55%, rgba(0,0,0,0) 56% 100%),
+    radial-gradient(circle at 60% 70%, rgba(255,255,255,.22) 0 60%, rgba(255,255,255,0) 61% 100%),
+    radial-gradient(circle at 45% 40%, var(--golf-ball-hi) 0 62%, rgba(210,200,170,.95) 63% 100%),
+    radial-gradient(circle at 0 0, rgba(0,0,0,.10) 0 70%, rgba(0,0,0,0) 71% 100%),
+    radial-gradient(circle, var(--golf-ball-dimple) 18%, rgba(0,0,0,0) 19%);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 7px 7px;
+  background-blend-mode: screen, multiply, screen, normal, multiply, normal;
+  box-shadow:
+    var(--golf-ball-shadow),
+    inset 0 -3px 6px rgba(0,0,0,.22),
+    inset 0 2px 6px rgba(255,255,255,.18);
+}
+
+/* -------------------------
+   Readout label
+   ------------------------- */
+#attackAngleValueLabel {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+}
+
+#attackAngleReadout {
+  font-size: var(--value-size);
+  letter-spacing: 0.08em;
+}
+
+#swingMetricsRow .metricCard--attack .metricCard__hint {
+  display: none;
+}
+
+/* -------------------------
+   Perfect state
+   ------------------------- */
+#swingMetricsRow #attackAngle.is-perfect #attackAngleRunner {
+  filter: drop-shadow(0 0 10px rgba(216, 200, 166, 0.22)) drop-shadow(0 0 18px rgba(216, 200, 166, 0.12));
+}
+
+#swingMetricsRow #attackAngle.is-perfect .tubeArc__inner,
+#swingMetricsRow #attackAngle.is-perfect .aa-arcTrack--inner {
+  opacity: 0.98;
+}
+
+/* -------------------------
+   Runner impact FX (visual-only, no gameplay effect)
+   Classes toggled by attack_widget.js: triggerReleaseFx()
+   ------------------------- */
+#swingMetricsRow [data-widget="attack"] #attackAngleRunner,
+#swingMetricsRow .metricCard--attack #attackAngleRunner {
+  will-change: transform, filter, opacity;
+  transition: filter 120ms ease, opacity 120ms ease;
+  backface-visibility: hidden;
+}
+
+#swingMetricsRow [data-widget="attack"] #attackAngleRunner.__holdFX,
+#swingMetricsRow .metricCard--attack #attackAngleRunner.__holdFX {
+  animation: attackRunnerHoldTension 560ms ease-in-out infinite alternate;
+}
+
+#swingMetricsRow [data-widget="attack"] #attackAngleRunner.__popFX,
+#swingMetricsRow .metricCard--attack #attackAngleRunner.__popFX {
+  animation: attackRunnerReleasePop 220ms cubic-bezier(0.22, 0.86, 0.2, 1) 1 both;
+}
+
+#swingMetricsRow [data-widget="attack"] #attackAngleRunner.__blurFX,
+#swingMetricsRow .metricCard--attack #attackAngleRunner.__blurFX {
+  filter: blur(0.8px) saturate(1.04);
+  opacity: 0.96;
+}
+
+#swingMetricsRow [data-widget="attack"] #attackAngleRunner.__perfectFX:not(.__popFX),
+#swingMetricsRow .metricCard--attack #attackAngleRunner.__perfectFX:not(.__popFX) {
+  animation: attackRunnerPerfectVibe 200ms linear 1;
+}
+
+#swingMetricsRow [data-widget="attack"] #attackAngleRunner.__popFX.__perfectFX,
+#swingMetricsRow .metricCard--attack #attackAngleRunner.__popFX.__perfectFX {
+  animation:
+    attackRunnerReleasePop 220ms cubic-bezier(0.22, 0.86, 0.2, 1) 1 both,
+    attackRunnerPerfectVibe 200ms linear 1;
+}
+
+@keyframes attackRunnerHoldTension {
+  0%   { transform: translate(-50%, -50%) scale(0.98); }
+  100% { transform: translate(-50%, -50%) scale(1.05); }
+}
+
+@keyframes attackRunnerReleasePop {
+  0%   { transform: translate(-50%, -50%) scale(0.95); }
+  55%  { transform: translate(-50%, -50%) scale(1.10); }
+  100% { transform: translate(-50%, -50%) scale(1.00); }
+}
+
+@keyframes attackRunnerPerfectVibe {
+  0%,  100% { transform: translate(-50%, -50%); }
+  20%        { transform: translate(calc(-50% - 1.4px), -50%); }
+  40%        { transform: translate(calc(-50% + 1.6px), -50%); }
+  60%        { transform: translate(calc(-50% - 1.2px), -50%); }
+  80%        { transform: translate(calc(-50% + 1.1px), -50%); }
+}
+
+/* -------------------------
+   mainPanel compact override
+   ------------------------- */
+#mainPanel #swingMetricsRow [data-widget="attack"],
+#mainPanel #swingMetricsRow .metricCard--attack {
+  --attack-size: var(--arc-size);
+  --aa-stage-w: var(--attack-size);
+}

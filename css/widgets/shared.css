@@ -1,0 +1,717 @@
+/* ============================================================
+   SHARED WIDGET STYLES
+   ============================================================
+   Owns: card shell (.metricCard), row grid (#swingMetricsRow),
+         phase emphasis, shared tube components (vertical + arc base),
+         compact-scale overrides for mainPanel context,
+         responsive breakpoints.
+
+   DO NOT put single-widget styles here.
+   Single-widget styles live in:
+     → attack.css   (Attack Angle widget)
+     → path.css     (Swing Path widget)
+     → tempo.css    (Swing Tempo widget)
+   ============================================================ */
+
+/* -------------------------
+   Row-level variables
+   ------------------------- */
+:root {
+  --metric-side-max: 140px;
+  --metric-hero-max: 320px;
+  --path-svg-size: min(260px, 48vw);
+}
+
+/* -------------------------
+   Row container
+   ------------------------- */
+#swingMetricsRow {
+  --sm-surface-radius: var(--card-radius, var(--hud-radius, var(--gc-radius, 18px)));
+  --sm-surface-pad: clamp(18px, 2.4vw, 22px);
+  --sm-col-gap: clamp(28px, 4vw, 56px);
+  --sm-divider: rgba(255, 255, 255, 0.06);
+
+  /* Arc visual tokens (used by both attack + path) */
+  --arc-outer-stroke: rgba(0, 0, 0, 0.46);
+  --arc-inner-stroke: rgba(216, 200, 166, 0.86);
+  --arc-outer-w: 10px;
+  --arc-inner-w: 8px;
+  --golf-ball-size: 20px;
+  --golf-ball-hi: rgba(245, 238, 220, 0.98);
+  --golf-ball-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+  --golf-ball-dimple: rgba(0, 0, 0, 0.24);
+  --golf-ball-dimple2: rgba(0, 0, 0, 0.12);
+
+  display: grid;
+  grid-template-columns: 1.15fr 1.6fr 1fr;
+  grid-template-areas: "attack path tempo";
+  column-gap: var(--sm-col-gap);
+  row-gap: 0;
+  padding: var(--sm-surface-pad);
+  padding-top: 18px; /* space for titles */
+  align-items: start;
+  justify-items: center;
+  width: 100%;
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  min-height: 220px;
+  border-radius: var(--sm-surface-radius);
+  border: 1px solid var(--border-soft, rgba(255, 255, 255, 0.1));
+  background:
+    radial-gradient(130% 125% at 50% -12%, rgba(255, 255, 255, 0.1), transparent 54%),
+    var(--gc-panel-bg, linear-gradient(180deg, rgba(18, 22, 24, 0.9) 0%, rgba(10, 12, 16, 0.92) 100%));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.2),
+    var(--shadow, 0 18px 50px rgba(0, 0, 0, 0.55));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  isolation: isolate;
+  overflow: visible;
+}
+
+#swingMetricsRow::before,
+#swingMetricsRow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#swingMetricsRow::before {
+  background: radial-gradient(140% 115% at 50% 52%, transparent 34%, rgba(0, 0, 0, 0.52) 100%);
+}
+
+#swingMetricsRow::after {
+  background: radial-gradient(64% 46% at 50% 40%, rgba(255, 255, 255, 0.07), transparent 68%);
+}
+
+#swingMetricsRow,
+#swingMetricsRow * {
+  box-sizing: border-box;
+}
+
+/* -------------------------
+   Widget slot base
+   ------------------------- */
+#swingMetricsRow > [data-widget] {
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  position: relative;
+  align-self: stretch;
+  z-index: 1;
+  opacity: 0.72;
+  transition: transform 220ms ease, filter 220ms ease, opacity 180ms ease;
+}
+
+#swingMetricsRow > [data-widget="attack"],
+#swingMetricsRow .metricCard--attack[data-widget="attack"] {
+  max-width: var(--metric-side-max);
+  width: 100%;
+  grid-area: attack;
+}
+
+#swingMetricsRow > [data-widget="path"],
+#swingMetricsRow .metricCard--path[data-widget="path"] {
+  --path-size: var(--arc-size);
+  max-width: var(--metric-hero-max);
+  grid-area: path;
+}
+
+#swingMetricsRow > [data-widget="tempo"],
+#swingMetricsRow .metricCard--tempo[data-widget="tempo"] {
+  max-width: var(--metric-side-max);
+  width: 100%;
+  grid-area: tempo;
+}
+
+/* Column dividers */
+#swingMetricsRow > [data-widget="path"]::before,
+#swingMetricsRow > [data-widget="tempo"]::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--sm-col-gap) / -2);
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: var(--sm-divider);
+  pointer-events: none;
+}
+
+/* -------------------------
+   Phase emphasis
+   ------------------------- */
+body[data-ui-phase="hold"] #swingMetricsRow > [data-widget="tempo"] {
+  opacity: 1;
+  transform: scale(1.02);
+}
+body[data-ui-phase="hold"] #swingMetricsRow > [data-widget="path"] {
+  opacity: 0.75;
+}
+body[data-ui-phase="hold"] #swingMetricsRow > [data-widget="attack"] {
+  opacity: 0.58;
+}
+
+body[data-ui-phase="flight"] #swingMetricsRow > [data-widget="path"] {
+  opacity: 1;
+  transform: scale(1.02);
+}
+body[data-ui-phase="flight"] #swingMetricsRow > [data-widget="tempo"] {
+  opacity: 0.55;
+}
+body[data-ui-phase="flight"] #swingMetricsRow > [data-widget="attack"] {
+  opacity: 0.72;
+}
+
+body[data-ui-phase="idle"] #swingMetricsRow > [data-widget],
+body[data-ui-phase="end"] #swingMetricsRow > [data-widget] {
+  opacity: 0.8;
+  transform: none;
+}
+
+/* -------------------------
+   Card shell (transparent reset inside row)
+   ------------------------- */
+#swingMetricsRow .metricCard {
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  overflow: visible;
+  min-height: 300px;
+}
+
+#swingMetricsRow .metricCard::before,
+#swingMetricsRow .metricCard::after {
+  display: none;
+}
+
+/* -------------------------
+   Card anatomy
+   ------------------------- */
+#swingMetricsRow .metricCard__title {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 5;
+  min-height: 34px;
+  padding: 16px 16px 0;
+  text-align: center;
+  text-transform: uppercase;
+  font-size: var(--title-size);
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  visibility: visible;
+  opacity: 1;
+}
+
+#swingMetricsRow .metricCard__body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 14px 8px;
+}
+
+#swingMetricsRow .metricCard__footer {
+  flex: 0 0 auto;
+  padding: 8px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+#swingMetricsRow .metricCard__value {
+  font-size: var(--value-size);
+  letter-spacing: 0.08em;
+  color: var(--text-strong);
+  line-height: 1.05;
+}
+
+#swingMetricsRow .metricCard__value * {
+  font-size: var(--value-size);
+  color: var(--text-strong);
+  line-height: 1.05;
+}
+
+#swingMetricsRow .metricCard__hint {
+  font-size: var(--hint-size);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+#swingMetricsRow .metricWidgetHost {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* -------------------------
+   Typography normalization (all widgets)
+   ------------------------- */
+#swingMetricsRow .metricCard__title,
+#swingMetricsRow .metricCard__title * {
+  color: rgba(255, 255, 255, 0.60);
+}
+
+#swingMetricsRow .metricCard__footer,
+#swingMetricsRow .metricCard__footer *,
+#swingMetricsRow .tubeV__label,
+#swingMetricsRow .tubeV__tick,
+#swingMetricsRow [id*="Pct"],
+#swingMetricsRow [id*="Value"],
+#swingMetricsRow [data-aa-degrees],
+#swingMetricsRow .aa-scale__label,
+#swingMetricsRow .aa-scale__tick {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+#swingMetricsRow .gold,
+#swingMetricsRow .metricCard__value.gold {
+  color: rgba(216, 199, 154, 0.85);
+}
+
+/* -------------------------
+   Shared tube base
+   ------------------------- */
+#swingMetricsRow .tubeView {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* -------------------------
+   Vertical tube (Tempo uses this)
+   ------------------------- */
+#swingMetricsRow .tubeView--vertical .tubeV {
+  width: min(220px, 100%);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+#swingMetricsRow .tubeV {
+  height: 100%;
+}
+
+#swingMetricsRow .tubeV__tube {
+  position: relative;
+  width: 38px;
+  height: min(200px, 100%);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--tube-edge);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, transparent 40%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.48) 0%, rgba(0, 0, 0, 0.24) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+  transform: scaleX(0.92);
+  transform-origin: center;
+}
+
+#swingMetricsRow .tubeV__fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 8%;
+  opacity: 0.88;
+  background: linear-gradient(
+    to top,
+    rgba(216, 200, 166, 0.14) 0%,
+    rgba(216, 200, 166, 0.22) 55%,
+    rgba(216, 200, 166, 0.32) 100%
+  );
+  transition: height 220ms ease-out, opacity 120ms ease-out;
+}
+
+#swingMetricsRow .tubeV__runner {
+  position: absolute;
+  left: 50%;
+  width: 72%;
+  height: 14px;
+  border-radius: 999px;
+  bottom: var(--runnerY, 8px);
+  transform: translateX(-50%);
+  transform-origin: 50% 50%;
+  background: linear-gradient(
+    to top,
+    rgba(216, 200, 166, 0.55) 0%,
+    rgba(216, 200, 166, 0.85) 60%,
+    rgba(216, 200, 166, 1.00) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+    0 6px 18px rgba(0, 0, 0, 0.34);
+  transition: transform 120ms ease-out, opacity 120ms ease-out;
+}
+
+#swingMetricsRow .tubeV__runner::after {
+  content: "";
+  position: absolute;
+  inset: 1px 2px;
+  border-radius: 999px;
+  opacity: 0;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.18) 48%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transition: opacity 110ms ease-out;
+}
+
+#swingMetricsRow .tubeView.is-hold .tubeV__runner {
+  transform: translateX(-50%) scaleY(1.07);
+}
+
+#swingMetricsRow .tubeView.is-hold .tubeV__runner::after {
+  opacity: 0.9;
+}
+
+#swingMetricsRow .tubeView.is-idle .tubeV__fill {
+  opacity: 0.45;
+}
+
+#swingMetricsRow .tubeV__scale {
+  height: min(200px, 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+#swingMetricsRow .tubeV__label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+
+#swingMetricsRow .tubeV__tick {
+  width: 16px;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(216, 200, 166, 0.24);
+}
+
+#swingMetricsRow .tubeV__tick--major {
+  width: 22px;
+  background: rgba(216, 200, 166, 0.36);
+}
+
+/* -------------------------
+   Arc tube base (Attack + Path both use this)
+   ------------------------- */
+#swingMetricsRow .tubeView--arc .tubeArc {
+  width: min(var(--arc-size), 100%);
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+#swingMetricsRow .tubeArc__stage {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  aspect-ratio: 12 / 9;
+  overflow: visible;
+}
+
+#swingMetricsRow .tubeArc__svg {
+  width: 100%;
+  height: auto;
+  max-width: none;
+  display: block;
+  overflow: visible;
+  transform: none;
+}
+
+#swingMetricsRow .tubeArc__outer,
+#swingMetricsRow .tubeArc__inner {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#swingMetricsRow .tubeArc__outer {
+  stroke: rgba(0, 0, 0, 0.46);
+  stroke-width: var(--arc-stroke-outer);
+  opacity: var(--arc-track-opacity);
+  filter: none;
+  vector-effect: non-scaling-stroke;
+}
+
+#swingMetricsRow .tubeArc__inner {
+  stroke: var(--arc-highlight-color);
+  stroke-width: var(--arc-stroke-inner);
+  opacity: 0.96;
+  filter: drop-shadow(0 0 4px rgba(216, 200, 166, var(--arc-glow-opacity)));
+  vector-effect: non-scaling-stroke;
+}
+
+#swingMetricsRow .tubeArc__runner {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(
+    to bottom,
+    rgba(216, 200, 166, 0.86),
+    rgba(216, 200, 166, 1.0)
+  );
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.35),
+    inset 0 1px 2px rgba(255, 255, 255, 0.34);
+  transition: transform 120ms ease-out, opacity 120ms ease-out;
+}
+
+#swingMetricsRow .tubeView.is-hold .tubeArc__runner {
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+#swingMetricsRow .tubeArc__scale {
+  width: min(220px, 100%);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-dim);
+}
+
+#swingMetricsRow .tubeArc__scaleLabel {
+  font-size: 12px;
+  letter-spacing: 0.09em;
+}
+
+#swingMetricsRow .tubeArc__tick {
+  width: 18px;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(216, 200, 166, 0.24);
+}
+
+#swingMetricsRow .tubeArc__tick--major {
+  width: 22px;
+  background: rgba(216, 200, 166, 0.34);
+}
+
+/* Shared arc stage reset for attack + path */
+#swingMetricsRow :is(.metricCard--attack, .metricCard--path) .tubeArc__stage,
+#swingMetricsRow :is([data-widget="attack"], [data-widget="path"]) :is(.tubeArc, .tubeArc__stage) {
+  width: 100%;
+  max-width: none;
+}
+
+/* Shared arc stroke tokens */
+#swingMetricsRow :is(.alignment-ring__base, .tubeArc__outer, .aa-arcTrack--outer) {
+  stroke-width: var(--arc-stroke-outer);
+  opacity: var(--arc-track-opacity);
+}
+
+#swingMetricsRow :is(.alignment-ring__sweet, .tubeArc__inner, .aa-arcTrack--inner, [data-aa-arc="1"]) {
+  stroke-width: var(--arc-stroke-inner);
+  stroke: var(--arc-highlight-color);
+}
+
+/* Shared arc/runner SVG sizing for attack + path */
+#swingMetricsRow [data-widget="path"] .alignment-ring__svg,
+#swingMetricsRow [data-widget="attack"] .tubeArc__svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-width: none;
+  transform: none !important;
+}
+
+/* -------------------------
+   Sizing design system
+   (keeps arc/tube sizes token-driven)
+   ------------------------- */
+#swingMetricsRow [data-widget="path"] {
+  --path-size: var(--arc-size);
+}
+
+#swingMetricsRow [data-widget="attack"],
+#swingMetricsRow .metricCard--attack {
+  --attack-size: var(--arc-size);
+  --aa-stage-w: var(--attack-size);
+}
+
+#swingMetricsRow [data-widget="path"] .metricCard__body,
+#swingMetricsRow [data-widget="attack"] .metricCard__body {
+  max-width: var(--arc-size);
+  margin-inline: auto;
+}
+
+#swingMetricsRow [data-widget="tempo"] .tubeV,
+#swingMetricsRow [data-widget="tempo"] .tubeView {
+  width: var(--tempo-w);
+  max-width: var(--tempo-w);
+}
+
+/* -------------------------
+   mainPanel compact scale
+   (when widgets live inside power card controls)
+   ------------------------- */
+#mainPanel #swingMetricsRow {
+  --metric-side-max: clamp(110px, 10vw, 132px);
+  --metric-hero-max: clamp(220px, 23vw, 280px);
+  min-height: clamp(180px, 25vh, 250px);
+  max-width: 660px;
+  padding: clamp(12px, 1.2vw, 16px);
+}
+
+#mainPanel #swingMetricsRow > [data-widget],
+#mainPanel #swingMetricsRow .metricCard {
+  min-height: clamp(160px, 22vh, 220px);
+}
+
+#mainPanel #swingMetricsRow .tubeV__tube {
+  width: clamp(24px, 2.15vw, 30px);
+}
+
+#mainPanel #swingMetricsRow .tubeV__label {
+  font-size: clamp(10px, 0.72vw, 12px);
+}
+
+#mainPanel #swingMetricsRow :is(.tubeArc__inner, .aa-arcTrack--inner, [data-aa-arc="1"]) {
+  stroke-width: var(--widget-stroke);
+}
+
+#mainPanel #swingMetricsRow :is(.tubeArc__outer, .aa-arcTrack--outer) {
+  stroke-width: calc(var(--widget-stroke) + 2px);
+  opacity: .33;
+}
+
+#mainPanel #swingMetricsRow .tubeArc__stage {
+  width: calc(var(--widget-scale) * 100%);
+  max-width: 185px;
+}
+
+#mainPanel .powerCard__controls .gc-swingControl {
+  height: auto;
+  min-height: 300px;
+  align-items: stretch;
+}
+
+#mainPanel .powerCard__controls #swingMetricsRow {
+  height: auto;
+  min-height: 300px;
+  align-content: start;
+  overflow: visible;
+}
+
+#mainPanel .powerCard__controls #swingMetricsRow > [data-widget] {
+  min-height: 300px;
+}
+
+#mainPanel #swingMetricsRow .metricCard {
+  min-height: 300px;
+}
+
+.powerCard__controls {
+  margin-top: 16px;
+}
+
+/* -------------------------
+   Responsive
+   ------------------------- */
+@media (max-width: 980px) {
+  #swingMetricsRow {
+    grid-template-columns: 1.15fr 1.4fr 1fr;
+    grid-template-areas: "attack path tempo";
+    column-gap: 24px;
+    max-width: 600px;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --metric-side-max: 200px;
+    --metric-hero-max: 280px;
+    --path-svg-size: min(160px, 50vw);
+  }
+
+  #swingMetricsRow {
+    grid-template-columns: 1fr;
+    grid-template-areas: "path" "tempo" "attack";
+    padding: 16px;
+    max-width: 320px;
+  }
+
+  #swingMetricsRow > [data-widget="path"]::before,
+  #swingMetricsRow > [data-widget="tempo"]::before {
+    content: none;
+  }
+
+  #swingMetricsRow > [data-widget] + [data-widget] {
+    border-top: 1px solid var(--sm-divider);
+    margin-top: 14px;
+    padding-top: 14px;
+  }
+
+  #swingMetricsRow > [data-widget="path"] {
+    order: -1;
+  }
+}
+
+@media (max-height: 800px) {
+  :root {
+    --widget-scale: 0.72;
+    --widget-stroke-thin: 3px;
+    --widget-stroke: 5px;
+  }
+
+  #mainPanel #swingMetricsRow {
+    --metric-side-max: clamp(98px, 9vw, 120px);
+    --metric-hero-max: clamp(200px, 21vw, 248px);
+    min-height: clamp(160px, 22vh, 215px);
+  }
+
+  #mainPanel #swingMetricsRow .tubeV__tube {
+    width: clamp(20px, 1.85vw, 26px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #swingMetricsRow #attackAngle #attackAngleRunner {
+    transition: none;
+  }
+}

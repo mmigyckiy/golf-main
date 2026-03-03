@@ -1,0 +1,241 @@
+/* ============================================================
+   SWING PATH WIDGET
+   ============================================================
+   Owns: everything inside [data-widget="path"] / .metricCard--path
+         Pixi canvas host (#pathPixi)
+         Alignment ring SVG (DOM fallback when no Pixi)
+         Golf-ball runner skin for the path runner
+         Title decorative lines
+
+   Touch this file when:
+     → changing Path arc shape, stroke weight, or color
+     → changing Pixi canvas positioning
+     → changing alignment ring SVG styles
+     → adjusting the animated shimmer (swingPathBreath)
+     → changing the decorative lines left/right of "SWING PATH" title
+   ============================================================ */
+
+/* -------------------------
+   Card layout overrides
+   (path card is transparent / borderless — just an SVG stage)
+   ------------------------- */
+#swingMetricsRow .metricCard.metricCard--path {
+  position: relative;
+  border-radius: 0;
+  overflow: visible;
+  padding: 0;
+}
+
+#swingMetricsRow .metricCard.metricCard--path::before,
+#swingMetricsRow .metricCard.metricCard--path::after {
+  content: none;
+}
+
+#swingMetricsRow .metricCard.metricCard--path > * {
+  position: relative;
+  z-index: 2;
+}
+
+#swingMetricsRow .metricCard--path .metricCard__body {
+  width: var(--path-size);
+  height: var(--path-size);
+  min-height: var(--path-size);
+  max-width: 100%;
+  margin-inline: auto;
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+}
+
+/* -------------------------
+   Alignment ring
+   ------------------------- */
+#swingMetricsRow .metricCard--path :is(#alignmentRing, .alignment-ring) {
+  width: min(var(--path-size), 100%);
+  height: min(var(--path-size), 100%);
+  max-width: none;
+}
+
+#swingMetricsRow [data-widget="path"] :is(.alignment-ring__svg, #alignmentSvg) {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-width: none;
+  transform: none !important;
+}
+
+/* Decoration cleanup — hide legacy ring elements */
+#swingMetricsRow [data-widget="path"] .alignment-ring::before,
+#swingMetricsRow [data-widget="path"] .alignment-ring::after {
+  content: none;
+  display: none;
+}
+
+#swingMetricsRow [data-widget="path"] :is(.alignment-ring__ball, #alignmentBall),
+#swingMetricsRow [data-widget="path"] :is(.alignment-ring__notch, .alignment-ring__marker) {
+  display: none;
+}
+
+/* -------------------------
+   Arc strokes
+   ------------------------- */
+#swingMetricsRow [data-widget="path"] :is(#alignmentBase, .alignment-ring__base, [id*="alignmentBase"], [class*="alignment-ring__base"]) {
+  stroke: var(--arc-outer-stroke);
+  stroke-width: var(--arc-outer-w);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .75;
+  filter: none;
+}
+
+#swingMetricsRow [data-widget="path"] :is(#alignmentSweet, .alignment-ring__sweet, [id*="alignmentSweet"], [class*="alignment-ring__sweet"]) {
+  stroke: var(--arc-inner-stroke);
+  stroke-width: var(--arc-inner-w);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 1;
+  filter: drop-shadow(0 0 10px rgba(0,0,0,.35)) drop-shadow(0 0 8px rgba(216,200,166,.22));
+}
+
+/* -------------------------
+   Runner — golf-ball skin
+   (supports both div and SVG circle runners)
+   ------------------------- */
+#swingMetricsRow [data-widget="path"] :is(
+  #alignmentRunner,
+  .alignment-ring__runner,
+  [id*="alignment"][id*="Runner"],
+  [class*="alignment-ring"][class*="runner"],
+  [class*="runner"]
+) {
+  width: var(--golf-ball-size);
+  height: var(--golf-ball-size);
+  border-radius: 999px;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 8px var(--arc-glow));
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255,255,255,.95) 0 18%, rgba(255,255,255,0) 19% 100%),
+    radial-gradient(circle at 50% 55%, var(--golf-ball-dimple2) 0 55%, rgba(0,0,0,0) 56% 100%),
+    radial-gradient(circle at 60% 70%, rgba(255,255,255,.22) 0 60%, rgba(255,255,255,0) 61% 100%),
+    radial-gradient(circle at 45% 40%, var(--golf-ball-hi) 0 62%, rgba(210,200,170,.95) 63% 100%),
+    radial-gradient(circle at 0 0, rgba(0,0,0,.10) 0 70%, rgba(0,0,0,0) 71% 100%),
+    radial-gradient(circle, var(--golf-ball-dimple) 18%, rgba(0,0,0,0) 19%);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 7px 7px;
+  background-blend-mode: screen, multiply, screen, normal, multiply, normal;
+  box-shadow:
+    var(--golf-ball-shadow),
+    inset 0 -3px 6px rgba(0,0,0,.22),
+    inset 0 2px 6px rgba(255,255,255,.18);
+  /* SVG circle attributes (used when runner is an SVG <circle>) */
+  fill: var(--golf-ball-hi);
+  stroke: rgba(255,255,255,.18);
+  stroke-width: 1.2;
+  r: calc(var(--golf-ball-size) * 0.5);
+}
+
+/* -------------------------
+   Pixi canvas host
+   ------------------------- */
+#swingMetricsRow .metricCard.metricCard--path #pathPixi,
+#swingMetricsRow .metricCard.metricCard--path #pathPixi.metricStage--pixi {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+#swingMetricsRow .metricCard.metricCard--path #pathPixi canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+/* Fallback shimmer when Pixi canvas is not yet mounted */
+#swingMetricsRow .metricCard.metricCard--path #pathPixi:not(:has(canvas))::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(
+    120% 80% at 50% 60%,
+    rgba(216, 200, 166, 0.18) 0%,
+    rgba(216, 200, 166, 0.1) 35%,
+    rgba(216, 200, 166, 0.04) 55%,
+    transparent 70%
+  );
+  filter: blur(8px);
+  opacity: 0.38;
+  animation: swingPathBreath 3s ease-in-out infinite;
+}
+
+@keyframes swingPathBreath {
+  0%, 100% { opacity: 0.34; }
+  50%       { opacity: 0.44; }
+}
+
+/* -------------------------
+   Title decorative lines
+   ------------------------- */
+#swingMetricsRow .metricCard.metricCard--path .metricCard__title {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#swingMetricsRow .metricCard.metricCard--path .metricCard__title::before,
+#swingMetricsRow .metricCard.metricCard--path .metricCard__title::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+  background: linear-gradient(
+    to right,
+    rgba(216, 200, 166, 0),
+    rgba(216, 200, 166, 0.55),
+    rgba(216, 200, 166, 0)
+  );
+  opacity: 0.62;
+  pointer-events: none;
+}
+
+#swingMetricsRow .metricCard.metricCard--path .metricCard__title::before {
+  left: 18px;
+  right: calc(50% + 70px);
+}
+
+#swingMetricsRow .metricCard.metricCard--path .metricCard__title::after {
+  left: calc(50% + 70px);
+  right: 18px;
+}
+
+/* -------------------------
+   mainPanel compact override
+   ------------------------- */
+#mainPanel #swingMetricsRow .metricCard--path .metricCard__body {
+  min-height: clamp(180px, 25vh, 245px);
+}
+
+#mainPanel #swingMetricsRow :is(#alignmentRing, .alignment-ring) {
+  max-width: var(--arc-size);
+  max-height: var(--arc-size);
+  margin-inline: auto;
+}
+
+#mainPanel #swingMetricsRow .alignment-ring__base {
+  stroke-width: var(--arc-stroke-outer);
+}
+
+#mainPanel #swingMetricsRow .alignment-ring__sweet {
+  stroke-width: var(--arc-stroke-inner);
+}

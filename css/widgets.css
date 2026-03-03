@@ -1,4 +1,2 @@
-/* @layer widgets */
-@layer widgets {
-  /* Widget-specific styles only: daily, leaderboard, swing metrics, etc. */
-}
+/* Replaced by css/widgets/ folder — see shared.css, attack.css, path.css, tempo.css */
+@layer widgets {}
