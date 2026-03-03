@@ -21,6 +21,15 @@
   --aa-ball: clamp(16px, 2.1vw, 22px);
 }
 
+/* Attack card is slightly wider than the shared --metric-side-max
+   so the arc has more breathing room */
+#swingMetricsRow > [data-widget="attack"],
+#swingMetricsRow .metricCard--attack,
+#mainPanel #swingMetricsRow > [data-widget="attack"],
+#mainPanel #swingMetricsRow .metricCard--attack {
+  max-width: 160px;
+}
+
 #swingMetricsRow .metricCard--attack .metricCard__body {
   display: flex;
   align-items: center;
@@ -54,6 +63,13 @@
   margin: 0 auto;
 }
 
+/* Indent the scale labels so +6 and -6 centers sit exactly over
+   the arc endpoints (stage is 101px centred in a 130px tubeArc) */
+#swingMetricsRow [data-widget="attack"] .tubeArc__scale {
+  padding-left: 8px;
+  padding-right: 9px;
+}
+
 /* -------------------------
    SVG sizing
    ------------------------- */
@@ -74,7 +90,7 @@
 #swingMetricsRow [data-widget="attack"] .tubeArc__inner,
 #swingMetricsRow [data-widget="attack"] .tubeArc__svg .tubeArc__outer,
 #swingMetricsRow [data-widget="attack"] .tubeArc__svg .tubeArc__inner {
-  d: path("M4 70 A56 56 0 0 1 116 70");
+  d: path("M2 72 A58 58 0 0 1 118 72");
 }
 
 /* -------------------------
@@ -99,7 +115,7 @@
 
 /* -------------------------
    Sweet zone indicator at 0° (top-center of arc)
-   Arc "M4 70 A56 56 0 0 1 116 70" → 0° = (60,14) in viewBox 0 0 120 90
+   Arc "M2 72 A58 58 0 0 1 118 72" → 0° = (60,14) in viewBox 0 0 120 90
    → ~14% from top, 50% from left
    ------------------------- */
 #swingMetricsRow [data-widget="attack"] .tubeArc__stage::before {
