@@ -128,10 +128,10 @@ export function createTubeViewArc({
     mountEl?.classList.toggle("is-perfect", Math.abs(resolvedDeg) <= 0.25);
   }
 
-  function findZeroScaleLabel() {
-    if (!viewEl) return null;
-    const labels = Array.from(viewEl.querySelectorAll(".tubeArc__scaleLabel"));
-    return labels.find((el) => (el.textContent || "").trim() === "0") || labels[1] || null;
+  function findZeroScaleLabel(rootEl) {
+    if (!rootEl) return null;
+    return Array.from(rootEl.querySelectorAll("*"))
+      .find((el) => (el.textContent || "").trim() === "0") || null;
   }
 
   function ensureCenterAxis() {
@@ -141,7 +141,19 @@ export function createTubeViewArc({
       axis = document.createElement("div");
       axis.id = "attackAxisCenter";
       axis.setAttribute("aria-hidden", "true");
+      axis.style.position = "absolute";
+      axis.style.left = "50%";
+      axis.style.transform = "translateX(-50%)";
+      axis.style.width = "3px";
       axis.style.pointerEvents = "none";
+      axis.style.zIndex = "5";
+      axis.style.background = [
+        "repeating-linear-gradient(",
+        "to bottom,",
+        "rgba(210,200,170,0.55) 0 16px,",
+        "transparent 16px 36px",
+        ")"
+      ].join(" ");
       if (runnerEl && runnerEl.parentElement === stageEl) {
         stageEl.insertBefore(axis, runnerEl);
       } else {
@@ -152,35 +164,27 @@ export function createTubeViewArc({
     return axisEl;
   }
 
-  function syncAxisColor() {
-    if (!axisEl || !viewEl) return;
-    const tickEl = viewEl.querySelector(".tubeArc__tick");
-    const tickBg = tickEl ? window.getComputedStyle(tickEl).backgroundColor : "";
-    if (tickBg) axisEl.style.setProperty("--attack-axis-color", tickBg);
-  }
-
   function updateCenterAxisGeometry() {
+    const root = stageEl;
     const axis = ensureCenterAxis();
-    const bodyEl = stageEl;
-    const arcSvg = bodyEl?.querySelector?.(".tubeArc__svg");
-    zeroScaleLabelEl = zeroScaleLabelEl?.isConnected ? zeroScaleLabelEl : findZeroScaleLabel();
+    const stageRect = root?.getBoundingClientRect?.();
+    const arcSvg = svgEl || root?.querySelector?.(".tubeArc__svg");
+    zeroScaleLabelEl = zeroScaleLabelEl?.isConnected ? zeroScaleLabelEl : findZeroScaleLabel(viewEl);
     const zeroEl = zeroScaleLabelEl;
-    if (!axis || !bodyEl || !arcSvg || !zeroEl) {
+    if (!axis || !stageRect || !arcSvg || !zeroEl) {
       if (axis) axis.style.display = "none";
       return;
     }
 
-    const bodyRect = bodyEl.getBoundingClientRect();
     const arcRect = arcSvg.getBoundingClientRect();
     const zeroRect = zeroEl.getBoundingClientRect();
-    const topPx = (arcRect.bottom - bodyRect.top) + 10;
-    const endPx = (zeroRect.top - bodyRect.top) - 10;
+    const topPx = (arcRect.bottom - stageRect.top) + 8;
+    const endPx = (zeroRect.top - stageRect.top) - 8;
     const heightPx = Math.max(0, endPx - topPx);
 
     axis.style.display = "";
     axis.style.top = `${Math.max(0, topPx)}px`;
     axis.style.height = `${heightPx}px`;
-    syncAxisColor();
   }
 
   function render() {

@@ -1,87 +1,140 @@
-/*
-  WHY: Attack arc svg was being constrained/scaled down; this patch removes
-  transform scaling and widens the path geometry.
-*/
-const DEBUG = false;
+(function () {
+  const PATCH_TAG = "[ATTACK_PATCH]";
+  const GUIDE_ID = "__attackCenterGuide";
 
-function debugLog(...args) {
-  if (!DEBUG) return;
-  console.log("[attack_arc_patch]", ...args);
-}
-
-function applyAttackArcPatch() {
-  const attackWidget = document.querySelector('#swingMetricsRow [data-widget="attack"]');
-  if (!attackWidget) return false;
-
-  const svg = attackWidget.querySelector(".tubeArc__svg");
-  if (!svg) return false;
-
-  const stage = attackWidget.querySelector(".tubeArc__stage") || svg.parentElement;
-  if (stage) {
-    stage.style.setProperty("width", "100%", "important");
-    stage.style.setProperty("max-width", "none", "important");
+  function findAttackRoot() {
+    return document.querySelector('#swingMetricsRow [data-widget="attack"]');
   }
 
-  svg.style.setProperty("transform", "none", "important");
-  svg.style.setProperty("width", "100%", "important");
-  svg.style.setProperty("height", "auto", "important");
-  svg.style.setProperty("display", "block", "important");
+  function findStage(root) {
+    return (
+      root.querySelector(".tubeArc__stage") ||
+      root.querySelector(".metricCard__body") ||
+      root
+    );
+  }
 
-  const widenedArcD = "M4 70 A56 56 0 0 1 116 70";
-  const outerPath = svg.querySelector(".tubeArc__outer");
-  const innerPath = svg.querySelector(".tubeArc__inner");
+  function findArcSvg(root) {
+    return root.querySelector(".tubeArc__svg");
+  }
 
-  if (outerPath) outerPath.setAttribute("d", widenedArcD);
-  if (innerPath) innerPath.setAttribute("d", widenedArcD);
+  function findZeroLabel(root, stageRect) {
+    // Search for "0" labels only inside the attack widget.
+    const nodes = Array.from(root.querySelectorAll("*"))
+      .filter((el) => el.childElementCount === 0)
+      .filter((el) => (el.textContent || "").trim() === "0");
 
-  return true;
-}
+    if (!nodes.length) return null;
 
-function bootstrapAttackArcPatch() {
-  let attempts = 0;
-  const maxAttempts = 30;
-  const retryMs = 100;
+    const stageCenterX = stageRect.left + stageRect.width / 2;
 
-  const retryId = window.setInterval(() => {
-    attempts += 1;
-    if (applyAttackArcPatch() || attempts >= maxAttempts) {
-      window.clearInterval(retryId);
+    // Pick the "0" nearest to the stage center on the X axis.
+    let best = null;
+    let bestScore = Infinity;
+
+    for (const el of nodes) {
+      const r = el.getBoundingClientRect();
+      const score = Math.abs((r.left + r.width / 2) - stageCenterX);
+      if (score < bestScore) {
+        bestScore = score;
+        best = { el, rect: r };
+      }
     }
-  }, retryMs);
+    return best;
+  }
 
-  const metricsRow = document.getElementById("swingMetricsRow");
-  if (!metricsRow) return;
+  function ensureStagePositioned(stage) {
+    const cs = getComputedStyle(stage);
+    if (cs.position === "static") {
+      // Does not change surrounding layout; only anchors absolute overlays.
+      stage.style.position = "relative";
+    }
+  }
 
-  let rafId = 0;
-  const observer = new MutationObserver(() => {
-    if (rafId) return;
-    rafId = window.requestAnimationFrame(() => {
-      rafId = 0;
-      applyAttackArcPatch();
-    });
-  });
+  function ensureGuide(stage) {
+    let guide = stage.querySelector(`#${GUIDE_ID}`);
+    if (!guide) {
+      guide = document.createElement("div");
+      guide.id = GUIDE_ID;
+      guide.style.position = "absolute";
+      guide.style.left = "50%";
+      guide.style.transform = "translateX(-50%)";
+      guide.style.width = "3px";
+      guide.style.pointerEvents = "none";
+      guide.style.zIndex = "3";
+      // Scale-like gray-beige, dashed with repeating gradient.
+      guide.style.background =
+        "repeating-linear-gradient(to bottom, rgba(160,160,160,.55) 0 14px, transparent 14px 30px)";
+      stage.appendChild(guide);
+    }
+    return guide;
+  }
 
-  observer.observe(metricsRow, {
-    childList: true,
-    subtree: true
-  });
+  function updateCenterGuide() {
+    const root = findAttackRoot();
+    if (!root) return;
 
-  let resizeRafId = 0;
+    const stage = findStage(root);
+    const svg = findArcSvg(root);
+    if (!stage || !svg) return;
+
+    const stageRect = stage.getBoundingClientRect();
+    const arcRect = svg.getBoundingClientRect();
+
+    const zero = findZeroLabel(root, stageRect);
+    if (!zero) return;
+
+    ensureStagePositioned(stage);
+    const guide = ensureGuide(stage);
+
+    // Start below the arc to avoid intersection.
+    const top = (arcRect.bottom - stageRect.top) + 10;
+    // End a bit above the "0" label.
+    const bottom = (zero.rect.top - stageRect.top) - 8;
+    const h = Math.max(0, bottom - top);
+
+    guide.style.top = `${top}px`;
+    guide.style.height = `${h}px`;
+  }
+
+  // Public hook for manual calls.
+  window.applyAttackArcPatch = function applyAttackArcPatch() {
+    try {
+      updateCenterGuide();
+      // One more update on next frame (DOM may finish painting later).
+      requestAnimationFrame(updateCenterGuide);
+      // And another for late layout/Pixi timing.
+      requestAnimationFrame(() => requestAnimationFrame(updateCenterGuide));
+      console.log(PATCH_TAG, "applyAttackArcPatch OK");
+    } catch (e) {
+      console.warn(PATCH_TAG, "applyAttackArcPatch failed:", e);
+    }
+  };
+
+  function boot() {
+    window.applyAttackArcPatch();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot, { once: true });
+  } else {
+    boot();
+  }
+
+  let raf = 0;
   window.addEventListener("resize", () => {
-    if (resizeRafId) return;
-    resizeRafId = window.requestAnimationFrame(() => {
-      resizeRafId = 0;
-      applyAttackArcPatch();
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => window.applyAttackArcPatch());
+  });
+
+  // Keep a single observer to avoid duplicates.
+  if (!window.__attackCenterGuideObserver) {
+    const obs = new MutationObserver(() => {
+      window.applyAttackArcPatch();
     });
-  }, { passive: true });
+    window.__attackCenterGuideObserver = obs;
 
-  applyAttackArcPatch();
-}
-
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", bootstrapAttackArcPatch, { once: true });
-} else {
-  bootstrapAttackArcPatch();
-}
-
-window.applyAttackArcPatch = applyAttackArcPatch;
+    const host = document.querySelector("#swingMetricsRow") || document.body;
+    obs.observe(host, { subtree: true, childList: true, attributes: true });
+  }
+})();
