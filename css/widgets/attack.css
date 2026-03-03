@@ -90,11 +90,11 @@
 
 #swingMetricsRow [data-widget="attack"] .tubeArc__inner,
 #attackAngle .aa-arcTrack--inner {
-  stroke: var(--zone-good) !important;
+  stroke: var(--arc-inner-stroke) !important;
   stroke-width: var(--arc-inner-w) !important;
   stroke-linecap: round !important;
   opacity: 1 !important;
-  filter: drop-shadow(0 0 8px var(--zone-good-glow)) drop-shadow(0 0 20px rgba(74, 222, 128, 0.18));
+  filter: drop-shadow(0 0 8px rgba(216, 200, 166, 0.18)) drop-shadow(0 0 20px rgba(216, 200, 166, 0.10));
 }
 
 /* -------------------------
@@ -111,9 +111,9 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: radial-gradient(circle, var(--zone-good-soft) 0%, transparent 70%);
-  border: 1px solid rgba(74, 222, 128, 0.28);
-  box-shadow: 0 0 18px var(--zone-good-glow), 0 0 40px rgba(74, 222, 128, 0.12);
+  background: radial-gradient(circle, rgba(216, 200, 166, 0.12) 0%, transparent 70%);
+  border: 1px solid rgba(216, 200, 166, 0.20);
+  box-shadow: 0 0 18px rgba(216, 200, 166, 0.14), 0 0 40px rgba(216, 200, 166, 0.06);
   pointer-events: none;
   z-index: 0;
 }
@@ -167,13 +167,13 @@
    Perfect state
    ------------------------- */
 #swingMetricsRow #attackAngle.is-perfect #attackAngleRunner {
-  filter: drop-shadow(0 0 14px var(--zone-good)) drop-shadow(0 0 28px var(--zone-good-glow));
+  filter: drop-shadow(0 0 14px rgba(216, 200, 166, 0.55)) drop-shadow(0 0 28px rgba(216, 200, 166, 0.28));
 }
 
 #swingMetricsRow #attackAngle.is-perfect .tubeArc__inner,
 #swingMetricsRow #attackAngle.is-perfect .aa-arcTrack--inner {
   opacity: 1;
-  filter: drop-shadow(0 0 10px var(--zone-good)) drop-shadow(0 0 24px var(--zone-good-glow));
+  filter: drop-shadow(0 0 10px rgba(216, 200, 166, 0.22)) drop-shadow(0 0 24px rgba(216, 200, 166, 0.12));
 }
 
 /* -------------------------
@@ -190,7 +190,7 @@
 #swingMetricsRow [data-widget="attack"] #attackAngleRunner.__holdFX,
 #swingMetricsRow .metricCard--attack #attackAngleRunner.__holdFX {
   animation: attackRunnerHoldTension 560ms ease-in-out infinite alternate;
-  filter: drop-shadow(0 0 10px var(--zone-good-glow)) drop-shadow(0 0 4px rgba(74, 222, 128, 0.6));
+  filter: drop-shadow(0 0 10px rgba(216, 200, 166, 0.28)) drop-shadow(0 0 4px rgba(216, 200, 166, 0.40));
 }
 
 #swingMetricsRow [data-widget="attack"] #attackAngleRunner.__popFX,

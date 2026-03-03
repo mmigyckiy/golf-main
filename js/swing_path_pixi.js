@@ -18,20 +18,20 @@
       endRad: 0
     }),
     cap: "round",
-    outer: Object.freeze({ width: 10, color: 0x1a2e1a, alpha: 0.55 }),
-    inner: Object.freeze({ width: 6, color: 0x4ade80, alpha: 0.40 }),
+    outer: Object.freeze({ width: 10, color: 0xD9D2BF, alpha: 0.18 }),
+    inner: Object.freeze({ width: 6, color: 0xD9D2BF, alpha: 0.55 }),
     glow: Object.freeze({
       enabled: true,
-      blur: 8,
-      strength: 1.2,
-      color: 0x4ade80,
-      alpha: 0.38
+      blur: 6,
+      strength: 1.0,
+      color: 0xCFC6AE,
+      alpha: 0.22
     }),
     sweet: Object.freeze({
-      width: 7,
-      alpha: 0.92,
-      glowWidth: 12,
-      glowAlpha: 0.45
+      width: 6,
+      alpha: 0.74,
+      glowWidth: 9,
+      glowAlpha: 0.18
     }),
     energy: Object.freeze({
       width: 4,

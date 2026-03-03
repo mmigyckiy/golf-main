@@ -76,8 +76,8 @@
    Value label
    ------------------------- */
 #swingMetricsRow .metricCard--tempo #tempoValueLabel {
-  color: var(--zone-good);
-  text-shadow: 0 0 14px var(--zone-good-glow), 0 6px 22px rgba(0, 0, 0, 0.4);
+  color: rgba(216, 200, 166, 0.9);
+  text-shadow: 0 0 14px rgba(216, 200, 166, 0.40), 0 6px 22px rgba(0, 0, 0, 0.4);
 }
 
 #swingMetricsRow .metricCard--tempo #swingTempoPct {
@@ -85,35 +85,35 @@
   line-height: 1;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: var(--zone-good);
-  text-shadow: 0 0 12px var(--zone-good-glow);
+  color: rgba(216, 200, 166, 0.9);
+  text-shadow: 0 0 12px rgba(216, 200, 166, 0.40);
 }
 
 /* -------------------------
-   Green fill override
+   Tube fill
    ------------------------- */
 #swingMetricsRow .metricCard--tempo .tubeV__fill {
   background: linear-gradient(
     to top,
-    rgba(74, 222, 128, 0.18) 0%,
-    rgba(74, 222, 128, 0.38) 55%,
-    rgba(74, 222, 128, 0.55) 100%
+    rgba(216, 200, 166, 0.08) 0%,
+    rgba(216, 200, 166, 0.20) 55%,
+    rgba(216, 200, 166, 0.32) 100%
   );
 }
 
 /* -------------------------
-   Green runner override
+   Runner
    ------------------------- */
 #swingMetricsRow .metricCard--tempo .tubeV__runner {
   background: linear-gradient(
     to top,
-    rgba(74, 222, 128, 0.65) 0%,
-    rgba(74, 222, 128, 0.90) 60%,
-    var(--zone-good) 100%
+    rgba(216, 200, 166, 0.55) 0%,
+    rgba(216, 200, 166, 0.80) 60%,
+    rgba(216, 200, 166, 0.95) 100%
   );
   box-shadow:
-    0 0 12px var(--zone-good-glow),
-    0 0 4px rgba(74, 222, 128, 0.6),
+    0 0 12px rgba(216, 200, 166, 0.35),
+    0 0 4px rgba(216, 200, 166, 0.50),
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
     inset 0 -1px 0 rgba(0, 0, 0, 0.18),
     0 6px 18px rgba(0, 0, 0, 0.34);
@@ -129,9 +129,9 @@
   right: 0;
   bottom: 65%;
   height: 20%;
-  background: var(--zone-good-band);
-  border-top: 1px solid rgba(74, 222, 128, 0.30);
-  border-bottom: 1px solid rgba(74, 222, 128, 0.22);
+  background: linear-gradient(transparent 0%, rgba(216, 200, 166, 0.06) 50%, transparent 100%);
+  border-top: 1px solid rgba(216, 200, 166, 0.20);
+  border-bottom: 1px solid rgba(216, 200, 166, 0.14);
   pointer-events: none;
   z-index: 1;
 }

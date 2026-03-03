@@ -89,11 +89,11 @@
 }
 
 #swingMetricsRow [data-widget="path"] :is(#alignmentSweet, .alignment-ring__sweet, [id*="alignmentSweet"], [class*="alignment-ring__sweet"]) {
-  stroke: var(--zone-good) !important;
+  stroke: var(--arc-inner-stroke) !important;
   stroke-width: var(--arc-inner-w) !important;
   stroke-linecap: round !important;
   opacity: 1 !important;
-  filter: drop-shadow(0 0 8px var(--zone-good-glow)) drop-shadow(0 0 20px rgba(74, 222, 128, 0.18)) !important;
+  filter: drop-shadow(0 0 8px rgba(216, 200, 166, 0.18)) drop-shadow(0 0 20px rgba(216, 200, 166, 0.10)) !important;
 }
 
 /* -------------------------
