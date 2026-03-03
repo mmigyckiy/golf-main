@@ -3821,9 +3821,10 @@ opacity: 0.18;
   pointer-events: none !important;
 }
 [data-legacy="true"] *{
+}
 
 #appHeader{
-
+}
 
 #appDock,
 .appDock{
@@ -4546,6 +4547,7 @@ body.uidebug #uiRoot::before{
 /* === SWING TEMPO: FIX RUNNER AS KNOB (NO STRETCH) === */
 /* Fill - background indication only, not runner */
 /* === TEMPO footer typography: match ATTACK ANGLE readout style === */
+/* DISABLED:
 display: flex;
   flex-direction: column;
   align-items: center;
@@ -4565,12 +4567,14 @@ display: flex;
 /* === ATTACK ANGLE: expand visible stage inside widget (safe, CSS-only) === */
 
 /* 1) Give the BODY more room for the arc/ball scene */
+/* DISABLED:
 padding-top: 10px !important;
   padding-bottom: 6px !important;
 }
 */
 
 /* 2) Expand the actual attack container inside body (IDs may vary, cover both) */
+/* DISABLED:
 height: 190px !important;
   max-height: none !important;
   overflow: visible !important;
@@ -4585,19 +4589,15 @@ height: 190px !important;
 
 /* 1) Give the BODY more room for the scene (without changing the whole card height) */
 /* 2) Make the scene wrapper taller and centered */
+/* DISABLED:
 width: 100% !important;
   height: 100% !important;
   min-height: 0 !important;
-
-  /* center contents */
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-
-  /* prevent clipping while we scale */
   overflow: visible !important;
 }
-*/
 
 /* 3) Scale the actual drawing (SVG) up a bit inside the scene */
 /* 4) Keep the readout stable (do NOT let it be pushed down) */
@@ -4645,15 +4645,15 @@ width: 100% !important;
    so the Attack card cannot grow. Also the card itself is capped by max-width: 140px.
    This override widens the 3rd column and removes the cap for attack only. */
 
+/* DISABLED:
 grid-template-columns: 0.95fr 1.55fr 1.20fr !important;
 }
 */
-
-}
-*/
+/* DISABLED: } */
 
 /* ATTACK: make inner visuals larger + centered (Tempo-like framing) */
 /* the meter root (your #attackAngle is .aa-meter) */
+/* DISABLED:
 height: 190px !important;
   position: relative !important;
   display: flex !important;
@@ -4664,12 +4664,14 @@ height: 190px !important;
 */
 
 /* scale the svg up so arc is readable */
+/* DISABLED:
 display: block !important;
   margin-top: 6px !important;
 }
 */
 
 /* ATTACK: make +6/0/-6 scale horizontal under the arc (Tempo-like) */
+/* DISABLED:
 padding: 0 6px !important;
   gap: 10px !important;
   opacity: 0.85 !important;
@@ -4680,27 +4682,25 @@ padding: 0 6px !important;
 /* tick marks (small dashes) - make them horizontal */
 /* If the old scale container was positioned on the right, neutralize it */
 /* === ATTACK ANGLE: make +6 / 0 / -6 horizontal under the arc === */
+/* DISABLED:
 position: relative;
 }
 */
 
 /* The scale itself */
+/* DISABLED:
 display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
   justify-content: space-between !important;
   gap: 10px !important;
-
-  /* place under arc (inside the widget) */
   position: absolute !important;
   left: 50% !important;
-  top: 58% !important;              /* tweak if needed: 56-62% */
+  top: 58% !important;
   transform: translateX(-50%) !important;
-
   width: min(220px, 92%) !important;
   margin: 0 !important;
   padding: 0 6px !important;
-
   writing-mode: horizontal-tb !important;
 }
 */
@@ -4862,11 +4862,11 @@ body {
 }
 
 body {
-
+}
 
 #appHeader,
 .appHeader {
-
+}
 
 .powerCard__main {
   flex: 1 1 auto;
@@ -4896,7 +4896,7 @@ body {
 }
 
 .powerCard__controls .gc-swingControl {
-
+}
 
 /* ========================================
    UI fit wrappers as normal flow containers
