@@ -1171,3 +1171,26 @@ body[data-debug="1"] #skillBreakdownDebug{
   stroke-width: 1.2 !important;
   r: calc(var(--golf-ball-size) * 0.5) !important;
 }
+
+/* =========================================================
+   ATTACK CENTER AXIS (visual-only)
+   WHY: static 0° reference guide between arc and scale without touching layout.
+   ========================================================= */
+#swingMetricsRow [data-widget="attack"] .tubeArc__stage {
+  --attack-axis-color: var(--arc-highlight-color);
+}
+
+#swingMetricsRow [data-widget="attack"] #attackAxisCenter {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.28;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--attack-axis-color) 0 18px,
+    transparent 18px 38px
+  );
+}

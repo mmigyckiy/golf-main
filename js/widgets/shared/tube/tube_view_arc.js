@@ -48,6 +48,8 @@ export function createTubeViewArc({
   let svgEl = null;
   let pathInnerEl = null;
   let runnerEl = null;
+  let axisEl = null;
+  let zeroScaleLabelEl = null;
   let mounted = false;
   let progress01 = 0;
   let runner01 = 0.5;
@@ -126,9 +128,65 @@ export function createTubeViewArc({
     mountEl?.classList.toggle("is-perfect", Math.abs(resolvedDeg) <= 0.25);
   }
 
+  function findZeroScaleLabel() {
+    if (!viewEl) return null;
+    const labels = Array.from(viewEl.querySelectorAll(".tubeArc__scaleLabel"));
+    return labels.find((el) => (el.textContent || "").trim() === "0") || labels[1] || null;
+  }
+
+  function ensureCenterAxis() {
+    if (!stageEl) return null;
+    let axis = stageEl.querySelector("#attackAxisCenter");
+    if (!axis) {
+      axis = document.createElement("div");
+      axis.id = "attackAxisCenter";
+      axis.setAttribute("aria-hidden", "true");
+      axis.style.pointerEvents = "none";
+      if (runnerEl && runnerEl.parentElement === stageEl) {
+        stageEl.insertBefore(axis, runnerEl);
+      } else {
+        stageEl.appendChild(axis);
+      }
+    }
+    axisEl = axis;
+    return axisEl;
+  }
+
+  function syncAxisColor() {
+    if (!axisEl || !viewEl) return;
+    const tickEl = viewEl.querySelector(".tubeArc__tick");
+    const tickBg = tickEl ? window.getComputedStyle(tickEl).backgroundColor : "";
+    if (tickBg) axisEl.style.setProperty("--attack-axis-color", tickBg);
+  }
+
+  function updateCenterAxisGeometry() {
+    const axis = ensureCenterAxis();
+    const bodyEl = stageEl;
+    const arcSvg = bodyEl?.querySelector?.(".tubeArc__svg");
+    zeroScaleLabelEl = zeroScaleLabelEl?.isConnected ? zeroScaleLabelEl : findZeroScaleLabel();
+    const zeroEl = zeroScaleLabelEl;
+    if (!axis || !bodyEl || !arcSvg || !zeroEl) {
+      if (axis) axis.style.display = "none";
+      return;
+    }
+
+    const bodyRect = bodyEl.getBoundingClientRect();
+    const arcRect = arcSvg.getBoundingClientRect();
+    const zeroRect = zeroEl.getBoundingClientRect();
+    const topPx = (arcRect.bottom - bodyRect.top) + 10;
+    const endPx = (zeroRect.top - bodyRect.top) - 10;
+    const heightPx = Math.max(0, endPx - topPx);
+
+    axis.style.display = "";
+    axis.style.top = `${Math.max(0, topPx)}px`;
+    axis.style.height = `${heightPx}px`;
+    syncAxisColor();
+  }
+
   function render() {
     if (!mounted) return;
     updateAttackRunnerPosition(currentValueDeg);
+    updateCenterAxisGeometry();
     if (viewEl) viewEl.style.setProperty("--arcProgress", `${clamp01(progress01)}`);
   }
 
@@ -166,6 +224,8 @@ export function createTubeViewArc({
     svgEl = viewEl.querySelector(".tubeArc__svg");
     pathInnerEl = viewEl.querySelector('[data-aa-arc="1"]');
     runnerEl = viewEl.querySelector("#attackAngleRunner");
+    axisEl = null;
+    zeroScaleLabelEl = null;
 
     mounted = true;
     armedOnce = false;
@@ -176,14 +236,14 @@ export function createTubeViewArc({
       if (resizeRafId) return;
       resizeRafId = window.requestAnimationFrame(() => {
         resizeRafId = 0;
-        updateAttackRunnerPosition(currentValueDeg);
+        render();
       });
     };
     window.addEventListener("resize", onResize);
     render();
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
-        updateAttackRunnerPosition(currentValueDeg);
+        render();
       });
     });
   }
@@ -224,6 +284,8 @@ export function createTubeViewArc({
     svgEl = null;
     pathInnerEl = null;
     runnerEl = null;
+    axisEl = null;
+    zeroScaleLabelEl = null;
     mounted = false;
     armedOnce = false;
     visualState = "idle";
