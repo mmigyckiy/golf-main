@@ -23,6 +23,21 @@
   --hint-size: clamp(10px, 0.9vw, 12px);
   --text-strong: rgba(255, 255, 255, 0.92);
   --text-muted: rgba(255, 255, 255, 0.70);
+  --kicker-text: rgba(255, 255, 255, 0.55);
+  --kicker-text-strong: rgba(255, 255, 255, 0.62);
+  --w-font-title: clamp(20px, 1.45vw, 26px);
+  --w-font-kicker: clamp(11px, 0.82vw, 13px);
+  --w-font-body: clamp(14px, 0.98vw, 16px);
+  --w-font-value: clamp(18px, 1.25vw, 22px);
+  --w-font-value-lg: clamp(42px, 3vw, 56px);
+  --w-pad-card: clamp(14px, 1vw, 18px);
+  --w-gap-card: clamp(10px, 0.85vw, 14px);
+  --w-pill-font: clamp(11px, 0.82vw, 12px);
+  --w-pill-pad-y: clamp(5px, 0.45vw, 7px);
+  --w-pill-pad-x: clamp(10px, 0.9vw, 13px);
+  --widget-stroke-thin: 4px;
+  --widget-stroke: 6px;
+  --widget-scale: 0.78;
 }
 
 #swingMetricsRow {

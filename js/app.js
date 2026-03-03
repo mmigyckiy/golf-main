@@ -5,10 +5,6 @@
 // - Target line evaluation (ON LINE / SHORT / LONG) at 300 yd
 // - Risk selector (Calm/Aggressive) influencing crash window
 // UI/game state focused on distance and cashout timing
-// DEAD-CODE CANDIDATES (removed in this cleanup):
-// - computeSweetSpot(): no references found
-// - computeEfficiency(): no references found
-// - getEnvWindFromSample(): no references found
 
 // == Config / Constants ==
 import { isWithinPerfectWindow, loadLongestToday, saveLongestToday, evaluateTarget, getGrowthForRisk, showSignatureOverlay } from "./longdrive-extras.js";
@@ -23,26 +19,26 @@ import { SwingControls } from "./swing_controls.js";
 import { SwingPath } from "./swing_path.js";
 import { createWidgetManager } from "./widgets/widget_manager.js";
 import { getUIRefs } from "./ui_refs.js";
+import { ROUND, FLIGHT, YARDS, STORAGE_KEYS } from "./constants.js";
+import { updateLeaderboard } from "./leaderboard.js";
 
-const FLIGHT_MS_VISUAL = 2200;
-const STORAGE_KEY = "golfcentral.longdrive.v1";
-const BASE_CARRY = 220; // yards at 1.00x
-const CARRY_PER_X = 55; // yards gained per +1x
-const MAX_SCREEN_YARDS = 300;
-const TARGET_DISTANCE = 300;
-const MAX_YD = 500;
-const LONG_DRIVE_UNLOCK_PROB = 0.12;
-const X_CAP = 9.99;
-const TEMPO_POWER = { min: 0.55, max: 1.05 };
-const X_TO_YARDS = 100;
-const RISK_K = 0.010;
-const RISK_P = 2.2;
-const DANGER_X_START = 2.2;
-const DANGER_X_FULL = 3.6;
-const ATTACK_PREVIEW_MAX_DEG = 6;
-const ATTACK_PREVIEW_PERIOD_MS = 2600;
-const DBG_PHYS = false;
-const REACT_UI = false;
+const FLIGHT_MS_VISUAL = FLIGHT.VISUAL_MS;
+const STORAGE_KEY = ROUND.STORAGE_KEY;
+const BASE_CARRY = ROUND.BASE_CARRY;
+const CARRY_PER_X = ROUND.CARRY_PER_X;
+const MAX_SCREEN_YARDS = ROUND.MAX_SCREEN_YARDS;
+const TARGET_DISTANCE = ROUND.TARGET_DISTANCE;
+const MAX_YD = YARDS.MAX;
+const LONG_DRIVE_UNLOCK_PROB = ROUND.LONG_DRIVE_UNLOCK_PROB;
+const X_CAP = ROUND.X_CAP;
+const TEMPO_POWER = ROUND.TEMPO_POWER;
+const X_TO_YARDS = YARDS.CONVERSION_MULTIPLIER;
+const RISK_K = ROUND.RISK_K;
+const RISK_P = ROUND.RISK_P;
+const DANGER_X_START = ROUND.DANGER_X_START;
+const DANGER_X_FULL = ROUND.DANGER_X_FULL;
+const ATTACK_PREVIEW_MAX_DEG = ROUND.ATTACK_PREVIEW_MAX_DEG;
+const ATTACK_PREVIEW_PERIOD_MS = ROUND.ATTACK_PREVIEW_PERIOD_MS;
 let widgetManager = null;
 
 const FEATURES = {
@@ -334,9 +330,9 @@ if (!window.__DRIVIX_UI__) {
 }
 window.__DRIVIX_UI__._state = state;
 
-const ANALYTICS_STORAGE_KEY = "drivix.stats";
-const ANALYTICS_MAX = 12;
-const ANALYTICS_RELEASE_MAX = 8;
+const ANALYTICS_STORAGE_KEY = STORAGE_KEYS.STATS;
+const ANALYTICS_MAX = ROUND.ANALYTICS_MAX;
+const ANALYTICS_RELEASE_MAX = ROUND.ANALYTICS_RELEASE_MAX;
 const SKILL_SIGNAL_DEFAULTS = { tempoQuality: 0.5, pathQuality: 0.5, risk: 0.5 };
 const analytics = {
   recentDistances: [],
@@ -845,7 +841,7 @@ function resetRoundState(reason = "manual"){
   state.alignment.sweetCenter = 0;
   state.alignment.hit = false;
   state.alignment.frozenValue = 0;
-  if (!REACT_UI && widgetManager) widgetManager.reset();
+  if (widgetManager) widgetManager.reset();
   state.sweetSpot = {
     baseCenterX: 2.7,
     baseWidthX: 0.55,
@@ -914,7 +910,7 @@ function resetRound(reason = "manual"){
   // Reset all 3 widgets
   SwingControls.resetTempo();
   SwingPath.resetPath();
-  if (!REACT_UI && widgetManager) widgetManager.reset();
+  if (widgetManager) widgetManager.reset();
   
   // Clear impact flash state (Variant 1)
   document.getElementById("swingMetricsRow")?.classList.remove("is-impact");
@@ -1241,12 +1237,7 @@ function renderImpactReadout(){
 function syncSwingUI(){
   SwingControls.syncFromState(state);
   const headPos = SwingControls.getTempoHeadPos();
-  if (!REACT_UI) {
-    renderSwingTempo(Number.isFinite(headPos) ? headPos : (state.tempo?.headPos ?? 0));
-  } else {
-    state.tempo = state.tempo || {};
-    state.tempo.headPos = Number.isFinite(headPos) ? headPos : (state.tempo?.headPos ?? 0);
-  }
+  renderSwingTempo(Number.isFinite(headPos) ? headPos : (state.tempo?.headPos ?? 0));
   
   // === PHYSICS OVERRIDE: Path + Attack from state.shot (spring-damper physics) ===
   // During ARMING/locked, use physics-driven values; otherwise fallback
@@ -1713,6 +1704,7 @@ function recordFlight({distance, x, crashed, perfect}){
   if(wasBest) state.bestDistance = distRounded;
   if(!crashed && distRounded > (state.longestToday.best || 0)){
     state.longestToday = saveLongestToday(distRounded);
+    updateLeaderboard();
   }
   recordAttempt(distRounded, crashed);
   renderFlights();
@@ -1816,7 +1808,7 @@ function releaseSwing(ts, power = 0){
   SwingControls.releaseSwing(now, state);
   state.tempo.holding = false;
   state.tempo.released = true;
-  if (!REACT_UI && widgetManager) {
+  if (widgetManager) {
     widgetManager.lock({
       snapshot: {
         tempo01: SwingControls.getTempoHeadPos(),
@@ -2010,7 +2002,7 @@ function tick(ts){
       state.shot.tempo01 = SwingControls.getTempoHeadPos();
     }
     
-    if (!REACT_UI && widgetManager) {
+    if (widgetManager) {
       widgetManager.update({
         ts,
         dt: dtMs,
@@ -2128,13 +2120,6 @@ function tick(ts){
     const danger = clamp01(dangerX * (1 + windN * 0.35 + fatigueN * 0.25) * (1.15 - stabilityN * 0.5));
     state.round.riskRate = riskRate;
     state.round.danger = danger;
-    if(DBG_PHYS){
-      state._physDbgAt = state._physDbgAt || 0;
-      if(!state._physDbgAt || (ts - state._physDbgAt) > 1000){
-        console.log("[PHYS]", { x: state.currentX, yards: yardsFromX(state.currentX), stabilityN, windN, fatigueN, riskRate, danger });
-        state._physDbgAt = ts;
-      }
-    }
     if(Math.random() < crashProb){
       endRound("CRASH", ts);
       emitUI();

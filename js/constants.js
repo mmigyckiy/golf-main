@@ -193,6 +193,29 @@ export const ATTACK_ANGLE = {
 };
 
 // =============================================================================
+// ROUND / GAMEPLAY
+// =============================================================================
+
+export const ROUND = {
+  STORAGE_KEY: "golfcentral.longdrive.v1",
+  BASE_CARRY: 220,          // yards at 1.00x
+  CARRY_PER_X: 55,          // yards gained per +1x
+  MAX_SCREEN_YARDS: 300,
+  TARGET_DISTANCE: 300,
+  X_CAP: 9.99,
+  TEMPO_POWER: { min: 0.55, max: 1.05 },
+  RISK_K: 0.010,
+  RISK_P: 2.2,
+  DANGER_X_START: 2.2,
+  DANGER_X_FULL: 3.6,
+  ATTACK_PREVIEW_MAX_DEG: 6,
+  ATTACK_PREVIEW_PERIOD_MS: 2600,
+  LONG_DRIVE_UNLOCK_PROB: 0.12,
+  ANALYTICS_MAX: 12,
+  ANALYTICS_RELEASE_MAX: 8
+};
+
+// =============================================================================
 // FLIGHT VISUALIZATION
 // =============================================================================
 
@@ -241,3 +264,5 @@ Object.freeze(ATTACK_ANGLE);
 Object.freeze(FLIGHT);
 CLUBS.forEach(Object.freeze);
 Object.freeze(CLUBS);
+Object.freeze(ROUND.TEMPO_POWER);
+Object.freeze(ROUND);
