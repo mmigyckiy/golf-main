@@ -396,6 +396,7 @@ body[data-debug="1"] #skillBreakdownDebug{
 #mainPanel.mainPanel.gc-main{
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* clip SVG bleeding on narrow viewports */
 }
 
 #mainPanel .gc-power,
@@ -438,4 +439,18 @@ body[data-debug="1"] #skillBreakdownDebug{
 
 .gc-leaderboard li.you .val {
   color: var(--accent, rgba(216, 200, 166, 1)) !important;
+}
+
+
+/* =========================================================
+   FIX: Hide legacy Pixi host — pendulum sector view replaced it
+   WHY: style.css has display: block !important on #pathPixi
+        plus ::before/::after placeholder arc pseudo-elements.
+        The overrides layer wins over base/style.css.
+   ========================================================= */
+
+#pathPixi,
+#pathPixi::before,
+#pathPixi::after {
+  display: none !important;
 }

@@ -1561,7 +1561,7 @@ hr,
 #pathPixi,
 .swing-metric--path .pixi-widget-canvas,
 .swing-metric--path canvas{
-  display: block !important;
+  display: block;
   visibility: visible !important;
   position: absolute !important;
   top: 0 !important;

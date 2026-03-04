@@ -1,5 +1,8 @@
 import { createPathModel } from "./path_model.js";
-import { SwingPath } from "../../swing_path.js";
+import { createPathViewSector } from "./path_view_sector.js";
+
+const MAX_DEG         = 20;   // must match path_view_sector.js
+const SWEEP_PERIOD_MS = 2800; // one full left→right→left sweep cycle (~2.8 s)
 
 function clamp01(v) {
   return Math.max(0, Math.min(1, Number(v) || 0));
@@ -8,116 +11,82 @@ function clamp01(v) {
 export function createPathWidget() {
   const name = "path";
   const model = createPathModel();
+  const view  = createPathViewSector();
 
   let mounted = false;
-  let usePixi = false;
-  let useDom = true;
-  let pathMountEl = null;
-  let pixiMountEl = null;
-  let ringEl = null;
+  let locked  = false;
+  let footerValueEl = null;
 
-  function mount({ rootEl, ui, usePixiPreferred = true } = {}) {
-    if (mounted) return { usePixi };
+  function mount({ rootEl, ui } = {}) {
+    if (mounted) return { usePixi: false };
 
-    window.ensureSwingPathCardStructure?.();
+    const bodyEl =
+      rootEl ||
+      ui?.path?.mount ||
+      document.getElementById("pathMount");
 
-    pathMountEl = rootEl || ui?.path?.mount || document.getElementById("pathMount");
-    pixiMountEl = ui?.path?.pixi || document.getElementById("pathPixi");
-    ringEl = ui?.path?.ring || document.getElementById("alignmentRing");
-
-    usePixi = false;
-    useDom = true;
-
-    const canUsePixi = !!(usePixiPreferred && window.SwingPathPixi?.init && pixiMountEl);
-    if (canUsePixi) {
-      window.ensureSwingPathCardStructure?.({ clearStage: true });
-      pixiMountEl = document.getElementById("pathPixi") || pixiMountEl;
-      usePixi = !!window.SwingPathPixi.init({ containerEl: pixiMountEl });
-    }
-    useDom = !usePixi;
-
-    if (pathMountEl) {
-      pathMountEl.classList.toggle("is-pixi-path", usePixi);
-      pathMountEl.classList.toggle("is-dom-path", useDom);
-    }
-    if (ringEl) {
-      ringEl.classList.toggle("is-legacyPathLayer", usePixi);
-      if (usePixi) ringEl.setAttribute("aria-hidden", "true");
-      else ringEl.removeAttribute("aria-hidden");
-      ringEl.style.display = usePixi ? "none" : "";
-    }
-
-    if (useDom && ringEl) SwingPath.init();
+    view.mount(bodyEl);
+    footerValueEl = document.querySelector("#pathFooter .metricCard__value");
     mounted = true;
-    return { usePixi };
+    locked  = false;
+    return { usePixi: false };
   }
 
-  function update({ phase = "IDLE", dt = 16, snapshot, state } = {}) {
+  function _updateFooter(path01) {
+    if (!footerValueEl) return;
+    const deg = (path01 - 0.5) * 40;   // map 0–1 → -20…+20
+    if (Math.abs(deg) < 0.5) {
+      footerValueEl.textContent = "CENTER";
+    } else if (deg > 0) {
+      footerValueEl.textContent = `→ +${deg.toFixed(1)}°`;
+    } else {
+      footerValueEl.textContent = `← ${Math.abs(deg).toFixed(1)}°`;
+    }
+  }
+
+  function update({ phase = "IDLE", ts = 0, snapshot, state } = {}) {
     if (!mounted) mount({ ui: state?.uiRefs });
     if (!mounted) return;
 
-    const head01 = clamp01(
-      Number.isFinite(snapshot?.path01) ? snapshot.path01 : (state?.alignment?.value ?? 0.5)
-    );
-    const intensity01 = clamp01(
-      Number.isFinite(snapshot?.tempo01) ? snapshot.tempo01 : (state?.shot?.tempo01 ?? 0.5)
-    );
-    model.update({ headPos01: head01, intensity: intensity01 });
+    // Hold = player is in arming phase and not yet released
+    const holding = !locked && phase === "ARMING";
+    view.setHoldFx(holding);
 
-    if (usePixi && window.SwingPathPixi?.update) {
-      window.SwingPathPixi.update({
-        headPos01: model.getValue().path01,
-        sweetStart01: 0.41,
-        sweetEnd01: 0.59,
-        locked: phase !== "ARMING",
-        intensity01,
-        dtMs: dt
-      });
-      if (ringEl) ringEl.style.display = "none";
-      return;
-    }
+    if (locked) return;
 
-    if (useDom) {
-      if (ringEl) ringEl.style.display = "";
-      SwingPath.update({
-        phase,
-        headPos01: model.getValue().path01,
-        sweetCenter: state?.alignment?.sweetCenter ?? 0,
-        sweetWidthDeg: 18
-      });
+    if (phase === "ARMING") {
+      // Pendulum sweep — needle scans the full arc, emulating the player's gaze
+      const sweepDeg = Math.sin(ts / SWEEP_PERIOD_MS * 2 * Math.PI) * MAX_DEG;
+      model.update({ headPos01: sweepDeg / (2 * MAX_DEG) + 0.5 });
     }
+    // IDLE / END: model stays at last value until reset()
+
+    const { path01 } = model.getValue();
+    view.setPath01(path01);
+    _updateFooter(path01);
   }
 
-  function lock() {
+  function lock({ snapshot, state } = {}) {
+    locked = true;
     model.lock();
-    if (useDom) SwingPath.lockPath();
+    view.setHoldFx(false);
+    view.setLocked(true);
+    view.triggerPopFx();
   }
 
   function reset() {
+    locked = false;
     model.reset();
-    if (useDom) SwingPath.resetPath();
-    if (usePixi && window.SwingPathPixi?.update) {
-      window.SwingPathPixi.update({
-        headPos01: 0.5,
-        sweetStart01: 0.41,
-        sweetEnd01: 0.59,
-        locked: false,
-        intensity01: 0.5,
-        dtMs: 16
-      });
-    }
+    view.setHoldFx(false);
+    view.reset();
+    if (footerValueEl) footerValueEl.textContent = "—";
   }
 
   function destroy() {
-    if (usePixi && window.SwingPathPixi?.destroy) {
-      window.SwingPathPixi.destroy();
-    }
-    mounted = false;
-    usePixi = false;
-    useDom = true;
-    pathMountEl = null;
-    pixiMountEl = null;
-    ringEl = null;
+    view.destroy();
+    mounted       = false;
+    locked        = false;
+    footerValueEl = null;
   }
 
   function getValue() {
