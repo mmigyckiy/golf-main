@@ -8,20 +8,20 @@
 // tempo01 = 0.0 → empty (acute angle at bottom-right)
 // tempo01 = 1.0 → full triangle filled (top-left reached)
 //
-// Geometry (SVG user units, viewBox 0 0 120 155):
+// Geometry (SVG user units, viewBox 0 0 120 110):
 //   P_topleft = (L, T) = (4, 4)    ← top-left corner
 //   P_topright = (R, T) = (90, 4)  ← top-right corner (right angle)
-//   P_acute   = (R, B) = (90, 151) ← bottom-right (acute angle, 0%)
+//   P_acute   = (R, B) = (90, 106) ← bottom-right (acute angle, 0%)
 //   Hypotenuse: P_topleft → P_acute ← fill boundary
 // ============================================================
 
 const SVG_NS   = "http://www.w3.org/2000/svg";
 const VB_W     = 120;
-const VB_H     = 155;
+const VB_H     = 110;
 const L        = 4;    // left x
 const R        = 90;   // right x  (right angle + acute angle share this column)
 const T        = 4;    // top y
-const B        = 151;  // bottom y (acute angle)
+const B        = 106;  // bottom y (acute angle)
 const SWEET_LO = 0.60;
 const SWEET_HI = 0.80;
 
@@ -34,7 +34,7 @@ const SWEET_HI = 0.80;
  */
 function hypAt(t) {
   return [R + t * (L - R), B + t * (T - B)];
-  // = [90 - 86t,  151 - 147t]
+  // = [90 - 86t,  106 - 102t]
 }
 
 /**
@@ -99,9 +99,9 @@ export function createTempoViewWedge() {
       id: "twFillGrad", x1: "0", y1: "1", x2: "0", y2: "0",
       gradientUnits: "objectBoundingBox"
     });
-    grad.appendChild(mkSvg("stop", { offset: "0%",   "stop-color": "rgba(216,200,166,0.08)"  }));
-    grad.appendChild(mkSvg("stop", { offset: "60%",  "stop-color": "rgba(216,200,166,0.26)" }));
-    grad.appendChild(mkSvg("stop", { offset: "100%", "stop-color": "rgba(216,200,166,0.48)" }));
+    grad.appendChild(mkSvg("stop", { offset: "0%",   "stop-color": "rgba(216,200,166,0.10)"  }));
+    grad.appendChild(mkSvg("stop", { offset: "60%",  "stop-color": "rgba(216,200,166,0.28)" }));
+    grad.appendChild(mkSvg("stop", { offset: "100%", "stop-color": "rgba(216,200,166,0.50)" }));
     defs.appendChild(grad);
     svg.appendChild(defs);
 
@@ -110,8 +110,8 @@ export function createTempoViewWedge() {
     svg.appendChild(mkSvg("polygon", {
       points: `${L},${T} ${R},${T} ${R},${B}`,
       class:  "tempoWedge__bg",
-      fill:   "rgba(216,200,166,0.035)",
-      stroke: "rgba(216,200,166,0.22)",
+      fill:   "rgba(216,200,166,0.04)",
+      stroke: "rgba(216,200,166,0.30)",
       "stroke-width":    "0.9",
       "stroke-linejoin": "round"
     }));
@@ -120,7 +120,7 @@ export function createTempoViewWedge() {
     svg.appendChild(mkSvg("path", {
       d:      sweetPath(SWEET_LO, SWEET_HI),
       class:  "tempoWedge__sweet",
-      fill:   "rgba(216,200,166,0.09)",
+      fill:   "rgba(216,200,166,0.12)",
       stroke: "none"
     }));
 
@@ -131,7 +131,7 @@ export function createTempoViewWedge() {
         x1: hx.toFixed(2), y1: hy.toFixed(2),
         x2: R,             y2: hy.toFixed(2),
         class:              "tempoWedge__sweetEdge",
-        stroke:             "rgba(216,200,166,0.28)",
+        stroke:             "rgba(216,200,166,0.32)",
         "stroke-width":     "0.7",
         "stroke-dasharray": "2.5 2"
       }));
@@ -150,8 +150,8 @@ export function createTempoViewWedge() {
     svg.appendChild(mkSvg("line", {
       x1: L, y1: T, x2: R, y2: B,
       class:            "tempoWedge__hyp",
-      stroke:           "rgba(216,200,166,0.52)",
-      "stroke-width":   "1.2",
+      stroke:           "rgba(216,200,166,0.88)",
+      "stroke-width":   "1.6",
       "stroke-linecap": "round"
     }));
 

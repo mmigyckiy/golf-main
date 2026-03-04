@@ -12,13 +12,10 @@
      → adding hit-flash or locked-state animations
    ============================================================ */
 
-/* -------------------------
-   Card — collapse to SVG content height (no dead space)
-   ------------------------- */
+/* Stretch card to row height so footer aligns with other widgets */
 #mainPanel #swingMetricsRow [data-widget="path"],
 #mainPanel #swingMetricsRow .metricCard--path {
-  align-self: start;
-  height: auto;
+  align-self: stretch;
   min-height: 0 !important;
 }
 
@@ -32,8 +29,7 @@
   align-items: center;
   justify-content: center;
   padding: 6px 0 2px;
-  flex: 0 0 auto;
-  height: auto;
+  flex: 1 1 auto;
   width: 100%;
   overflow: visible;
 }

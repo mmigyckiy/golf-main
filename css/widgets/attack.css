@@ -41,16 +41,17 @@
   max-width: 820px;
 }
 
-/* Compact card — remove dead space by sizing to content */
+/* Stretch card to row height so footer aligns with other widgets */
 #mainPanel #swingMetricsRow [data-widget="attack"],
 #mainPanel #swingMetricsRow .metricCard--attack {
-  align-self: start;
-  height: auto;
+  align-self: stretch;
   min-height: 0 !important;
 }
 
 #swingMetricsRow .metricCard--attack .metricCard__title {
   padding-top: 10px;
+  white-space: nowrap;
+  letter-spacing: 0.05em;
 }
 
 #swingMetricsRow .metricCard--attack .metricCard__body {
@@ -59,8 +60,7 @@
   justify-content: center;
   padding: 6px 14px 0;
   width: 100%;
-  flex: 0 0 auto;
-  height: auto;
+  flex: 1 1 auto;
 }
 
 #swingMetricsRow .metricCard--attack .metricCard__footer {

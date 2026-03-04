@@ -12,6 +12,24 @@
    ============================================================ */
 
 /* -------------------------
+   Card width — override --metric-side-max cap so tempo fills its column
+   (mirrors the same pattern used in attack.css)
+   ------------------------- */
+#swingMetricsRow > [data-widget="tempo"],
+#swingMetricsRow .metricCard--tempo,
+#mainPanel #swingMetricsRow > [data-widget="tempo"],
+#mainPanel #swingMetricsRow .metricCard--tempo {
+  max-width: 220px;
+}
+
+/* Stretch card to row height so footer aligns with other widgets */
+#mainPanel #swingMetricsRow [data-widget="tempo"],
+#mainPanel #swingMetricsRow .metricCard--tempo {
+  align-self: stretch;
+  min-height: 0 !important;
+}
+
+/* -------------------------
    Card layout — body stretches to fill the row height
    ------------------------- */
 #swingMetricsRow .metricCard--tempo .metricCard__body {
@@ -61,7 +79,7 @@
   display: block;
   width: 100%;
   height: auto;
-  max-height: 210px;
+  max-height: 190px;
   overflow: visible;
 }
 
@@ -72,7 +90,7 @@
   font-family: inherit;
   font-size: 9px;
   letter-spacing: 0.08em;
-  fill: rgba(216, 200, 166, 0.40);
+  fill: rgba(216, 200, 166, 0.38);
 }
 
 /* -------------------------
@@ -97,23 +115,29 @@
 }
 
 /* -------------------------
-   Locked state — hyp brightens, fill glows
+   Locked state — hyp goes near-white (matches path tip), fill glows
    ------------------------- */
 #swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-locked .tempoWedge__fill {
-  filter: drop-shadow(0 0 6px rgba(216, 200, 166, 0.28));
+  filter: drop-shadow(0 0 6px rgba(216, 200, 166, 0.32));
 }
 
 #swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-locked .tempoWedge__hyp {
-  stroke: rgba(216, 200, 166, 0.85);
+  stroke: rgba(255, 255, 255, 0.85);
   filter: drop-shadow(0 0 4px rgba(216, 200, 166, 0.55));
 }
 
 /* -------------------------
-   Value label (footer %)
+   Footer padding — matches attack.css / path.css (4px top, 12px bottom)
+   ------------------------- */
+#swingMetricsRow .metricCard--tempo .metricCard__footer {
+  padding: 4px 14px 12px;
+}
+
+/* -------------------------
+   Value label (footer %) — colour matches shared.css rgba(255,255,255,0.72)
    ------------------------- */
 #swingMetricsRow .metricCard--tempo #tempoValueLabel {
-  color: rgba(216, 200, 166, 0.9);
-  text-shadow: 0 0 14px rgba(216, 200, 166, 0.40), 0 6px 22px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.18), 0 6px 22px rgba(0, 0, 0, 0.4);
 }
 
 #swingMetricsRow .metricCard--tempo #swingTempoPct {
@@ -121,6 +145,13 @@
   line-height: 1;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: rgba(216, 200, 166, 0.9);
-  text-shadow: 0 0 12px rgba(216, 200, 166, 0.40);
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.18);
+}
+
+/* -------------------------
+   Title — prevent "SWING TEMPO" wrapping to two lines
+   ------------------------- */
+#swingMetricsRow .metricCard--tempo .metricCard__title {
+  white-space: nowrap;
+  letter-spacing: 0.05em;
 }
