@@ -4157,28 +4157,22 @@ body.uidebug #uiRoot::before{
 #attackAngleRunner,
 .attack-angle #attackAngleRunner,
 .attack-angle .aa-ball {
-  width: 22px !important;
-  height: 22px !important;
+  width: var(--golf-ball-size, 22px) !important;
+  height: var(--golf-ball-size, 22px) !important;
   border-radius: 999px !important;
-  background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.95), rgba(220,220,220,0.55) 55%, rgba(0,0,0,0.18) 100%) !important;
+  background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.95), rgba(220,220,220,0.55) 55%, rgba(0,0,0,0.18) 100%);
   box-shadow:
     0 10px 22px rgba(0,0,0,0.35),
     0 0 0 1px rgba(216,200,166,0.18) inset !important;
   opacity: 1 !important;
 }
 
-/* Optional: keep a subtle SINGLE glow around the ball (not a second halo plate). */
+/* Halo pseudo-element disabled — glow removed per design */
 #attackAngleRunner::after,
 .attack-angle #attackAngleRunner::after,
 .attack-angle .aa-ball::after {
-  content: "" !important;
-  position: absolute !important;
-  inset: -12px !important;
-  border-radius: 999px !important;
-  background: radial-gradient(circle, rgba(216,200,166,0.16), rgba(216,200,166,0.00) 70%) !important;
-  filter: blur(0.2px) !important;
-  opacity: 0.55 !important;
-  pointer-events: none !important;
+  content: none !important;
+  display: none !important;
 }
 
 /* Make sure the ball sits above the arc (but still inside the widget). */

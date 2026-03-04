@@ -36,7 +36,7 @@ function attackStateFromPhase({ phase, holdActive, locked }) {
 export function createAttackWidget() {
   const name = "attack";
   const view = createTubeViewArc({
-    arcPathD: "M2 72 A58 58 0 0 1 118 72",
+    arcPathD: "M9 72 A51 51 0 0 1 111 72",
     viewBox: "0 0 120 90"
   });
 
