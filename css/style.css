@@ -4777,16 +4777,11 @@ body.uidebug .debug-outline {
   letter-spacing: 0.12em !important;
 }
 
-/* Readout: centered bottom, size 16 (you requested) */
+/* Readout: centered bottom */
 #attackAngleValueLabel{
   display:flex !important;
   justify-content:center !important;
   align-items:center !important;
-  margin-top: 6px !important;
-}
-#attackAngleReadout{
-  font-size: 16px !important;
-  letter-spacing: 0.08em !important;
 }
 
 /* Remove "DEGREES" label if still present somewhere */
