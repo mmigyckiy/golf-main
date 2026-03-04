@@ -190,7 +190,13 @@ export function createAttackWidget() {
 
   function lock({ snapshot, state } = {}) {
     locked = true;
-    const attackDeg = Number.isFinite(snapshot?.attackDeg) ? snapshot.attackDeg : state?.shot?.attackDeg;
+    // Freeze at the last visually rendered position so the ball stays exactly
+    // where the preview animation left it. snapshot.attackDeg is the physics
+    // value which starts near 0 and diverges from the sine-wave preview,
+    // so using it causes the ball to snap back to ~0 on release.
+    const attackDeg = Number.isFinite(lastAttackDeg)
+      ? lastAttackDeg
+      : (Number.isFinite(snapshot?.attackDeg) ? snapshot.attackDeg : (state?.shot?.attackDeg ?? 0));
     render(attackDeg, "locked");
     triggerReleaseFx(attackDeg);
   }
