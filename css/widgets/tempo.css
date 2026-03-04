@@ -1,79 +1,115 @@
 /* ============================================================
-   SWING TEMPO WIDGET
+   SWING TEMPO WIDGET — Wedge View
    ============================================================
    Owns: everything inside [data-widget="tempo"] / .metricCard--tempo
-         The vertical tube (#swingTempoControl, .tubeView--vertical)
+         .tempoWedge wrapper + #tempoWedge__svg
          Percentage readout (#swingTempoPct)
 
    Touch this file when:
-     → changing tube height, width, or color
-     → changing the percentage label style
-     → adjusting tube click interaction area
+     → changing wedge fill colour, hypotenuse stroke, or sweet zone
+     → changing runner animation (hold pulse, locked glow)
+     → adjusting card layout or label style
    ============================================================ */
 
 /* -------------------------
-   Card layout
+   Card layout — body stretches to fill the row height
    ------------------------- */
 #swingMetricsRow .metricCard--tempo .metricCard__body {
-  align-items: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px 4px;
   width: 100%;
+  flex: 1 1 auto;
 }
 
 #swingMetricsRow #swingTempoControl {
   cursor: pointer;
   pointer-events: auto;
-}
-
-#swingMetricsRow .metricCard--tempo #tempoMount,
-#swingMetricsRow .metricCard--tempo #swingTempoControl {
+  width: 100%;
   height: 100%;
   display: flex;
   align-items: stretch;
   justify-content: center;
-  max-width: 100%;
+}
+
+#swingMetricsRow .metricCard--tempo #tempoMount {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
 }
 
 /* -------------------------
-   Vertical tube sizing
-   Overrides the --tempo-w constraint from shared.css so the container
-   expands to the full card body width, giving the tube room to breathe.
+   Wedge wrapper — fills the host, centres the SVG
    ------------------------- */
-#swingMetricsRow [data-widget="tempo"] .tubeView--vertical,
-#swingMetricsRow [data-widget="tempo"] .tubeV {
-  width: 100%;
-  max-width: 100%;
-}
-
-#swingMetricsRow .metricCard--tempo .tubeView--vertical {
-  height: 100%;
-  flex: 1 1 auto;
+#swingMetricsRow [data-widget="tempo"] .tempoWedge {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   justify-content: center;
-}
-
-#swingMetricsRow .metricCard--tempo .tubeView--vertical .tubeV {
-  height: 100% !important;
-  max-height: none !important;
-  display: flex;
-  align-items: stretch;
-}
-
-/* Tube fills remaining space after the scale ticks */
-#swingMetricsRow .metricCard--tempo .tubeView--vertical .tubeV__tube {
-  flex: 1 1 auto;
-  width: auto;
-  max-width: none;
-  height: 100% !important;
-}
-
-#swingMetricsRow .metricCard--tempo #swingTempoControl {
   width: 100%;
-  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 /* -------------------------
-   Value label
+   SVG canvas
+   ------------------------- */
+#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 210px;
+  overflow: visible;
+}
+
+/* -------------------------
+   Scale labels (SVG <text> elements)
+   ------------------------- */
+#swingMetricsRow [data-widget="tempo"] .tempoWedge__label {
+  font-family: inherit;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  fill: rgba(216, 200, 166, 0.40);
+}
+
+/* -------------------------
+   Hold FX — hypotenuse + fill pulse while player charges
+   ------------------------- */
+#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-hold .tempoWedge__hyp {
+  animation: tempoHypHold 1100ms ease-in-out infinite alternate;
+}
+
+#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-hold .tempoWedge__fill {
+  animation: tempoFillHold 1100ms ease-in-out infinite alternate;
+}
+
+@keyframes tempoHypHold {
+  0%   { opacity: 0.45; }
+  100% { opacity: 1.00; }
+}
+
+@keyframes tempoFillHold {
+  0%   { opacity: 0.60; }
+  100% { opacity: 1.00; }
+}
+
+/* -------------------------
+   Locked state — hyp brightens, fill glows
+   ------------------------- */
+#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-locked .tempoWedge__fill {
+  filter: drop-shadow(0 0 6px rgba(216, 200, 166, 0.28));
+}
+
+#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-locked .tempoWedge__hyp {
+  stroke: rgba(216, 200, 166, 0.85);
+  filter: drop-shadow(0 0 4px rgba(216, 200, 166, 0.55));
+}
+
+/* -------------------------
+   Value label (footer %)
    ------------------------- */
 #swingMetricsRow .metricCard--tempo #tempoValueLabel {
   color: rgba(216, 200, 166, 0.9);
@@ -87,51 +123,4 @@
   letter-spacing: 0.04em;
   color: rgba(216, 200, 166, 0.9);
   text-shadow: 0 0 12px rgba(216, 200, 166, 0.40);
-}
-
-/* -------------------------
-   Tube fill
-   ------------------------- */
-#swingMetricsRow .metricCard--tempo .tubeV__fill {
-  background: linear-gradient(
-    to top,
-    rgba(216, 200, 166, 0.08) 0%,
-    rgba(216, 200, 166, 0.20) 55%,
-    rgba(216, 200, 166, 0.32) 100%
-  );
-}
-
-/* -------------------------
-   Runner
-   ------------------------- */
-#swingMetricsRow .metricCard--tempo .tubeV__runner {
-  background: linear-gradient(
-    to top,
-    rgba(216, 200, 166, 0.55) 0%,
-    rgba(216, 200, 166, 0.80) 60%,
-    rgba(216, 200, 166, 0.95) 100%
-  );
-  box-shadow:
-    0 0 12px rgba(216, 200, 166, 0.35),
-    0 0 4px rgba(216, 200, 166, 0.50),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
-    0 6px 18px rgba(0, 0, 0, 0.34);
-}
-
-/* -------------------------
-   Sweet zone band on tube (65–85%)
-   ------------------------- */
-#swingMetricsRow .metricCard--tempo .tubeV__tube::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 65%;
-  height: 20%;
-  background: linear-gradient(transparent 0%, rgba(216, 200, 166, 0.06) 50%, transparent 100%);
-  border-top: 1px solid rgba(216, 200, 166, 0.20);
-  border-bottom: 1px solid rgba(216, 200, 166, 0.14);
-  pointer-events: none;
-  z-index: 1;
 }

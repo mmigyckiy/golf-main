@@ -1,4 +1,4 @@
-import { createTubeViewVertical } from "../shared/tube/tube_view_vertical.js";
+import { createTempoViewWedge } from "./tempo_view_wedge.js";
 
 function clamp01(v) {
   return Math.max(0, Math.min(1, Number(v) || 0));
@@ -13,7 +13,7 @@ function tempoStateFromPhase({ phase, holdActive, locked }) {
 
 export function createTempoWidget() {
   const name = "tempo";
-  const view = createTubeViewVertical();
+  const view = createTempoViewWedge();
 
   let mounted = false;
   let locked = false;
