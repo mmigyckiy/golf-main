@@ -52,9 +52,9 @@
   align-items: start;
   justify-items: center;
   width: 100%;
-  max-width: 760px;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
   position: relative;
   min-height: 220px;
   border-radius: var(--sm-surface-radius);

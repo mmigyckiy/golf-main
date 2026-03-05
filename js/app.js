@@ -21,9 +21,10 @@ import { createWidgetManager } from "./widgets/widget_manager.js";
 import { getUIRefs } from "./ui_refs.js";
 import { ROUND, FLIGHT, YARDS, STORAGE_KEYS } from "./constants.js";
 import { updateLeaderboard } from "./leaderboard.js";
+import { createFieldTopView } from "./widgets/field/field_topview.js";
+import { StateStore, KEYS as STORE_KEYS } from "./storage.js";
 
 const FLIGHT_MS_VISUAL = FLIGHT.VISUAL_MS;
-const STORAGE_KEY = ROUND.STORAGE_KEY;
 const BASE_CARRY = ROUND.BASE_CARRY;
 const CARRY_PER_X = ROUND.CARRY_PER_X;
 const MAX_SCREEN_YARDS = ROUND.MAX_SCREEN_YARDS;
@@ -67,6 +68,17 @@ function setUiPhaseAttr(phase){
   };
   document.body.dataset.uiPhase = map[phase] || "idle";
 }
+
+// ── PhaseManager ───────────────────────────────────────────
+// Centralises every phase transition: state.phase + UI sync.
+// Usage: phaseManager.to(RoundPhase.X)
+const phaseManager = {
+  to(next) {
+    state.phase = next;
+    setUiPhaseAttr(next);
+  },
+  is(phase) { return state.phase === phase; },
+};
 
 const $ = (...ids) => {
   for (const id of ids) {
@@ -253,14 +265,7 @@ const state = {
     attackDeg: 0,
     locked: false,
     score01: 0,
-    components: { tempo: 0, path: 0, attack: 0 }
-  },
-  swingWidget: {
-    locked: false,
-    tempo01: 0,
-    path01: 0.5,
-    attackDeg: 0,
-    holdStartMs: 0,
+    components: { tempo: 0, path: 0, attack: 0 },
     prevPath01: 0.5
   },
   lastFlights: [],
@@ -330,7 +335,6 @@ if (!window.__DRIVIX_UI__) {
 }
 window.__DRIVIX_UI__._state = state;
 
-const ANALYTICS_STORAGE_KEY = STORAGE_KEYS.STATS;
 const ANALYTICS_MAX = ROUND.ANALYTICS_MAX;
 const ANALYTICS_RELEASE_MAX = ROUND.ANALYTICS_RELEASE_MAX;
 const SKILL_SIGNAL_DEFAULTS = { tempoQuality: 0.5, pathQuality: 0.5, risk: 0.5 };
@@ -349,58 +353,36 @@ if(typeof window !== "undefined"){
 
 // == Storage ==
 function loadFromStorage(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw){
-      const data = JSON.parse(raw);
-      if(Array.isArray(data.lastFlights)) state.lastFlights = data.lastFlights.slice(0, 10);
-    }
-  }catch(err){
-    console.warn("[LD] failed to load", err);
-  }
+  const data = StateStore.get(STORE_KEYS.FLIGHTS, {});
+  if(Array.isArray(data.lastFlights)) state.lastFlights = data.lastFlights.slice(0, 10);
   state.longestToday = loadLongestToday();
 }
 
 function loadAnalyticsState(){
-  try{
-    const raw = localStorage.getItem(ANALYTICS_STORAGE_KEY);
-    if(!raw) return;
-    const data = JSON.parse(raw);
-    if(Array.isArray(data.recentDistances)){
-      analytics.recentDistances = data.recentDistances.map(v => Number(v) || 0).slice(-ANALYTICS_MAX);
-    }
-    if(Array.isArray(data.recentSweet)){
-      analytics.recentSweet = data.recentSweet.map(v => !!v).slice(-ANALYTICS_MAX);
-    }
-    if(Array.isArray(data.recentRelease)){
-      analytics.recentRelease = data.recentRelease.map(v => Number(v)).filter(v => Number.isFinite(v)).slice(-ANALYTICS_MAX);
-    }
-  }catch(err){
-    console.warn("[LD] analytics load failed", err);
+  const data = StateStore.get(STORE_KEYS.ANALYTICS, {});
+  if(Array.isArray(data.recentDistances)){
+    analytics.recentDistances = data.recentDistances.map(v => Number(v) || 0).slice(-ANALYTICS_MAX);
+  }
+  if(Array.isArray(data.recentSweet)){
+    analytics.recentSweet = data.recentSweet.map(v => !!v).slice(-ANALYTICS_MAX);
+  }
+  if(Array.isArray(data.recentRelease)){
+    analytics.recentRelease = data.recentRelease.map(v => Number(v)).filter(v => Number.isFinite(v)).slice(-ANALYTICS_MAX);
   }
 }
 
 function saveAnalyticsState(){
-  try{
-    const raw = localStorage.getItem(ANALYTICS_STORAGE_KEY);
-    const base = raw ? JSON.parse(raw) : {};
-    const payload = {
-      ...base,
-      recentDistances: analytics.recentDistances.slice(-ANALYTICS_MAX),
-      recentSweet: analytics.recentSweet.slice(-ANALYTICS_MAX),
-      recentRelease: analytics.recentRelease.slice(-ANALYTICS_MAX)
-    };
-    localStorage.setItem(ANALYTICS_STORAGE_KEY, JSON.stringify(payload));
-  }catch(err){
-    console.warn("[LD] analytics save failed", err);
-  }
+  const base = StateStore.get(STORE_KEYS.ANALYTICS, {});
+  StateStore.set(STORE_KEYS.ANALYTICS, {
+    ...base,
+    recentDistances: analytics.recentDistances.slice(-ANALYTICS_MAX),
+    recentSweet:     analytics.recentSweet.slice(-ANALYTICS_MAX),
+    recentRelease:   analytics.recentRelease.slice(-ANALYTICS_MAX),
+  });
 }
 
 function saveToStorage(){
-  const payload = {
-    lastFlights: state.lastFlights.slice(0, 10)
-  };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  StateStore.set(STORE_KEYS.FLIGHTS, { lastFlights: state.lastFlights.slice(0, 10) });
 }
 
 function syncStateWithProfile(){
@@ -759,7 +741,7 @@ function ensureSwingPathCardStructure({ clearStage = false } = {}){
     node.setAttribute("aria-hidden", "true");
   }
 
-  const devMode = Boolean(window.__DEV__ || window.__PATH_PICK__ || window.__DRIVIX_RENDER_DEBUG__?.logComposite);
+  const devMode = Boolean(window.__DRIVIX_DEBUG__?.dev || window.__DRIVIX_DEBUG__?.pathPick || window.__DRIVIX_RENDER_DEBUG__?.logComposite);
   if (devMode && !pathStructureDebugLogged) {
     const b = bodyEl.getBoundingClientRect();
     const p = pathPixiEl.getBoundingClientRect();
@@ -881,8 +863,7 @@ function resetRoundState(reason = "manual"){
 
 function resetRound(reason = "manual"){
   resetRoundState(reason);
-  state.phase = RoundPhase.IDLE;
-  setUiPhaseAttr(state.phase);
+  phaseManager.to(RoundPhase.IDLE);
   state.timestamps.holdStartMs = 0;
   state.timestamps.releaseMs = 0;
   state.timestamps.endMs = 0;
@@ -916,16 +897,9 @@ function resetRound(reason = "manual"){
   document.getElementById("swingMetricsRow")?.classList.remove("is-impact");
   clearTimeout(state._impactFlashT);
   
-  // Reset unified SwingWidget
-  state.swingWidget = {
-    locked: false,
-    tempo01: 0,
-    path01: 0.5,
-    attackDeg: 0,
-    holdStartMs: 0,
-    prevPath01: 0.5
-  };
-  
+  // Reset shot carry-over state
+  state.shot.prevPath01 = 0.5;
+
   // Reset spring-damper physics state
   if(state.swingPhys){
     state.swingPhys.tPrev = null;
@@ -1105,7 +1079,6 @@ function getAttackRiskSignal(){
   const degCandidates = [
     state.shot?.attackDeg,
     state.attackAngle?.valueDeg,
-    state.swingWidget?.attackDeg,
     state.ui?.preview?.attackDeg
   ];
   for(const deg of degCandidates){
@@ -1377,8 +1350,7 @@ function endRound(reason = "STOP", ts){
   if(state.phase === RoundPhase.END) return;
   const now = Number.isFinite(ts) ? ts : performance.now();
   const crashed = reason === "CRASH";
-  state.phase = RoundPhase.END;
-  setUiPhaseAttr(state.phase);
+  phaseManager.to(RoundPhase.END);
   state.timestamps.endMs = now;
   state.flags.crashed = crashed;
   state.running = false;
@@ -1645,6 +1617,8 @@ function syncRendererState(){
   const effectiveDistance = state.round?.finalDistanceYards ?? state.liveDistanceYd ?? 0;
   lastState.distanceYd = effectiveDistance;
   lastState.effectiveDistanceYd = effectiveDistance;
+  // Always expose raw live distance (finalDistanceYards starts at 0 so ?? never falls through)
+  lastState.liveDistanceYd = state.liveDistanceYd ?? 0;
   const faceNorm = Number.isFinite(state.round?.faceAngleNorm) ? state.round.faceAngleNorm : 0;
   const windFactor = clamp01((state.wind.mph || 0) / 18);
   const xFactor = clamp01((state.currentX - 1) / 4);
@@ -1655,6 +1629,7 @@ function syncRendererState(){
   lastState.round.faceAlignedQuality01 = Number.isFinite(state.round?.faceAlignedQuality01) ? state.round.faceAlignedQuality01 : 0;
   lastState.round.danger = Number.isFinite(state.round?.danger) ? state.round.danger : 0;
   lastState.round.riskRate = Number.isFinite(state.round?.riskRate) ? state.round.riskRate : 0;
+  lastState.round.landingX = state.round?.landingX || 0;
   window.lastState = lastState;
 }
 
@@ -1732,8 +1707,7 @@ function beginHold(ts){
   const now = Number.isFinite(ts) ? ts : performance.now();
   if(state.phase !== RoundPhase.IDLE && state.phase !== RoundPhase.END) return false;
   resetRound("beginHold");
-  state.phase = RoundPhase.ARMING;
-  setUiPhaseAttr(state.phase);
+  phaseManager.to(RoundPhase.ARMING);
   state.timestamps = state.timestamps || {};
   state.timestamps.holdStartMs = now;
   state.ui = state.ui || {};
@@ -1776,15 +1750,9 @@ function beginHold(ts){
   state._tempoUiTest.stableCount = 0;
   state._tempoUiTest.lastV = null;
   
-  // Reset unified SwingWidget state
-  state.swingWidget = state.swingWidget || {};
-  state.swingWidget.locked = false;
-  state.swingWidget.holdStartMs = state.timestamps.holdStartMs;
-  state.swingWidget.tempo01 = 0;
-  state.swingWidget.path01 = 0.5;
-  state.swingWidget.attackDeg = 0;
-  state.swingWidget.prevPath01 = 0.5;
-  
+  // Reset per-swing carry-over state
+  state.shot.prevPath01 = 0.5;
+
   // Initialize spring-damper physics with some initial velocity for "overshoot/settle" feel
   ensureSwingPhysState();
   state.swingPhys.tPrev = null;
@@ -1802,8 +1770,7 @@ function beginHold(ts){
 function releaseSwing(ts, power = 0){
   const now = Number.isFinite(ts) ? ts : performance.now();
   if(state.phase !== RoundPhase.ARMING) return false;
-  state.phase = RoundPhase.SWING;
-  setUiPhaseAttr(state.phase);
+  phaseManager.to(RoundPhase.SWING);
   state.timestamps.releaseMs = now;
   SwingControls.releaseSwing(now, state);
   state.tempo.holding = false;
@@ -1845,13 +1812,12 @@ function releaseSwing(ts, power = 0){
   // state.shot.path01 and state.shot.attackDeg are already set by stepSwingPhysics
   state.shot.locked = true;
   
-  // Lock unified SwingWidget + physics
+  // Lock physics
   ensureSwingPhysState();
-  state.swingWidget.locked = true;
   console.log("[SWING WIDGET]", {
-    tempo01: state.swingWidget.tempo01?.toFixed(3) ?? "0",
-    path01: state.swingWidget.path01?.toFixed(3) ?? "0.5",
-    attackDeg: state.swingWidget.attackDeg?.toFixed(2) ?? "0"
+    tempo01: state.shot.tempo01?.toFixed(3) ?? "0",
+    path01: state.shot.path01?.toFixed(3) ?? "0.5",
+    attackDeg: state.shot.attackDeg?.toFixed(2) ?? "0"
   });
   console.log("[SHOT LOCK]", { 
     path01: state.shot.path01?.toFixed(3) ?? "0.5", 
@@ -1977,16 +1943,11 @@ function tick(ts){
       // Step physics simulation — updates state.shot.path01 and state.shot.attackDeg
       stepSwingPhysics(ts);
       
-      // Compute tempo from path velocity
-      const sw = state.swingWidget;
-      const holdMs = ts - (sw.holdStartMs || ts);
-      const speed = Math.abs(state.shot.path01 - (sw.prevPath01 ?? 0.5)) / Math.max(0.001, dtMs / 1000);
-      const maxSpeed = 2.2;
-      const rawTempo = clamp01(speed / maxSpeed);
-      sw.tempo01 = (sw.tempo01 || 0) + (rawTempo - (sw.tempo01 || 0)) * 0.15;
-      sw.prevPath01 = state.shot.path01;
-      sw.path01 = state.shot.path01;
-      sw.attackDeg = state.shot.attackDeg;
+      // Compute velocity-based tempo (EMA) from path delta
+      const speed = Math.abs(state.shot.path01 - (state.shot.prevPath01 ?? 0.5)) / Math.max(0.001, dtMs / 1000);
+      const rawTempo = clamp01(speed / 2.2);
+      state.shot._tempoEma = (state.shot._tempoEma || 0) + (rawTempo - (state.shot._tempoEma || 0)) * 0.15;
+      state.shot.prevPath01 = state.shot.path01;
       
       // Inject physics values into attackAngle state BEFORE rendering
       // This ensures DOM attack driver shows the same values as scoring
@@ -2038,8 +1999,7 @@ function tick(ts){
     return;
   }
   if(state.phase === RoundPhase.SWING){
-    state.phase = RoundPhase.FLIGHT;
-    setUiPhaseAttr(state.phase);
+    phaseManager.to(RoundPhase.FLIGHT);
   }
   const dt = Math.max(0.001, dtMs / 1000);
   state.lastTs = ts;
@@ -2357,7 +2317,7 @@ function setupMemberInlineEdit(){
 
   console.log("[MEMBER EDIT] initialized", { hasNameEl: !!nameEl, hasBtn: !!btn, hasPopover: !!pop });
 
-  const storedName = (localStorage.getItem("drivix_member_name") || localStorage.getItem("drivix.playerName") || state.playerName || profile.name || "Guest").trim() || "Guest";
+  const storedName = (StateStore.get(STORE_KEYS.PLAYER_NAME) || StateStore.get(STORE_KEYS.PLAYER_NAME_LEGACY) || state.playerName || profile.name || "Guest").trim() || "Guest";
   state.playerName = storedName;
   profile = { ...profile, name: storedName };
   persistProfile(profile);
@@ -2499,9 +2459,9 @@ function setupMemberInlineEdit(){
     if(!field) return;
     const next = (field.value || "").trim().slice(0, 16) || "Guest";
     if(next === "Guest"){
-      try{ localStorage.removeItem("drivix_member_name"); }catch(_){}
+      StateStore.remove(STORE_KEYS.PLAYER_NAME);
     }else{
-      localStorage.setItem("drivix_member_name", next);
+      StateStore.set(STORE_KEYS.PLAYER_NAME, next);
     }
     state.playerName = next;
     profile = { ...profile, name: next };
@@ -2535,8 +2495,7 @@ function setupMemberInlineEdit(){
 }
 
 function resetPlayer(){
-  state.phase = RoundPhase.IDLE;
-  setUiPhaseAttr(state.phase);
+  phaseManager.to(RoundPhase.IDLE);
   state.timestamps.holdStartMs = 0;
   state.timestamps.releaseMs = 0;
   state.timestamps.endMs = 0;
@@ -2617,14 +2576,13 @@ function resetPlayer(){
   setSkillSignals(SKILL_SIGNAL_DEFAULTS);
   profile = { ...defaultProfile, name: "Guest" };
   syncStateWithProfile();
-  try{
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem("drivix.playerName");
-    localStorage.removeItem("drivix.profileJson");
-    localStorage.removeItem("drivix.stats");
-  }catch(err){
-    console.warn("[LD] reset failed", err);
-  }
+  StateStore.removeAll(
+    STORE_KEYS.FLIGHTS,
+    STORE_KEYS.PLAYER_NAME,
+    STORE_KEYS.PLAYER_NAME_LEGACY,
+    STORE_KEYS.PROFILE,
+    STORE_KEYS.ANALYTICS,
+  );
   saveToStorage();
   renderFlights();
   updatePlayerUI();
@@ -2790,17 +2748,22 @@ function bindSwingTempoInput(){
 }
 
 const flight = {
-  engine: null,
-  startLive: () => flight.engine?.onRoundStart?.(state),
-  updateLive: (_yards) => {},
-  land: (_yards) => flight.engine?.onCashout?.(state),
-  crash: (_yards) => flight.engine?.onCrash?.(state),
+  engine:  null,
+  topView: null,
+  startLive:   () => flight.engine?.onRoundStart?.(state),
+  updateLive:  (_yards) => {},
+  land:        (_yards) => flight.engine?.onCashout?.(state),
+  crash:       (_yards) => flight.engine?.onCrash?.(state),
   onCrashLand: (_yards) => flight.engine?.onCrash?.(state),
-  onRoundStart: (gs) => flight.engine?.onRoundStart?.(gs),
-  onCashout: (gs) => flight.engine?.onCashout?.(gs),
-  onCrash: (gs) => flight.engine?.onCrash?.(gs),
-  render: (gs) => flight.engine?.render?.(gs),
-  reset: () => flight.engine?.destroy?.()
+  onRoundStart: (gs) => { flight.engine?.onRoundStart?.(gs); flight.topView?.onRoundStart?.(gs); },
+  onCashout:    (gs) => { flight.engine?.onCashout?.(gs);    flight.topView?.onCashout?.(gs);    },
+  onCrash:      (gs) => { flight.engine?.onCrash?.(gs);      flight.topView?.onCrash?.(gs);      },
+  // Skip the hidden 3D-engine canvas when the top-view renderer is active.
+  // Without this guard, the 3D engine's resize() reads canvas.clientWidth=0
+  // (hidden) and falls back to canvas.width, doubling it every frame
+  // (300→600→…→307 200 px), which freezes the flight animation for ~300 ms.
+  render:       (gs) => { if (!flight.topView) flight.engine?.render?.(gs); syncRendererState(); },
+  reset:        ()   => { flight.engine?.destroy?.(); flight.topView?.destroy?.(); }
 };
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -2822,6 +2785,18 @@ window.addEventListener("DOMContentLoaded", () => {
   }
   document.getElementById("__dbg_overlay")?.remove();
   initUI();
+  // Mount top-view after all sync init (including widgetManager) is done
+  requestAnimationFrame(() => {
+    try{
+      const fieldEl = document.querySelector('.gc-field[aria-label="Flight view"]');
+      if(fieldEl && !document.getElementById('flightTopCanvas')){
+        flight.topView = createFieldTopView();
+        flight.topView.mount(fieldEl);
+      }
+    }catch(err){
+      console.error("[LD] top-view init failed", err);
+    }
+  });
   
   const bestSrc = document.querySelector("#uiBestYd, #bestValue, #bestDistance, [data-best-distance]");
   const youBest = document.querySelector("#youBestInline");
@@ -2854,12 +2829,12 @@ window.DRIVIX_DUMP = function(){
 /* =========================================
    PATH PICK DEBUG (opt-in)
    Usage:
-     window.__PATH_PICK__ = true; location.reload();
+     window.__DRIVIX_DEBUG__.pathPick = true; location.reload();
      Then click inside Swing Path area to see real container chain.
 ========================================= */
 (function initPathPickDebug(){
   try{
-    if (!window.__PATH_PICK__) return;
+    if (!window.__DRIVIX_DEBUG__?.pathPick) return;
 
     const css = `
       .__pickOutlineA{ outline: 3px solid rgba(255,0,0,.85) !important; outline-offset: -2px !important; }
@@ -2960,7 +2935,7 @@ window.DRIVIX_DUMP = function(){
 /* =========================================
    SWING LAYER MARKER (opt-in)
    Usage:
-     window.__SWING_LAYER_DEBUG__ = true; location.reload();
+     window.__DRIVIX_DEBUG__.swingLayers = true; location.reload();
      or run: window.markSwingLayers();
 ========================================= */
 (function initSwingLayerMarker(){
@@ -2986,7 +2961,7 @@ window.DRIVIX_DUMP = function(){
 
   window.markSwingLayers = run;
 
-  if (window.__SWING_LAYER_DEBUG__) {
+  if (window.__DRIVIX_DEBUG__?.swingLayers) {
     if (document.readyState === "loading") {
       window.addEventListener("DOMContentLoaded", run, { once: true });
     } else {

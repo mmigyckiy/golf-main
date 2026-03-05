@@ -27,7 +27,7 @@
   --bg-base: var(--drx-bg);
   --bg-deep: #0a0c0e;
   --bg-ink: #080a0c;
-  
+
   /* Panel backgrounds — dark theme */
   --panel: var(--drx-panel);
   --panel-2: var(--drx-panel-soft);
@@ -35,19 +35,19 @@
   --gc-panel-bg: radial-gradient(120% 140% at 20% 0%, rgba(255,255,255,0.04), transparent 40%), linear-gradient(180deg, rgba(18,22,24,0.9) 0%, rgba(15,20,22,0.95) 100%);
   --gc-panel-border: var(--drx-line-soft);
   --gc-panel-inner: rgba(255,255,255,0.04);
-  
+
   /* Overlay backgrounds — dark theme */
   --overlay-light: rgba(255,255,255,0.03);
   --overlay-medium: rgba(255,255,255,0.05);
   --overlay-strong: rgba(255,255,255,0.07);
   --overlay-intense: rgba(255,255,255,0.10);
-  
+
   /* Borders — dark theme */
   --border: var(--drx-line);
   --border-soft: var(--drx-line-soft);
   --stroke: var(--drx-line);
   --hairline: rgba(255,255,255,0.12);
-  
+
   /* Text colors — dark theme */
   --text: var(--drx-text);
   --text-primary: var(--drx-text);
@@ -55,7 +55,7 @@
   --text-faint: var(--drx-muted);
   --muted: var(--drx-text-2);
   --muted2: var(--drx-muted);
-  
+
   /* Accent colors — dark theme */
   --accent: var(--drx-gold);
   --accent-ice: #a8d7ff;
@@ -63,12 +63,12 @@
   --accent-gold-dim: var(--drx-gold-soft);
   --accent-gold-light: var(--drx-gold-glow);
   --drivix-accent: var(--drx-gold);
-  
+
   /* Bloom effects — dark theme with subtle glow */
   --bloom-1: rgba(255,255,255,0.04);
   --bloom-2: rgba(255,255,255,0.03);
   --bloom-3: rgba(255,255,241,0.02);
-  
+
   /* HUD — dark theme */
   --hud-bg-a: rgba(15,20,22,0.85);
   --hud-bg-b: rgba(15,20,22,0.65);
@@ -77,39 +77,39 @@
   --hud-border: var(--drx-line-soft);
   --hud-stroke: var(--drx-line-soft);
   --hud-shadow: 0 18px 50px rgba(0,0,0,0.55);
-  
+
   /* Shadows — dark theme */
   --shadow: 0 18px 50px rgba(0,0,0,0.55);
   --shadow-lg: 0 28px 70px rgba(0,0,0,0.60);
   --shadow-md: 0 18px 45px rgba(0,0,0,0.50);
   --shadow-soft: 0 10px 28px rgba(0,0,0,0.40);
   --gc-shadow: 0 18px 50px rgba(0,0,0,0.45);
-  
+
   /* Border radius */
   --gc-radius: 24px;
   --radius-lg: 22px;
   --radius-md: 16px;
   --radius-sm: 12px;
   --radius-pill: 999px;
-  
+
   /* Blur */
   --blur: 18px;
   --blur-light: 10px;
-  
+
   /* Easing */
   --ease: cubic-bezier(.22,.61,.36,1);
-  
+
   /* Typography */
   --font: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  
+
   /* Spacing (letter-spacing) */
   --ls-tight: 0.02em;
   --ls-normal: 0.08em;
   --ls-wide: 0.14em;
   --ls-wider: 0.18em;
   --ls-widest: 0.24em;
-  
+
   /* Brand */
   --brand-name: "Drivix";
 }
@@ -150,8 +150,8 @@ html, body{ height: 100%; }
 
 body{
   margin: 0;
-  color: var(--text-0);
-  font-family: var(--font-ui);
+  color: var(--text);
+  font-family: var(--font);
   font-weight: 400;
   background:
     radial-gradient(900px 420px at 25% 10%, rgba(255,255,255,0.06), transparent 60%),
@@ -190,12 +190,13 @@ body::after{
 .gc-shell{
   position: relative;
   z-index: 1;
-  max-width: 1260px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 22px 18px 34px;
+  padding: 14px 16px 20px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  gap: 12px;
 }
 
 .gc-ambient{
@@ -224,8 +225,8 @@ body::after{
   align-items:center;
   justify-content:space-between;
   gap: 24px;
-  padding: 15px 18px;
-  border: 1px solid var(--drx-line);
+  padding: 10px 18px;
+  border: 1px solid var(--border-soft);
   border-radius: var(--gc-radius);
   background: var(--gc-panel-bg);
   box-shadow:
@@ -396,8 +397,7 @@ body::after{
 .gc-panel::after,
 .gc-power::before,
 .gc-power::after,
-.gc-field::before,
-.gc-field::after,
+
 .gc-miniCard::before,
 .gc-miniCard::after,
 .gc-sidecard::before,
@@ -558,28 +558,25 @@ hr,
 }
 
 .gc-layout{
-  display:grid;
-  grid-template-columns: 1fr 420px;
-  gap: 24px;
-  align-items:start;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 .gc-layout .gc-main{
-  display:block;
-}
-@media (max-width: 1100px){
-  .gc-layout{ grid-template-columns: 1fr; }
-  .gc-sidepanel{ order: 2; }
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .gc-sidepanel{
-  display:flex;
-  flex-direction:column;
-  gap:16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 .gc-sidecard{
-  border-radius: var(--card-r);
-  padding: 18px;
+  border-radius: var(--gc-radius);
+  padding: 14px 16px;
 }
 
 .gc-card__kicker{
@@ -622,7 +619,7 @@ hr,
   margin:0;
   display:flex;
   flex-direction:column;
-  gap:10px;
+  gap:6px;
 }
 .gc-leaderboard li{
   display:flex;
@@ -1027,18 +1024,18 @@ hr,
 
 /* --- Compact Layout Pass (no-scroll) --- */
 .gc-main{
-  margin-top: 14px;
-  display:grid;
-  grid-template-columns: 1.25fr .75fr;
-  gap: 14px;
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 .gc-card--primary .gc-card__head{ display:none; }
 .gc-card--primary{ padding-top: 12px; }
-.gc-card--primary .gc-power{ margin-top: 0; }
+.gc-card--primary .gc-power{ display: none; }
 
 .gc-card{
   border-radius: var(--gc-radius);
-  border: 1px solid var(--gc-panel-border);
+  border: 1px solid var(--border-soft);
   background: var(--gc-panel-bg);
   box-shadow: inset 0 1px 0 var(--gc-panel-inner), var(--gc-shadow);
   backdrop-filter: blur(18px);
@@ -1167,32 +1164,31 @@ hr,
 
 /* Field */
 .gc-field{
-  margin-top: 10px;
+  margin-top: 0;
+  flex: 1 1 auto;
+  min-height: clamp(280px, 46vh, 520px);
   position: relative;
-  border-radius: var(--gc-radius);
-  border: 1px solid var(--gc-panel-border);
-  background: var(--gc-panel-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-soft);
+  background: rgba(2, 4, 8, 0.92);
   padding: 0;
   overflow: hidden;
-  box-shadow: inset 0 1px 0 var(--gc-panel-inner), var(--gc-shadow);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  box-shadow: var(--gc-shadow);
 }
 .gc-flightHud{
   position:absolute;
-  inset:18px 18px auto 18px;
+  inset:16px 16px auto 16px;
   display:flex;
   justify-content:space-between;
   align-items:flex-start;
   pointer-events:none;
   gap: 14px;
   z-index:2;
-  opacity: 0.96;
 }
 .gc-flightHud__left{
   display:flex;
   flex-direction:column;
-  gap: 6px;
+  gap: 3px;
 }
 .gc-flightHud__label{
   font-size: 11px;
@@ -1200,8 +1196,8 @@ hr,
   opacity: .65;
 }
 .gc-flightHud__x{
-  font-size: 30px;
-  letter-spacing: .08em;
+  font-size: clamp(28px, 3.5vw, 44px);
+  letter-spacing: -0.02em;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   text-shadow: 0 6px 14px rgba(0,0,0,0.3);
@@ -1209,7 +1205,7 @@ hr,
 }
 .gc-flightHud__right{
   display:flex;
-  gap: 10px;
+  gap: 14px;
   padding: 0;
   border-radius: 0;
   background: transparent;
@@ -1220,7 +1216,7 @@ hr,
 .gc-flightHud__stat{
   display:flex;
   align-items:baseline;
-  gap: 6px;
+  gap: 5px;
   font-variant-numeric: tabular-nums;
 }
 .gc-flightHud__stat .k{
@@ -1229,14 +1225,15 @@ hr,
   opacity: .62;
 }
 .gc-flightHud__stat .v{
-  font-size: 20px;
+  font-size: clamp(18px, 2vw, 26px);
   font-weight: 700;
-  letter-spacing: .06em;
+  letter-spacing: -0.01em;
+  color: rgba(255,255,255,0.92);
 }
 .gc-flightHud__stat .u{
-  font-size: 12px;
-  opacity: .58;
-  letter-spacing: .08em;
+  font-size: 11px;
+  color: var(--text-faint);
+  letter-spacing: .06em;
 }
 .gc-flightHud__x,
 .gc-flightHud__stat .v{
@@ -2556,7 +2553,7 @@ body[data-ui-phase="idle"] .swing-metric--attack{
 .gc-field__canvas{
   display:block;
   width: 100%;
-  height: clamp(220px, 32vh, 340px);
+  height: 100%;
   border-radius: inherit;
 }
 .gc-targetLine{
@@ -2594,60 +2591,6 @@ body[data-ui-phase="idle"] .swing-metric--attack{
 .gc-trail polyline{ opacity:1; transition: opacity 360ms ease; }
 .gc-trail.gc-trail--fade polyline{ opacity: 0; }
 
-.gc-field__rough{
-  position:absolute;
-  left:0; right:0;
-  height: 25%;
-  background: linear-gradient(180deg, rgba(120,168,130,.12), rgba(20,30,26,.14));
-  opacity: .65;
-}
-.gc-field__rough--top{ top:0; }
-.gc-field__rough--bot{ bottom:0; transform: rotate(180deg); }
-
-.gc-field__fairway{
-  position:absolute;
-  left:0; right:0;
-  top: 24%;
-  height: 52%;
-  background:
-    linear-gradient(90deg, rgba(255,255,255,.10), rgba(255,255,255,.02)),
-    linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
-  opacity: .65;
-}
-
-.gc-field__green{
-  position:absolute;
-  right: 0;
-  top: 18%;
-  width: 22%;
-  height: 64%;
-  background:
-    radial-gradient(circle at 30% 35%, rgba(168,215,186,.32), rgba(40,64,46,.12) 70%),
-    linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-  border-left: 1px solid rgba(255,255,255,.08);
-}
-
-.gc-field__markers{
-  position:absolute;
-  inset: 0;
-  pointer-events:none;
-}
-.gc-marker{
-  position:absolute;
-  top: 0;
-  bottom: 0;
-  left: var(--x);
-  width: 1px;
-  background: rgba(255,255,255,.06);
-}
-.gc-marker span{
-  position:absolute;
-  top: 10px;
-  left: 8px;
-  font-size: 11px;
-  color: rgba(255,255,255,.40);
-  letter-spacing: .10em;
-}
 
 .gc-cup{
   position:absolute;
@@ -3311,9 +3254,6 @@ kbd{
 
 #clubSelect{ background: transparent; }
 
-.field--shake .gc-field__frame{
-  animation: fieldShake 360ms ease;
-}
 
 .gc-anim [data-status="crashed"] .gc-pill--status,
 .gc-anim body[data-status="crashed"] .gc-pill--status{
@@ -3348,13 +3288,6 @@ kbd{
   0%{ translate: 0 0; }
   100%{ translate: 0 70px; }
 }
-@keyframes fieldShake{
-  0%{ transform: translate3d(0,0,0); }
-  25%{ transform: translate3d(-2px, 2px, 0); }
-  50%{ transform: translate3d(2px, -2px, 0); }
-  75%{ transform: translate3d(-2px, 2px, 0); }
-  100%{ transform: translate3d(0,0,0); }
-}
 
 /* Responsive */
 @media (max-width: 1020px){
@@ -3369,7 +3302,7 @@ kbd{
   .gc-controls__row--grid{ grid-template-columns: 1fr; }
   .gc-card__head{ flex-direction: column; align-items:flex-start; }
   .gc-card__meta{ justify-content:flex-start; }
-  .gc-field__frame{ height: 210px; }
+
   .gc-topbar__right{ align-items:flex-start; }
 }
 @media (max-width: 520px){
@@ -3554,261 +3487,11 @@ opacity: 0.18;
 /* driver shaft: subtle */
 /* center runner ball: consistent with path */
 /* degrees: premium contrast */
-/* =========================================================
-   ATTACK ANGLE — RETICLE RESTYLE (single ring + crosshair)
-   ========================================================= */
-
-:root{
-  --aa-gold: rgba(216,200,166,0.85);
-  --aa-gold-soft: rgba(216,200,166,0.45);
-  --aa-line-dim: rgba(216,200,166,0.18);
-}
-
-#attackAngle.attack-angle{
-  position: relative;
-  display: grid;
-  place-items: center;
-}
-
-#attackAngle .attack-angle__plane{
-  position: relative;
-  width: 180px;
-  height: 180px;
-  display: grid;
-  place-items: center;
-}
-
-#attackAngle .attack-angle__svg{
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  filter: drop-shadow(0 10px 24px rgba(0,0,0,0.28));
-}
-
-/* SINGLE ring (no double ring) */
-#attackAngle .aa-ring{
-  fill: none;
-  stroke: var(--aa-gold-soft);
-  stroke-width: 2.2;
-  opacity: 0.9;
-}
-
-#attackAngle .aa-cross{
-  stroke: var(--aa-line-dim);
-  stroke-width: 1.6;
-  stroke-linecap: round;
-}
-#attackAngle .aa-cross--v{ opacity: 0.55; }
-#attackAngle .aa-cross--h{ opacity: 0.75; }
-
-#attackAngle .aa-arrow{
-  fill: var(--aa-gold-soft);
-  opacity: 0.8;
-}
-
-#attackAngle .aa-glint path{
-  fill: var(--aa-gold);
-  opacity: 0.75;
-  filter: drop-shadow(0 0 8px rgba(216,200,166,0.35));
-}
-
-#attackAngle .aa-driver{
-  fill: rgba(216,200,166,0.12);
-  stroke: rgba(216,200,166,0.22);
-  stroke-width: 1.2;
-  opacity: 0.75;
-  filter: blur(0.15px);
-}
-
-#attackAngle .aa-center{
-  fill: rgba(216,200,166,0.9);
-  opacity: 0.85;
-}
-
-/* Moving indicator */
-#attackAngleRunner.aa-ball,
-#attackAngleBall.aa-ball{
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  transform: translate(-50%,-50%);
-  background: rgba(232,236,241,0.9);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.35), 0 0 18px rgba(216,200,166,0.18);
-}
-
-/* Soft "dust/light" feel */
-#attackAngle .attack-angle__plane::before{
-  content: "";
-  position: absolute;
-  inset: -10px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 30% 20%, rgba(216,200,166,0.08), transparent 45%),
-    radial-gradient(circle at 70% 80%, rgba(216,200,166,0.05), transparent 55%);
-  opacity: 0.65;
-  pointer-events: none;
-}
-
-/* Disable old double-ring/track layers if present */
-#attackAngle .attack-angle__track,
-#attackAngle .attack-angle__ring-inner,
-#attackAngle .attack-plane__inner-ring,
-#attackAngle .plane-ring--inner,
-#attackAngle .attack-angle__meter{
-  opacity: 0 !important;
-  display: none !important;
-}
-
-/* --- ATTACK ANGLE (Variant A: Semi-Arc) --- */
-/* ATTACK ANGLE — ARC VARIANT */
-.attack-angle--arc{
-  position: relative;
-  width: 100%;
-  height: 100%;
-  max-width: 260px;
-  margin: 0 auto;
-  aspect-ratio: 1 / 1;
-  pointer-events: none;
-  isolation: isolate; /* cleaner blending */
-}
-
-.attack-angle--arc .attack-angle__svg{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-}
-
-/* Base arc (premium metal feel) */
-.attack-angle--arc .aa-arc{
-  fill:none;
-  stroke: rgba(216,200,166,0.32);
-  stroke-width: 6;
-  stroke-linecap: round;
-  opacity: 0.95;
-  filter:
-    drop-shadow(0 10px 18px rgba(0,0,0,0.22));
-}
-
-/* Secondary arc underlay to fake thicker edges */
-.attack-angle--arc .aa-arc-edge{
-  fill:none;
-  stroke: rgba(216,200,166,0.20);
-  stroke-width: 10;
-  stroke-linecap: round;
-  opacity: 0.55;
-  filter: drop-shadow(0 0 22px rgba(216,200,166,0.10));
-}
-
-/* Add a subtle “inner rim” by drawing the sweet path as a thin rim overlay */
-.attack-angle--arc .aa-sweet{
-  fill:none;
-  stroke: rgba(216,200,166,0.18);
-  stroke-width: 12;
-  stroke-linecap: round;
-  opacity: 0.35;
-  filter: drop-shadow(0 0 16px rgba(216,200,166,0.08));
-}
-
-/* Center marker: quieter */
-.attack-angle--arc .aa-center{
-  fill: rgba(255,255,255,0.45);
-  opacity: 0.32;
-}
-
-/* Runner: glassy ball (less “blob”, more premium) */
-.attack-angle--arc .aa-runner{
-  position:absolute;
-  width: 14px;
-  height: 14px;
-  border-radius: 999px;
-
-  background:
-    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(255,255,255,0.65) 42%, rgba(255,255,255,0.22) 72%, rgba(255,255,255,0.12) 100%);
-  /* Removed ball halo glow; keep ball only */
-  box-shadow:
-    0 8px 16px rgba(0,0,0,0.28);
-
-  transform: translate(-50%, -50%) scale(0.96);
-  left: 60px; /* JS will override */
-  top: 76px;  /* JS will override */
-  z-index: 5;
-  opacity: 0.98;
-}
-
-/* Optional: subtle “bloom” around the runner without extra DOM */
-.attack-angle--arc .aa-runner::after{
-  content:"";
-  position:absolute;
-  inset:-8px;
-  border-radius: 999px;
-  /* Removed ball halo glow; keep ball only */
-  background: none !important;
-  filter: none !important;
-  opacity: 0 !important;
-  z-index: -1;
-}
-
-/* REMOVE runner background halo (capsule overlay) */
+/* Kill pseudo-elements on runner (safety) */
 #attackAngleRunner::before,
 #attackAngleRunner::after {
   content: none !important;
   display: none !important;
-}
-
-/* Safety: if legacy bg element exists */
-.attack-angle .aa-runner-bg,
-.attack-angle .aa-runner-glow,
-.attack-angle .aa-runner-shadow {
-  display: none !important;
-  opacity: 0 !important;
-}
-
-/* --- Attack Angle: kill the SECOND halo (extra glow layer) --- */
-#attackAngleRunner::before,
-#attackAngleRunner::after,
-.attack-angle--arc .aa-runner::before,
-.attack-angle--arc .aa-runner::after,
-.attack-angle--arc .aa-ball::before,
-.attack-angle--arc .aa-ball::after {
-  content: none !important;
-  opacity: 0 !important;
-  background: none !important;
-  background-image: none !important;
-  filter: none !important;
-  box-shadow: none !important;
-}
-
-/* Keep ONE clean halo only (on the runner element itself) */
-#attackAngleRunner,
-.attack-angle--arc .aa-runner,
-.attack-angle--arc .aa-ball {
-  box-shadow: 0 0 0 10px rgba(216,200,166,0.08) !important;
-}
-
-/* If any extra blurred “cap”/overlay exists above the arc, disable it */
-.attack-angle--arc .aa-arc-glow,
-.attack-angle--arc .aa-glow,
-.attack-angle--arc .aa-runner-glow {
-  display: none !important;
-}
-
-/* --- Attack Angle: remove extra backdrop layers that can wash over the arc --- */
-
-/* 1) Kill the widget-body "glass pocket" overlay ONLY for Attack Angle */
-/* 2) If the Attack track/disc exists, make it fully transparent (keeps layout, removes wash) */
-/* 3) Ensure arc is above any remaining backgrounds, but below the runner */
-/* Disable legacy visuals inside the new arc variant only */
-.attack-angle--arc .attack-angle__plane,
-.attack-angle--arc .aa-ring,
-.attack-angle--arc .aa-cross,
-.attack-angle--arc .aa-arrow,
-.attack-angle--arc .aa-driver,
-.attack-angle--arc .aa-glint{
-  display:none !important;
 }
 
 /* =========================================================
@@ -4011,7 +3694,7 @@ body{
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
 }
 .gc-segmented__btn{
-  color: var(--text-1);
+  color: var(--text-dim);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -4030,7 +3713,7 @@ body{
 .gc-segmented__btn:not(.is-active):hover,
 .gc-segmented__btn:not(.gc-segmented__btn--active):hover{
   background: rgba(255,255,255,0.05);
-  color: var(--text-0);
+  color: rgba(255,255,255,0.80);
 }
 .gc-power__value,
 #powerValue,
@@ -4135,572 +3818,11 @@ body.uidebug #uiRoot::before{
   opacity: 0.75;
 }
 
-/* ================================
-   ATTACK ANGLE — runner cleanup
-   (restore ball, kill extra halo)
-   ================================ */
-
-/* The unwanted layer is almost certainly a ::before/backplate on the runner.
-   Kill it completely. */
-#attackAngleRunner::before,
-.attack-angle #attackAngleRunner::before,
-.attack-angle .aa-ball::before {
-  content: none !important;
-  display: none !important;
-  opacity: 0 !important;
-  filter: none !important;
-  background: none !important;
-  box-shadow: none !important;
-}
-
-/* Ensure the runner itself is ONLY the ball (no pill/rect). */
-#attackAngleRunner,
-.attack-angle #attackAngleRunner,
-.attack-angle .aa-ball {
-  width: var(--golf-ball-size, 22px) !important;
-  height: var(--golf-ball-size, 22px) !important;
-  border-radius: 999px !important;
-  background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.95), rgba(220,220,220,0.55) 55%, rgba(0,0,0,0.18) 100%);
-  box-shadow:
-    0 10px 22px rgba(0,0,0,0.35),
-    0 0 0 1px rgba(216,200,166,0.18) inset !important;
-  opacity: 1 !important;
-}
-
-/* Halo pseudo-element disabled — glow removed per design */
-#attackAngleRunner::after,
-.attack-angle #attackAngleRunner::after,
-.attack-angle .aa-ball::after {
-  content: none !important;
-  display: none !important;
-}
-
-/* Make sure the ball sits above the arc (but still inside the widget). */
-.attack-angle,
-#attackAngle {
-  position: relative;
-}
-#attackAngleRunner,
-.attack-angle #attackAngleRunner {
+/* Runner above arc */
+#attackAngleRunner {
   position: absolute !important;
   z-index: 6 !important;
 }
-
-/* --- AA: restore arc visibility --- */
-#attackAnglePlane .aa-arc-edge,
-#attackAnglePlane .aa-arc{
-  fill: none !important;
-  stroke-linecap: round !important;
-  stroke-linejoin: round !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: inline !important;
-}
-
-#attackAnglePlane .aa-arc-edge{
-  stroke: rgba(216,200,166,0.16) !important;
-  stroke-width: 18 !important;
-  filter: blur(0.2px);
-}
-
-#attackAnglePlane .aa-arc{
-  stroke: rgba(216,200,166,0.34) !important;
-  stroke-width: 14 !important;
-}
-
-#attackAnglePlane .attack-angle__svg{
-  overflow: visible !important;
-}
-
-/* keep runner above arc */
-#attackAngleRunner{ z-index: 6 !important; }
-
-/* --- DEBUG: force-show Attack Angle widget --- */
-.swing-metric--attack,
-.swing-metric--attack .swing-metric__body,
-#attackAngle,
-#attackAnglePlane,
-#attackAngleRunner,
-.attack-angle,
-.attack-angle__plane,
-.attack-angle__svg {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
-}
-
-/* Ensure containers establish stacking context */
-.swing-metric--attack .swing-metric__body,
-#attackAngle,
-#attackAnglePlane,
-.attack-angle {
-  position: relative !important;
-  z-index: 50 !important;
-}
-
-/* Ensure SVG and runner are on top within the widget */
-.attack-angle__svg { position: relative !important; z-index: 2 !important; }
-#attackAngleRunner { position: absolute !important; z-index: 5 !important; }
-
-/* === AA FIX: remove the "capsule" halo above the arc (from sweet/runner layers) === */
-#attackAnglePlane #attackAngleSweet,
-#attackAnglePlane .aa-sweet{
-  box-shadow: none !important;
-  filter: none !important;
-}
-
-#attackAnglePlane #attackAngleSweet::before,
-#attackAnglePlane #attackAngleSweet::after,
-#attackAnglePlane .aa-sweet::before,
-#attackAnglePlane .aa-sweet::after,
-#attackAnglePlane #attackAngleRunner::before,
-#attackAnglePlane #attackAngleRunner::after,
-#attackAnglePlane .aa-runner::before,
-#attackAnglePlane .aa-runner::after,
-#attackAnglePlane .aa-ball::before,
-#attackAnglePlane .aa-ball::after{
-  content: none !important;
-  background: none !important;
-  background-image: none !important;
-  box-shadow: none !important;
-  filter: none !important;
-}
-
-/* If the capsule is an SVG pill/window layer, hide only that */
-#attackAnglePlane svg .aa-sweet,
-#attackAnglePlane svg .aa-sweet-bg,
-#attackAnglePlane svg .aa-window,
-#attackAnglePlane svg .aa-pill{
-  display: none !important;
-  opacity: 0 !important;
-}
-
-/* =========================
-   ATTACK ANGLE — ARC MODE
-   (Tempo-like: 1 arc + 1 runner)
-   ========================= */
-
-.swing-metric--attack .attack-angle{
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: grid;
-  place-items: center;
-}
-
-
-/* Kill any legacy reticle leftovers if they still exist */
-.swing-metric--attack .attack-angle__plane,
-.swing-metric--attack .aa-ring,
-.swing-metric--attack .aa-cross,
-.swing-metric--attack .aa-arrow,
-.swing-metric--attack .aa-glint,
-.swing-metric--attack .aa-driver{
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-}
-
-/* SVG fits like Swing Tempo inner tube */
-.swing-metric--attack .attack-angle__svg{
-  width: min(86%, 220px);
-  height: auto;
-  display: block;
-  overflow: visible;
-}
-
-/* Main arc (matte gold) */
-.swing-metric--attack .aa-arc{
-  fill: none;
-  stroke: rgba(216,200,166,0.55);
-  stroke-width: 14;
-  stroke-linecap: round;
-  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.35));
-}
-
-/* Inner highlight (subtle) */
-.swing-metric--attack .aa-arc-hi{
-  fill: none;
-  stroke: rgba(255,255,255,0.10);
-  stroke-width: 6;
-  stroke-linecap: round;
-  opacity: 0.55;
-}
-
-/* Anchor dot (quiet) */
-.swing-metric--attack .aa-anchor{
-  fill: rgba(216,200,166,0.55);
-  opacity: 0.55;
-}
-
-/* Runner: SINGLE ball, NO second halo */
-.swing-metric--attack #attackAngleRunner.aa-runner{
-  position: absolute;
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  background: radial-gradient(circle at 35% 30%,
-    rgba(255,255,255,0.92),
-    rgba(255,255,255,0.30) 55%,
-    rgba(0,0,0,0.22) 100%);
-  box-shadow:
-    0 10px 22px rgba(0,0,0,0.40),
-    inset 0 1px 0 rgba(255,255,255,0.22);
-  transform: translate(-50%, -50%);
-  z-index: 4;
-}
-
-/* IMPORTANT: remove pseudo halos */
-.swing-metric--attack #attackAngleRunner.aa-runner::before,
-.swing-metric--attack #attackAngleRunner.aa-runner::after{
-  content: none !important;
-  display: none !important;
-}
-
-/* Scale on the right: keep it super quiet */
-.swing-metric--attack .aa-scale{
-  position: absolute;
-  right: 10%;
-  top: 18%;
-  bottom: 18%;
-  width: 26px;
-  display: grid;
-  grid-template-rows: auto 1fr auto 1fr auto;
-  align-items: center;
-  justify-items: center;
-  opacity: 0.32;
-  pointer-events: none;
-}
-
-.swing-metric--attack .aa-scale__label{
-  font-size: 13px;
-  letter-spacing: 0.12em;
-  color: rgba(216,200,166,0.85);
-}
-
-.swing-metric--attack .aa-scale__tick{
-  width: 14px;
-  height: 2px;
-  border-radius: 999px;
-  background: rgba(216,200,166,0.35);
-}
-
-/* Ensure the attack widget doesn’t overflow its card */
-.swing-metric--attack .swing-metric__body{
-  overflow: hidden;
-}
-
-/* =========================================
-   ATTACK ANGLE — Step 2: remove double layers / keep clean track + runner
-   Paste at END of css/style.css
-   ========================================= */
-
-/* 1) Kill any generic “glass pocket” overlays that often double visuals */
-.swing-metric--attack .swing-metric__body::before,
-.swing-metric--attack .swing-metric__body::after,
-.swing-metric--attack .attack-angle::before,
-.swing-metric--attack .attack-angle::after,
-.swing-metric--attack .attack-angle__plane::before,
-.swing-metric--attack .attack-angle__plane::after{
-  content: none !important;
-  opacity: 0 !important;
-  filter: none !important;
-  background: none !important;
-  box-shadow: none !important;
-}
-
-/* 2) Ensure only ONE arc/track is visible (hide legacy rings/crosshair if still present) */
-.swing-metric--attack .aa-ring,
-.swing-metric--attack .aa-cross,
-.swing-metric--attack .aa-arrow,
-.swing-metric--attack .aa-glint,
-.swing-metric--attack .aa-driver{
-  opacity: 0 !important;
-}
-
-/* If your new arc is SVG path(s), keep them ON explicitly */
-.swing-metric--attack .aa-arc,
-.swing-metric--attack .aa-arc-edge{
-  opacity: 1 !important;
-}
-
-/* 3) Runner (ball) sits above track, no extra halos/pills */
-.swing-metric--attack #attackAngleRunner{
-  z-index: 5 !important;
-  box-shadow:
-    0 8px 18px rgba(0,0,0,0.45),
-    0 0 0 2px rgba(255,255,255,0.10) !important;
-}
-
-/* Remove “second halo” if it was coming from pseudo elements on runner */
-.swing-metric--attack #attackAngleRunner::before,
-.swing-metric--attack #attackAngleRunner::after{
-  content: none !important;
-  opacity: 0 !important;
-  filter: none !important;
-  background: none !important;
-}
-
-/* 4) Make sure the arc is the hero: soften its shadow so it means thickness, not duplication */
-.swing-metric--attack .aa-arc,
-.swing-metric--attack .aa-arc-edge{
-  filter: none !important;
-}
-
-/* =========================================================
-   SWING METRICS — unify card heights (Tempo/Path/Attack)
-   Goal: all three widgets have одинаковую "длину"/высоту карточки
-   ========================================================= */
-
-/* Each widget becomes a fixed-height card with 3 sections:
-   title (fixed) + body (fixed) + footer (fixed) */
-/* Fixed header height */
-/* Fixed body height (у тебя уже ~220, фиксируем жёстко) */
-/* Fixed footer height */
-/* Ensure Path doesn’t look "taller" because of extra label spacing */
-/* Optional: keep titles aligned even if one has extra margin somewhere */
-/* ===================#attackAngle .aa-arcTrack--inner==================
-   SWING TEMPO — reduce empty space, make tube taller
-   (only Tempo widget)
-   ========================================================= */
-
-/* компактнее заголовок */
-.swing-metric--tempo .swing-metric__title{
-  flex: 0 0 34px !important;
-  padding-top: 8px !important;
-}
-
-/* компактнее футер */
-.swing-metric--tempo .swing-metric__footer{
-  min-height: 42px !important;
-  padding: 6px 10px 10px !important;
-}
-
-/* body чуть выше за счёт header/footer */
-.swing-metric--tempo .swing-metric__body{
-  flex: 1 1 auto !important;
-  padding: 6px 0 !important;
-}
-
-/* сам темпо-метр заполняет body */
-.swing-metric--tempo #swingTempoControl.tempo-meter{
-  height: 100% !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* tube становится выше (главный эффект) */
-.swing-metric--tempo .tempo-meter__tube{
-  height: 88% !important;
-  max-height: 240px;
-}
-
-/* шкалу (100/50/0) чуть ближе к tube */
-.swing-metric--tempo .tempo-meter__scale{
-  margin-left: 12px !important;
-}
-
-/* значение в футере чуть компактнее */
-.swing-metric--tempo #tempoValueLabel{
-  margin-top: 2px !important;
-}
-
-/* SWING TEMPO — nudge percentage closer to scale (micro adjust) */
-.swing-metric--tempo #tempoValueLabel{
-  margin-top: -4px !important;
-}
-
-/* SWING TEMPO — equalize bottom spacing */
-.swing-metric--tempo .swing-metric__body{
-  padding-bottom: 14px;
-}
-
-/* already nudged label up — оставляем */
-.swing-metric--tempo #tempoValueLabel{
-  margin-top: -4px !important;
-}
-
-/* SWING TEMPO — final vertical balance */
-.swing-metric--tempo .swing-metric__body{
-  padding-bottom: 8px;
-}
-
-/* процент ещё ближе к шкале */
-.swing-metric--tempo #tempoValueLabel{
-  margin-top: -6px !important;
-}
-
-@keyframes tempoHoldPulse{
-  0%   { transform: translateY(0) scaleY(1);    filter: brightness(1);    opacity: 0.98; }
-  50%  { transform: translateY(0) scaleY(1.03); filter: brightness(1.06); opacity: 1; }
-  100% { transform: translateY(0) scaleY(1);    filter: brightness(1);    opacity: 0.98; }
-}
-
-/* === SWING TEMPO: FIX RUNNER AS KNOB (NO STRETCH) === */
-/* Fill - background indication only, not runner */
-/* === TEMPO footer typography: match ATTACK ANGLE readout style === */
-/* DISABLED:
-display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  text-align: center;
-}
-*/
-
-/* dash "—" line (usually first item inside tempoValueLabel) */
-/* percent readout (slightly smaller - half step down) */
-/* ===========================
-   ATTACK ANGLE (Tempo Style)
-   =========================== */
-/* Footer typography to match Tempo's calm style */
-/* Hide any legacy attack-angle layers if they still exist */
-/* === ATTACK ANGLE: expand visible stage inside widget (safe, CSS-only) === */
-
-/* 1) Give the BODY more room for the arc/ball scene */
-/* DISABLED:
-padding-top: 10px !important;
-  padding-bottom: 6px !important;
-}
-*/
-
-/* 2) Expand the actual attack container inside body (IDs may vary, cover both) */
-/* DISABLED:
-height: 190px !important;
-  max-height: none !important;
-  overflow: visible !important;
-}
-*/
-
-/* 3) Reduce footer footprint a bit so body gets space */
-/* 4) Slightly lift the readout to feel centered like Swing Tempo */
-/* =========================
-   ATTACK ANGLE: expand inner scene area (safe)
-   ========================= */
-
-/* 1) Give the BODY more room for the scene (without changing the whole card height) */
-/* 2) Make the scene wrapper taller and centered */
-/* DISABLED:
-width: 100% !important;
-  height: 100% !important;
-  min-height: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  overflow: visible !important;
-}
-
-/* 3) Scale the actual drawing (SVG) up a bit inside the scene */
-/* 4) Keep the readout stable (do NOT let it be pushed down) */
-/* =========================
-   ATTACK ANGLE: value size
-   ========================= */
-
-/* Main value: +0.0° */
-/* Keep "DEGREES" visually secondary */
-/* =========================
-   ATTACK ANGLE: remove unit label
-   ========================= */
-
-/* Completely remove "DEGREES" text */
-/* Ensure value (+0.0deg) is centered nicely after removal */
-/* =========================
-   ATTACK ANGLE - center value in card
-   ========================= */
-
-/* Make attack widget body a centering context */
-/* Center the numeric value itself */
-/* Safety: ensure no hidden unit or spacer affects layout */
-/* =========================
-   ATTACK ANGLE: full-scene SVG scale fix
-   ========================= */
-
-/* 1) Attack body must provide a stable layout box */
-/* 2) #attackAngle (aa-meter) fills the body and does not shrink */
-/* 3) Force arc SVG to fill the attack container */
-/* 4) Keep runner above SVG */
-/* === ATTACK ANGLE: widen card for better visual balance === */
-.swing-metric--attack {
-  min-width: 200px;           /* was visually too narrow */
-  padding-left: 20px;
-  padding-right: 20px;
-}
-
-/* ensure body stretches with card */
-.swing-metric--attack .swing-metric__body {
-  width: 100%;
-}
-
-/* ATTACK WIDTH FIX
-   Reason: .swing-metrics-row is a GRID with fixed columns (182 / 291 / 182),
-   so the Attack card cannot grow. Also the card itself is capped by max-width: 140px.
-   This override widens the 3rd column and removes the cap for attack only. */
-
-/* DISABLED:
-grid-template-columns: 0.95fr 1.55fr 1.20fr !important;
-}
-*/
-/* DISABLED: } */
-
-/* ATTACK: make inner visuals larger + centered (Tempo-like framing) */
-/* the meter root (your #attackAngle is .aa-meter) */
-/* DISABLED:
-height: 190px !important;
-  position: relative !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-}
-*/
-
-/* scale the svg up so arc is readable */
-/* DISABLED:
-display: block !important;
-  margin-top: 6px !important;
-}
-*/
-
-/* ATTACK: make +6/0/-6 scale horizontal under the arc (Tempo-like) */
-/* DISABLED:
-padding: 0 6px !important;
-  gap: 10px !important;
-  opacity: 0.85 !important;
-}
-*/
-
-/* labels in the scale (+6 / 0 / -6) */
-/* tick marks (small dashes) - make them horizontal */
-/* If the old scale container was positioned on the right, neutralize it */
-/* === ATTACK ANGLE: make +6 / 0 / -6 horizontal under the arc === */
-/* DISABLED:
-position: relative;
-}
-*/
-
-/* The scale itself */
-/* DISABLED:
-display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 10px !important;
-  position: absolute !important;
-  left: 50% !important;
-  top: 58% !important;
-  transform: translateX(-50%) !important;
-  width: min(220px, 92%) !important;
-  margin: 0 !important;
-  padding: 0 6px !important;
-  writing-mode: horizontal-tb !important;
-}
-*/
-
-/* Labels: reuse Tempo-like typography */
-/* If there are tick lines inside scale and they were stacked vertically, keep them inline */
 /* === FORCE DISABLE UI DEBUG OVERLAYS (cleanup) === */
 body.uidebug #uiRoot {
   outline: none !important;

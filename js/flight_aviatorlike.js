@@ -66,12 +66,12 @@
     /* =========================================
        PATH PICK DEBUG (opt-in)
        Usage:
-         window.__PATH_PICK__ = true; location.reload();
+         window.__DRIVIX_DEBUG__.pathPick = true; location.reload();
          Then click inside SWING PATH card to see the real DOM chain + top rendering layer.
     ========================================= */
     (function initPathPickDebug(){
       try{
-        if (!window.__PATH_PICK__) return;
+        if (!window.__DRIVIX_DEBUG__?.pathPick) return;
         if (window.__PATH_PICK_INIT__) return;
         window.__PATH_PICK_INIT__ = true;
 
@@ -251,6 +251,10 @@
       crash.fromY = pos.y;
       crash.x = pos.x;
       crash.rollTarget = Math.min(w * 0.94, pos.x + w * 0.02);
+      // Duration scales with drop distance: near-ground ball falls faster (min 220ms)
+      const dropDist = Math.max(4, (h * 0.86) - pos.y);
+      const maxDrop  = h * 0.86 - h * 0.18;
+      crash.duration  = Math.round(220 + 300 * clamp01(dropDist / maxDrop));
       flash.active = true;
       flash.start = crash.start;
       addDust(pos.x, h * 0.86);
@@ -259,7 +263,7 @@
       trailFade.active = true;
       trailFade.start = crash.start;
       trailFade.freeze = true;
-      startExit(pos);
+      // startExit is NOT called here — crash animation calls it when complete (see computePos crash block)
     }
 
     function drawBackground(){
@@ -583,6 +587,11 @@
     }
 
     function draw(gameState){
+      // Skip rendering on hidden canvas — prevents exponential canvas.width growth.
+      // When clientWidth/clientHeight are 0 (display:none), resize() would read
+      // canvas.width as fallback and double it every frame (300→600→1200→…→307200px),
+      // causing massive GPU overhead on every tick.
+      if (!canvas.clientWidth && !canvas.clientHeight) return;
       if(Number.isFinite(gameState?.round?.bias)){
         bias = Math.max(-0.4, Math.min(0.4, gameState.round.bias));
       }
@@ -703,15 +712,33 @@
       lastState = gameState || lastState;
       const pos = computePos(lastState || {});
       setLanding(pos, "cashout");
-      startExit(pos);
-      if(!rafId) render(lastState);
+      const p = clamp01(pos.progress ?? 0);
+      if(p < 0.11){
+        // X≈1 case: ball barely left the ground — drop it softly to ground first, then exit.
+        // Reuse crash machinery but without flash (it's a cashout, not a crash).
+        crash.active = true;
+        crash.start = performance.now();
+        crash.fromY = pos.y;
+        crash.x = pos.x;
+        crash.rollTarget = pos.x; // no roll for cashout landing
+        const dropDist = Math.max(2, (h * 0.86) - pos.y);
+        const maxDrop  = h * 0.86 - h * 0.18;
+        crash.duration  = Math.round(160 + 120 * clamp01(dropDist / maxDrop));
+        trailFade.active = true;
+        trailFade.start = crash.start;
+        trailFade.freeze = true;
+        // No flash, smaller effects for cashout
+        addDust(pos.x, h * 0.86);
+        if(!rafId) rafId = window.requestAnimationFrame(loop);
+      } else {
+        startExit(pos);
+        if(!rafId) render(lastState);
+      }
     }
 
     function onCrash(gameState){
-      lastState = gameState || lastState;
-      const pos = computePos(lastState || {});
-      startCrash(pos);
-      if(!rafId) rafId = window.requestAnimationFrame(loop);
+      // No separate crash visual — treat as normal landing (same as cashout)
+      onCashout(gameState);
     }
 
     function roundRect(ctx, x, y, w2, h2, r){

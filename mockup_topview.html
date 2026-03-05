@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOP VIEW — Golf Driver Shot Mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #060a0f;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'SF Pro Display', -apple-system, sans-serif;
+    color: rgba(255,255,255,0.88);
+    gap: 20px;
+    padding: 24px;
+  }
+
+  h2 {
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    color: rgba(216,200,166,0.55);
+    text-transform: uppercase;
+  }
+
+  /* ── Main field container ── */
+  .field-top {
+    position: relative;
+    width: 860px;
+    height: 300px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05);
+    background: #070e0a;
+  }
+
+  /* ── Rough (top & bottom strips) ── */
+  .rough {
+    position: absolute;
+    left: 0; right: 0;
+    background:
+      repeating-linear-gradient(
+        88deg,
+        rgba(30,55,32,0.6) 0px,
+        rgba(22,40,24,0.6) 3px,
+        rgba(28,50,30,0.6) 6px
+      );
+  }
+  .rough-top    { top: 0;    height: 78px; }
+  .rough-bottom { bottom: 0; height: 78px; }
+
+  /* ── Fairway center strip ── */
+  .fairway {
+    position: absolute;
+    left: 0; right: 0;
+    top: 78px; bottom: 78px;
+    background:
+      linear-gradient(180deg,
+        rgba(35,68,38,0.5) 0%,
+        rgba(42,80,46,0.65) 50%,
+        rgba(35,68,38,0.5) 100%
+      );
+  }
+
+  /* ── Fairway edge lines ── */
+  .fairway::before,
+  .fairway::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 1px;
+    background: rgba(255,255,255,0.07);
+  }
+  .fairway::before { top: 0; }
+  .fairway::after  { bottom: 0; }
+
+  /* ── Distance markers ── */
+  .dist-marker {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: rgba(255,255,255,0.06);
+  }
+  .dist-marker span {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.28);
+    white-space: nowrap;
+  }
+  .dist-marker.active {
+    background: rgba(216,200,166,0.25);
+    box-shadow: 0 0 6px rgba(216,200,166,0.15);
+  }
+  .dist-marker.active span { color: rgba(216,200,166,0.6); }
+
+  /* ── Tee box ── */
+  .tee-box {
+    position: absolute;
+    left: 36px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.9), rgba(216,200,166,0.7));
+    box-shadow: 0 0 8px rgba(216,200,166,0.5), 0 0 20px rgba(216,200,166,0.2);
+    z-index: 10;
+  }
+  .tee-box::after {
+    content: 'TEE';
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    letter-spacing: 0.14em;
+    color: rgba(216,200,166,0.45);
+    white-space: nowrap;
+  }
+
+  /* ── Ball trail (SVG path) ── */
+  .trail-svg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  /* ── Ball ── */
+  .ball {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, rgba(255,255,255,0.98), rgba(216,200,166,0.9));
+    box-shadow:
+      0 0 8px rgba(216,200,166,0.9),
+      0 0 20px rgba(216,200,166,0.5),
+      0 0 40px rgba(216,200,166,0.2);
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    top: 50%;
+    left: 20%;  /* updated by animation */
+    animation: ballFly 3s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+  }
+
+  @keyframes ballFly {
+    0%   { left: 4.2%; top: 50%; opacity: 1; }
+    15%  { top: 48%; }
+    30%  { top: 47%; }   /* slight wind drift */
+    60%  { top: 49%; }
+    85%  { left: 82%; top: 52%; opacity: 1; }
+    90%  { left: 83%; top: 52.5%; opacity: 0.8; }
+    95%  { left: 83.5%; top: 52.5%; opacity: 0; }
+    100% { left: 4.2%; top: 50%; opacity: 0; }
+  }
+
+  /* ── Landing zone prediction ── */
+  .landing-zone {
+    position: absolute;
+    left: 80%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px dashed rgba(216,200,166,0.30);
+    background: rgba(216,200,166,0.05);
+    z-index: 5;
+  }
+  .landing-zone::after {
+    content: '287yd';
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    color: rgba(216,200,166,0.55);
+    white-space: nowrap;
+  }
+
+  /* ── Flag / Pin ── */
+  .flag {
+    position: absolute;
+    left: 83%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 6;
+  }
+  .flag-pole {
+    width: 1.5px;
+    height: 20px;
+    background: rgba(255,255,255,0.55);
+    margin: 0 auto;
+  }
+  .flag-head {
+    width: 10px;
+    height: 7px;
+    background: rgba(216,200,166,0.85);
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+    position: absolute;
+    top: 2px;
+    left: 1.5px;
+  }
+
+  /* ── HUD overlays ── */
+  .hud {
+    position: absolute;
+    top: 14px;
+    left: 18px;
+    right: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    pointer-events: none;
+    z-index: 30;
+  }
+  .hud-left { display: flex; flex-direction: column; gap: 2px; }
+  .hud-label {
+    font-size: 9px;
+    letter-spacing: 0.24em;
+    color: rgba(255,255,255,0.42);
+    text-transform: uppercase;
+  }
+  .hud-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.96);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .hud-right { text-align: right; display: flex; flex-direction: column; gap: 2px; }
+  .hud-dist-val {
+    font-size: 22px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.96);
+  }
+  .hud-dist-unit {
+    font-size: 10px;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.12em;
+  }
+
+  /* ── Wind indicator ── */
+  .wind-badge {
+    position: absolute;
+    bottom: 14px;
+    right: 18px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.65);
+    z-index: 30;
+  }
+  .wind-arrow {
+    color: rgba(216,200,166,0.85);
+    font-size: 10px;
+    transform: rotate(45deg);
+    display: inline-block;
+  }
+
+  /* ── Swing path indicator (bottom left) ── */
+  .path-badge {
+    position: absolute;
+    bottom: 14px;
+    left: 18px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    letter-spacing: 0.10em;
+    color: rgba(255,255,255,0.45);
+    z-index: 30;
+  }
+  .path-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(216,200,166,0.7);
+  }
+
+  /* ── Rough texture dots ── */
+  .rough-dot {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(40,70,42,0.7);
+  }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 10px;
+    letter-spacing: 0.10em;
+    color: rgba(255,255,255,0.40);
+  }
+  .legend-swatch {
+    width: 22px; height: 3px;
+    border-radius: 2px;
+  }
+
+  /* ── Variant labels ── */
+  .variant-row {
+    display: flex;
+    gap: 14px;
+    width: 860px;
+  }
+  .variant {
+    flex: 1;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.6;
+  }
+  .variant strong {
+    display: block;
+    color: rgba(216,200,166,0.75);
+    font-size: 11px;
+    margin-bottom: 4px;
+    letter-spacing: 0.16em;
+  }
+</style>
+</head>
+<body>
+
+<h2>Top View — Driver Shot · Concept Mockup</h2>
+
+<!-- MAIN FIELD -->
+<div class="field-top">
+
+  <!-- Rough strips -->
+  <div class="rough rough-top"></div>
+  <div class="rough rough-bottom"></div>
+
+  <!-- Fairway -->
+  <div class="fairway"></div>
+
+  <!-- Distance markers -->
+  <div class="dist-marker" style="left:16%"><span>100 YD</span></div>
+  <div class="dist-marker" style="left:29%"><span>150 YD</span></div>
+  <div class="dist-marker" style="left:43%"><span>200 YD</span></div>
+  <div class="dist-marker" style="left:57%"><span>250 YD</span></div>
+  <div class="dist-marker active" style="left:71%"><span>300 YD</span></div>
+  <div class="dist-marker" style="left:85%"><span>350 YD</span></div>
+
+  <!-- Ball trail SVG -->
+  <svg class="trail-svg" viewBox="0 0 860 300" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="trailGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%"   stop-color="rgba(216,200,166,0)"   />
+        <stop offset="40%"  stop-color="rgba(216,200,166,0.18)"/>
+        <stop offset="100%" stop-color="rgba(216,200,166,0.55)"/>
+      </linearGradient>
+      <filter id="glow">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <!-- Main trail path — slight curve (wind drift) -->
+    <path
+      d="M 36 150  C 150 150, 300 145, 450 148, 600 151, 680 155, 715 157"
+      fill="none"
+      stroke="url(#trailGrad)"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      filter="url(#glow)"
+    />
+    <!-- Thin predicted continuation (dashed) -->
+    <path
+      d="M 715 157  C 730 158, 745 159, 755 160"
+      fill="none"
+      stroke="rgba(216,200,166,0.22)"
+      stroke-width="1.2"
+      stroke-dasharray="4 3"
+      stroke-linecap="round"
+    />
+    <!-- Rough boundary lines on fairway edges -->
+    <line x1="0" y1="78"  x2="860" y2="78"  stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <line x1="0" y1="222" x2="860" y2="222" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+  </svg>
+
+  <!-- Tee box -->
+  <div class="tee-box"></div>
+
+  <!-- Landing zone -->
+  <div class="landing-zone"></div>
+
+  <!-- Flag -->
+  <div class="flag">
+    <div class="flag-pole"></div>
+    <div class="flag-head"></div>
+  </div>
+
+  <!-- Ball (animated) -->
+  <div class="ball"></div>
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="hud-left">
+      <div class="hud-label">Power</div>
+      <div class="hud-value">x2.46</div>
+    </div>
+    <div class="hud-right">
+      <div class="hud-label">Dist</div>
+      <div><span class="hud-dist-val">287</span> <span class="hud-dist-unit">YD</span></div>
+    </div>
+  </div>
+
+  <!-- Wind -->
+  <div class="wind-badge">
+    <span class="wind-arrow">▲</span>
+    WIND &nbsp; 11 MPH
+  </div>
+
+  <!-- Path info -->
+  <div class="path-badge">
+    <span class="path-dot"></span>
+    PATH ← 2.1°
+  </div>
+
+</div>
+
+<!-- Variant options -->
+<div class="variant-row">
+  <div class="variant">
+    <strong>A · CLEAN OVERHEAD</strong>
+    Только шар + шлейф + метки дистанции. Минималистично, быстро читается.
+  </div>
+  <div class="variant">
+    <strong>B · PREDICTIVE ARC</strong>
+    Пунктирная линия предсказания до удара — исчезает когда мяч летит. Тактически полезно.
+  </div>
+  <div class="variant">
+    <strong>C · WIND DRIFT ZONE</strong>
+    Полупрозрачная зона показывает куда сдует ветер. Игрок видит риск сразу.
+  </div>
+  <div class="variant">
+    <strong>D · FULL BROADCAST</strong>
+    Метки + шлейф + зона приземления + флаг + path-кривизна всё в одном.
+  </div>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:rgba(216,200,166,0.55)"></div>
+    Ball trail
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:rgba(216,200,166,0.22);border-top:1px dashed rgba(216,200,166,0.4)"></div>
+    Predicted path
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:rgba(42,80,46,0.8)"></div>
+    Fairway
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:rgba(30,55,32,0.8)"></div>
+    Rough
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="border:1px dashed rgba(216,200,166,0.4);background:rgba(216,200,166,0.05)"></div>
+    Landing zone
+  </div>
+</div>
+
+</body>
+</html>

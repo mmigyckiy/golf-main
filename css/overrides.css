@@ -34,14 +34,8 @@
 
 /* =========================================
    FIX: Right column spacing (no stretch)
+   — consolidated into COCKPIT LAYOUT v3 below
    ========================================= */
-
-aside#sidePanel.sidePanel.gc-sidepanel{
-  justify-content: flex-start !important;
-  gap: 16px !important;
-  height: auto !important;
-  align-content: flex-start !important;
-}
 
 
 /* =========================================
@@ -68,7 +62,7 @@ aside#sidePanel.sidePanel.gc-sidepanel{
    ========================================= */
 
 header#appHeader{
-  margin-bottom: 24px !important;
+  margin-bottom: 0 !important;
 }
 
 
@@ -210,7 +204,7 @@ header#appHeader{
    ========================================================= */
 
 #appBody.appBody.gc-layout{
-  align-items: flex-start !important;
+  align-items: stretch !important;
   align-content: flex-start !important;
 }
 
@@ -297,61 +291,94 @@ aside#sidePanel > .gc-card:first-child{
 
 
 /* =========================================================
-   FLIGHT DOMINANCE + CONTROLS COMPACT SCALE
-   WHY: Keep flight/power area dominant and widgets smaller/consistent.
+   COCKPIT LAYOUT v3 — grid: header full-width + [main | side]
+   WHY: sidePanel pinned to right column; gc-field fixed size.
+        Nothing grows during gameplay.
    ========================================================= */
 
-#appBody.appBody.gc-layout{
-  align-items: flex-start !important;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 390px) !important;
-  gap: clamp(14px, 1.5vw, 22px) !important;
+/* 1. App body: 2-column grid, header spans both columns */
+#appBody.appBody.gc-layout {
+  display:               grid !important;
+  grid-template-columns: 1fr 300px !important;
+  grid-template-rows:    auto auto !important;
+  align-items:           start !important;
+  gap:                   12px !important;
 }
 
-#mainPanel.mainPanel.gc-main,
-#sidePanel.sidePanel.gc-sidepanel{
-  align-self: flex-start !important;
-  margin-top: 0 !important;
+header#appHeader {
+  grid-column:   1 / -1 !important;
+  flex:          none !important;
+  margin-bottom: 0 !important;
 }
 
-header#appHeader{
-  margin-bottom: clamp(12px, 1.05vw, 18px) !important;
+/* 2. mainPanel: left column, flex-column */
+main#mainPanel,
+main#mainPanel.mainPanel.gc-main {
+  display:        flex !important;
+  flex-direction: column !important;
+  flex:           none !important;
+  min-width:      0 !important;
+  width:          auto !important;
+  overflow:       hidden !important;
 }
 
-#sidePanel.sidePanel.gc-sidepanel{
-  justify-content: flex-start !important;
-  gap: clamp(10px, 1vw, 14px) !important;
+/* 3. powerCard: column, content-sized — no forced min-height */
+#mainPanel .powerCard,
+#mainPanel .gc-card--primary.powerCard {
+  display:        flex !important;
+  flex-direction: column !important;
+  min-height:     0 !important;
+  height:         auto !important;
+  flex:           none !important;
 }
 
-/* Power card vertical ratio: main area ~65%, controls ~35% */
-#mainPanel .powerCard{
-  display: flex;
-  flex-direction: column;
-  min-height: clamp(620px, 74vh, 860px);
-}
-
-#mainPanel .powerCard__main{
-  flex: 1 1 65%;
-  min-height: clamp(360px, 52vh, 560px);
-}
-
-#mainPanel .powerCard__controls{
-  flex: 0 1 35%;
-  min-height: clamp(220px, 30vh, 330px);
-  padding: clamp(10px, 1.05vw, 16px) clamp(12px, 1.2vw, 18px) !important;
-}
-
-#mainPanel .powerCard__controls .gc-swingControl{
+/* 4. powerCard__main: wraps gc-field, sized by field */
+#mainPanel .powerCard__main {
+  flex:       none !important;
   min-height: 0 !important;
-  height: auto !important;
+  height:     auto !important;
 }
 
+/* 5. Flight canvas — FIXED height, never grows or shrinks */
+#mainPanel .gc-field {
+  height:     clamp(260px, 36vh, 420px) !important;
+  min-height: clamp(260px, 36vh, 420px) !important;
+  max-height: clamp(260px, 36vh, 420px) !important;
+  flex:       none !important;
+  overflow:   hidden !important;
+}
+
+/* 6. Controls section: contains metric widgets, content-sized */
+#mainPanel .powerCard__controls {
+  flex:           none !important;
+  min-height:     0 !important;
+  padding-top:    0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* 7. Metric row: fixed height, no flex-grow */
+#mainPanel .gc-swingControl,
+#mainPanel #swingMetricsRow {
+  flex:       none !important;
+  min-height: 0 !important;
+  height:     auto !important;
+}
+
+/* 8. Side panel: right column, cards stacked vertically */
+aside#sidePanel.sidePanel.gc-sidepanel {
+  display:        flex !important;
+  flex-direction: column !important;
+  gap:            12px !important;
+  width:          auto !important;
+  align-self:     start !important;
+  height:         auto !important;
+}
 
 /* Debug breakdown panel (JS-rendered content) */
-#skillBreakdownDebug{
+#skillBreakdownDebug {
   display: none;
   position: fixed;
-  top: 12px;
-  right: 12px;
+  top: 12px; right: 12px;
   z-index: 1200;
   max-width: min(560px, calc(100vw - 24px));
   padding: 8px 10px;
@@ -359,72 +386,10 @@ header#appHeader{
   border: 1px solid rgba(255,255,255,0.22);
   background: rgba(8, 12, 16, 0.78);
   color: rgba(236, 240, 244, 0.94);
-  font-size: 11px;
-  line-height: 1.35;
-  letter-spacing: 0.02em;
+  font-size: 11px; line-height: 1.35; letter-spacing: 0.02em;
   pointer-events: none;
 }
-
-body[data-debug="1"] #skillBreakdownDebug{
-  display: block;
-}
-
-/* Controls compact mode for short viewports */
-@media (max-height: 800px){
-  #mainPanel .powerCard{
-    min-height: clamp(540px, 68vh, 700px);
-  }
-
-  #mainPanel .powerCard__main{
-    min-height: clamp(320px, 44vh, 480px);
-  }
-
-  #mainPanel .powerCard__controls{
-    min-height: clamp(185px, 25vh, 280px);
-    padding-top: 10px !important;
-    padding-bottom: 10px !important;
-  }
-}
-
-
-/* =========================================================
-   LEFT COLUMN REBALANCE (POWER DOMINANT)
-   Scope: #mainPanel only. Right column untouched.
-   ========================================================= */
-
-#mainPanel,
-#mainPanel.mainPanel.gc-main{
-  display: flex;
-  flex-direction: column;
-  overflow: hidden; /* clip SVG bleeding on narrow viewports */
-}
-
-#mainPanel .gc-power,
-#mainPanel .power-card{
-  flex: 0 0 68%;
-}
-
-#mainPanel .powerCard__main{
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-}
-
-/* gc-field fills the full main area — no dead space below the canvas */
-#mainPanel .gc-field {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-}
-
-#mainPanel .controls-card,
-#mainPanel #swingMetricsRow{
-  flex: 1;
-  padding-top: 16px;
-}
-
-#mainPanel .powerCard__controls{
-  flex: 0 1 auto !important;
-  min-height: clamp(220px, 30vh, 330px) !important;
-}
+body[data-debug="1"] #skillBreakdownDebug { display: block; }
 
 
 /* =========================================================

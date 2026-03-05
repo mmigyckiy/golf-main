@@ -1,27 +1,26 @@
 // ============================================================
-// Swing Tempo — Wedge View
+// Swing Tempo — Wedge View (↗ ramp)
 // ============================================================
-// A right-angle triangle (wedge / ramp) that fills from the
-// acute bottom-right corner upward to the top-left as tempo
-// increases 0 → 1.
+// A right-angle triangle that fills from the acute bottom-left
+// corner rightward and upward as tempo increases 0 → 1.
 //
-// tempo01 = 0.0 → empty (acute angle at bottom-right)
-// tempo01 = 1.0 → full triangle filled (top-left reached)
+// tempo01 = 0.0 → empty (acute angle at bottom-left)
+// tempo01 = 1.0 → full triangle filled (top-right reached)
 //
 // Geometry (SVG user units, viewBox 0 0 120 110):
-//   P_topleft = (L, T) = (4, 4)    ← top-left corner
-//   P_topright = (R, T) = (90, 4)  ← top-right corner (right angle)
-//   P_acute   = (R, B) = (90, 106) ← bottom-right (acute angle, 0%)
-//   Hypotenuse: P_topleft → P_acute ← fill boundary
+//   P_acute    = (L, B) = (4, 106)  ← bottom-left (acute angle, 0%)
+//   P_botright = (R, B) = (90, 106) ← bottom-right (right angle)
+//   P_topright = (R, T) = (90, 4)   ← top-right (100%)
+//   Hypotenuse: P_acute → P_topright ← fill boundary
 // ============================================================
 
 const SVG_NS   = "http://www.w3.org/2000/svg";
 const VB_W     = 120;
 const VB_H     = 110;
-const L        = 4;    // left x
-const R        = 90;   // right x  (right angle + acute angle share this column)
+const L        = 4;    // left x  (acute angle)
+const R        = 90;   // right x (right angle + top corner share this column)
 const T        = 4;    // top y
-const B        = 106;  // bottom y (acute angle)
+const B        = 106;  // bottom y
 const SWEET_LO = 0.60;
 const SWEET_HI = 0.80;
 
@@ -29,32 +28,30 @@ const SWEET_HI = 0.80;
 
 /**
  * Point on hypotenuse at progress t.
- * t=0 → P_acute (R,B) bottom-right   (0%  — sharp tip)
- * t=1 → P_topleft (L,T) top-left     (100% — wide end)
+ * t=0 → P_acute (L,B) bottom-left   (0%  — sharp tip)
+ * t=1 → P_topright (R,T) top-right  (100% — wide end)
  */
 function hypAt(t) {
-  return [R + t * (L - R), B + t * (T - B)];
-  // = [90 - 86t,  106 - 102t]
+  return [L + t * (R - L), B + t * (T - B)];
+  // = [4 + 86t,  106 - 102t]
 }
 
 /**
  * Fill path at progress t.
- * Polygon: P_acute → right-edge-up-to-ry → hyp-point-at-ry → close via hyp.
- * The closing edge lies exactly on the hypotenuse.
+ * Triangle: P_acute → bottom-edge-to-hx → hyp-point → close.
  */
 function fillPath(t) {
   if (t <= 0.001) return "";
-  const [hx, hy] = hypAt(t);   // point on hyp = same y as right-edge cut
-  const ry = hy;                // right-edge y at progress t
-  return `M ${R} ${B} L ${R} ${ry.toFixed(2)} L ${hx.toFixed(2)} ${ry.toFixed(2)} Z`;
+  const [hx, hy] = hypAt(t);
+  return `M ${L} ${B} L ${hx.toFixed(2)} ${B} L ${hx.toFixed(2)} ${hy.toFixed(2)} Z`;
 }
 
 /** Sweet zone polygon between two progress values */
 function sweetPath(t0, t1) {
   const [x0, y0] = hypAt(t0);
   const [x1, y1] = hypAt(t1);
-  // Band between the two horizontal levels (bounded left by hyp, right by right edge)
-  return `M ${x0.toFixed(2)} ${y0.toFixed(2)} L ${R} ${y0.toFixed(2)} L ${R} ${y1.toFixed(2)} L ${x1.toFixed(2)} ${y1.toFixed(2)} Z`;
+  // Band bounded by hyp on top, bottom edge on bottom, verticals on sides
+  return `M ${x0.toFixed(2)} ${y0.toFixed(2)} L ${x0.toFixed(2)} ${B} L ${x1.toFixed(2)} ${B} L ${x1.toFixed(2)} ${y1.toFixed(2)} Z`;
 }
 
 function mkSvg(tag, attrs) {
@@ -106,9 +103,9 @@ export function createTempoViewWedge() {
     svg.appendChild(defs);
 
     // ── background triangle (full wedge outline) ──
-    // Vertices: P_topleft(L,T) — P_topright(R,T) — P_acute(R,B)
+    // Vertices: P_acute(L,B) — P_botright(R,B) — P_topright(R,T)
     svg.appendChild(mkSvg("polygon", {
-      points: `${L},${T} ${R},${T} ${R},${B}`,
+      points: `${L},${B} ${R},${B} ${R},${T}`,
       class:  "tempoWedge__bg",
       fill:   "rgba(216,200,166,0.04)",
       stroke: "rgba(216,200,166,0.30)",
@@ -124,12 +121,12 @@ export function createTempoViewWedge() {
       stroke: "none"
     }));
 
-    // ── sweet zone dashed boundary lines ──
+    // ── sweet zone dashed boundary lines (vertical) ──
     [SWEET_LO, SWEET_HI].forEach(t => {
       const [hx, hy] = hypAt(t);
       svg.appendChild(mkSvg("line", {
-        x1: hx.toFixed(2), y1: hy.toFixed(2),
-        x2: R,             y2: hy.toFixed(2),
+        x1: hx.toFixed(2), y1: B,
+        x2: hx.toFixed(2), y2: hy.toFixed(2),
         class:              "tempoWedge__sweetEdge",
         stroke:             "rgba(216,200,166,0.32)",
         "stroke-width":     "0.7",
@@ -148,7 +145,7 @@ export function createTempoViewWedge() {
 
     // ── hypotenuse edge (crisp diagonal, drawn over fill) ──
     svg.appendChild(mkSvg("line", {
-      x1: L, y1: T, x2: R, y2: B,
+      x1: L, y1: B, x2: R, y2: T,
       class:            "tempoWedge__hyp",
       stroke:           "rgba(216,200,166,0.88)",
       "stroke-width":   "1.6",

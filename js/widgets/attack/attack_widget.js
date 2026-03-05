@@ -6,7 +6,7 @@ const ATTACK_PERFECT_THRESHOLD_DEG = 0.05;
 const ATTACK_POP_FX_MS = 220;
 const ATTACK_BLUR_FX_MS = 100;
 const ATTACK_PERFECT_FX_MS = 200;
-const DEBUG_ATTACK_WIDGET = Boolean(globalThis.__ATTACK_WIDGET_DEBUG__ || globalThis.__DEV__);
+const DEBUG_ATTACK_WIDGET = Boolean(globalThis.__DRIVIX_DEBUG__?.attack);
 
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, Number(v) || 0));
