@@ -175,6 +175,161 @@ export function createFieldTopView() {
     ctx.font      = `${fSize}px -apple-system, sans-serif`;
     ctx.textAlign = 'center';
     ctx.fillText('TEE', x, y + fSize * 2 + 2);
+
+    drawGolfer(x, y, l);
+  }
+
+  // ── Golfer silhouette — address pose, classic hip hinge ──
+
+  function drawGolfer(tx, ty, l) {
+    const u  = Math.max(44, l.groundY * 0.60);
+    const bx = tx - u * 0.14;
+    const by = ty;
+    const fill   = 'rgba(216,200,166,0.54)';
+    const stroke = 'rgba(216,200,166,0.54)';
+
+    ctx.save();
+    ctx.setLineDash([]);
+    ctx.lineJoin = 'round';
+    ctx.lineCap  = 'round';
+
+    // head geometry (shared by head, neck, cap)
+    const hx = bx + u * 0.09;
+    const hy = by - u * 0.83;
+    const hr = u * 0.086;          // bigger head — better readability
+
+    // ━━ 1. BODY + LEGS — single closed filled path ━━━━━━━━
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.moveTo(bx + u * 0.20, by);          // front foot toe
+    ctx.lineTo(bx + u * 0.14, by);          // front heel
+    ctx.bezierCurveTo(
+      bx + u * 0.13, by - u * 0.14,
+      bx + u * 0.11, by - u * 0.28,
+      bx + u * 0.11, by - u * 0.42
+    );
+    ctx.bezierCurveTo(
+      bx + u * 0.11, by - u * 0.49,
+      bx + u * 0.12, by - u * 0.54,
+      bx + u * 0.14, by - u * 0.58
+    );
+    ctx.bezierCurveTo(
+      bx + u * 0.16, by - u * 0.64,
+      bx + u * 0.16, by - u * 0.70,
+      bx + u * 0.14, by - u * 0.75
+    );
+    ctx.bezierCurveTo(
+      bx + u * 0.10, by - u * 0.78,
+      bx + u * 0.00, by - u * 0.78,
+      bx - u * 0.03, by - u * 0.74
+    );
+    ctx.bezierCurveTo(
+      bx - u * 0.05, by - u * 0.66,
+      bx - u * 0.05, by - u * 0.56,
+      bx - u * 0.03, by - u * 0.50
+    );
+    ctx.bezierCurveTo(
+      bx - u * 0.03, by - u * 0.44,
+      bx - u * 0.03, by - u * 0.30,
+      bx - u * 0.04, by - u * 0.15
+    );
+    ctx.bezierCurveTo(
+      bx - u * 0.04, by - u * 0.07,
+      bx - u * 0.05, by - u * 0.01,
+      bx - u * 0.05, by
+    );
+    ctx.lineTo(bx + u * 0.06, by);
+    ctx.closePath();
+    ctx.fill();
+
+    // ━━ 2. NECK — trapezoid bridging shoulders to head ━━━━
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.moveTo(bx + u * 0.04, by - u * 0.77);    // back base (shoulder level)
+    ctx.lineTo(bx + u * 0.14, by - u * 0.77);    // front base
+    ctx.lineTo(hx + hr * 0.42, hy + hr * 0.62);  // front top (below jaw)
+    ctx.lineTo(hx - hr * 0.32, hy + hr * 0.62);  // back top
+    ctx.closePath();
+    ctx.fill();
+
+    // ━━ 3. HEAD ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.arc(hx, hy, hr, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ━━ 4. CAP DOME — arches above the head ━━━━━━━━━━━━━━
+    // Cap base meets head at upper-left (back ≈ −149°) and
+    // upper-right (front ≈ −17°), dome curves above.
+    const cbA = Math.atan2(-0.52, -0.85);  // back angle  ≈ −149°
+    const cfA = Math.atan2(-0.30,  0.95);  // front angle ≈  −17°
+    const cbX = hx + hr * (-0.85), cbY = hy + hr * (-0.52);
+    const cfX = hx + hr *   0.95,  cfY = hy + hr * (-0.30);
+
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.moveTo(cbX, cbY);
+    ctx.bezierCurveTo(
+      hx - hr * 0.88, hy - hr * 1.72,   // back-top ctrl
+      hx + hr * 0.44, hy - hr * 1.80,   // front-top ctrl (peak fwd)
+      cfX, cfY
+    );
+    ctx.arc(hx, hy, hr, cfA, cbA, true); // CCW arc through head top → closes
+    ctx.closePath();
+    ctx.fill();
+
+    // ━━ 5. CAP BRIM — thin oval jutting forward ━━━━━━━━━━
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.ellipse(
+      cfX + hr * 0.46, cfY + hr * 0.04,  // center: just ahead of cap front
+      hr * 0.54, hr * 0.13,               // wide × thin
+      0.14,                               // slight downward tilt
+      0, Math.PI * 2
+    );
+    ctx.fill();
+
+    // ━━ 6. ARMS — hanging down, both meet at grip ━━━━━━━━
+    const lw = Math.max(3, u * 0.062);
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth   = lw;
+
+    ctx.beginPath();
+    ctx.moveTo(bx + u * 0.12, by - u * 0.73);
+    ctx.bezierCurveTo(
+      bx + u * 0.10, by - u * 0.60,
+      bx + u * 0.09, by - u * 0.45,
+      bx + u * 0.08, by - u * 0.31
+    );
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(bx - u * 0.03, by - u * 0.72);
+    ctx.bezierCurveTo(
+      bx + u * 0.01, by - u * 0.59,
+      bx + u * 0.04, by - u * 0.45,
+      bx + u * 0.08, by - u * 0.31
+    );
+    ctx.stroke();
+
+    // ━━ 7. CLUB SHAFT — nearly vertical, address ━━━━━━━━━
+    ctx.strokeStyle = 'rgba(216,200,166,0.40)';
+    ctx.lineWidth   = Math.max(1.5, u * 0.022);
+    ctx.beginPath();
+    ctx.moveTo(bx + u * 0.08, by - u * 0.31);
+    ctx.lineTo(bx + u * 0.14, by + 1);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(216,200,166,0.38)';
+    ctx.beginPath();
+    ctx.ellipse(
+      bx + u * 0.14, by + 1,
+      u * 0.042, u * 0.021,
+      Math.atan2(u * 0.32, u * 0.06), 0, Math.PI * 2
+    );
+    ctx.fill();
+
+    ctx.restore();
   }
 
   // ── Live trajectory arc (RUNNING state) ───────────────────
