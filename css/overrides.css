@@ -902,11 +902,7 @@ header#appHeader .top-right .gc-segmented__btn--active {
   overflow:   hidden !important;
 }
 
-/* ── Attack angle widget ─────────────────────────────────── */
-/* Attack SVG viewBox is 120×90. Stage defaults to clamp(140px,22vw,190px).
-   At 190px stage → SVG renders 190×142px, arc endpoints at y=113px →
-   clipped by our 72px body. Fix: shrink --arc-size to 88px → SVG 88×66px,
-   endpoints at 53px, ball at neutral 15px — all visible. */
+/* ── Attack angle widget (compact placeholder — overridden below) ── */
 #sidePanel [data-widget="attack"],
 #sidePanel .metricCard--attack {
   --arc-size:       88px !important;
@@ -915,19 +911,87 @@ header#appHeader .top-right .gc-segmented__btn--active {
   --arc-inner-w:    4px !important;
   --golf-ball-size: 13px !important;
 }
+#sidePanel [data-widget="attack"] .tubeArc__scale { display: none !important; }
+
+
+/* =========================================================
+   ATTACK widget — full-width bottom row (v2)
+   Layout: [TEMPO | PATH] top row, [ATTACK ─────────] bottom
+   Arc viewBox 0 0 120 90 · stage 196px → SVG 196×147px
+   Arc endpoints y=72 → rendered 118px from top → body 128px
+   ========================================================= */
+
+/* Step 1: switch grid to 2 top columns, let ATTACK fill row 2 */
+#sidePanel #swingMetricsRow {
+  grid-template-columns: 1fr 1fr !important;
+  grid-template-rows:    auto auto !important;
+  gap:                   8px 6px !important;
+}
+
+/* Step 2: ATTACK explicitly placed at row 2, spans both columns */
+#sidePanel .metricCard--attack {
+  grid-column:  1 / -1 !important;
+  grid-row:     2 !important;
+  border-top:   1px solid rgba(255,255,255,0.07) !important;
+  padding-top:  8px !important;
+  overflow:     visible !important;
+  /* Larger strokes & ball for full-width */
+  --arc-size:       196px !important;
+  --aa-stage-w:     196px !important;
+  --arc-outer-w:    11px !important;
+  --arc-inner-w:    9px !important;
+  --golf-ball-size: 22px !important;
+}
+
+/* Step 3: ATTACK body — taller to fit full arc (196×147px SVG) */
+#sidePanel .metricCard--attack .metricCard__body {
+  height:     128px !important;
+  min-height: 128px !important;
+  max-height: 128px !important;
+  flex:       0 0 128px !important;
+  overflow:   visible !important;
+}
+
+/* Step 4: stage & host centered */
 #sidePanel [data-widget="attack"] .tubeArc__stage {
-  width:  88px !important;
+  width:  196px !important;
   margin: 0 auto !important;
 }
-#sidePanel [data-widget="attack"] .tubeArc__scale {
-  display: none !important;
-}
 #sidePanel [data-widget="attack"] #attackAngle {
-  width:    88px !important;
+  width:    196px !important;
   overflow: visible !important;
   margin:   0 auto !important;
 }
 #sidePanel [data-widget="attack"] .tubeArc__svg {
   width:  100% !important;
   height: auto !important;
+}
+
+/* Step 5: re-enable ±6° scale labels */
+#sidePanel [data-widget="attack"] .tubeArc__scale {
+  display:       flex !important;
+  margin-top:    2px !important;
+}
+#sidePanel [data-widget="attack"] .tubeArc__scaleLabel {
+  font-size:   10px !important;
+  opacity:     0.45 !important;
+}
+
+/* Step 6: bigger readout for full-width row */
+#sidePanel .metricCard--attack .metricCard__footer {
+  padding:    6px 4px 4px !important;
+  text-align: center !important;
+}
+#sidePanel .metricCard--attack #attackAngleReadout,
+#sidePanel .metricCard--attack .metricCard__footer .metricCard__value {
+  font-size:      20px !important;
+  font-weight:    700 !important;
+  letter-spacing: -0.01em !important;
+  color:          rgba(255,255,255,0.92) !important;
+}
+
+/* Step 7: ATTACK title — left-aligned to feel like section label */
+#sidePanel .metricCard--attack .metricCard__title {
+  text-align:  left !important;
+  padding-left: 4px !important;
 }
