@@ -160,43 +160,6 @@
 
           </div>
           <div class="powerCard__controls">
-            <div class="gc-controls__row gc-controls__row--buttons gc-controls__row--primary">
-              <div class="gc-swingControl">
-                <div class="swing-metrics-row" id="swingMetricsRow">
-                  <div class="metricCard metricCard--tempo" data-widget="tempo">
-                    <div class="metricCard__title">SWING TEMPO</div>
-                    <div class="metricCard__body" id="tempoMount">
-                      <div id="swingTempoControl" class="metricWidgetHost" aria-label="Swing tempo"></div>
-                    </div>
-                    <div class="metricCard__footer" id="tempoFooter">
-                      <div class="metricCard__hint" id="swingTempoPct">0%</div>
-                    </div>
-                  </div>
-
-                  <div class="metricCard metricCard--path" data-widget="path">
-                    <div class="metricCard__title">SWING PATH</div>
-                    <div class="metricCard__body" id="pathMount">
-                      <div id="pathPixi" aria-hidden="true"></div>
-                    </div>
-                    <div class="metricCard__footer" id="pathFooter">
-                      <div class="metricCard__value">—</div>
-                    </div>
-                  </div>
-
-                  <div class="metricCard metricCard--attack" data-widget="attack">
-                    <div class="metricCard__title">ATTACK ANGLE</div>
-                    <div class="metricCard__body" id="attackMount">
-                      <div id="attackAngle" class="metricWidgetHost" aria-label="Attack angle"></div>
-                    </div>
-                    <div class="metricCard__footer" id="attackFooter">
-                      <div class="metricCard__value" id="attackAngleValueLabel">
-                        <span id="attackAngleReadout">+0.0°</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
             <div id="uiRoot"></div>
           </div>
         </section>
@@ -223,6 +186,44 @@
             <div class="stats-card__item">
               <div class="stats-card__label">BEST 3 AVG</div>
               <div class="stats-card__value"><span id="best3AvgValue">—</span><span class="stats-card__unit"> YD</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SWING METRICS card -->
+        <div class="gc-card gc-sidecard drivix-card metrics-card">
+          <div class="gc-card__kicker">SWING METRICS</div>
+          <div class="swing-metrics-row" id="swingMetricsRow">
+            <div class="metricCard metricCard--tempo" data-widget="tempo">
+              <div class="metricCard__title">TEMPO</div>
+              <div class="metricCard__body" id="tempoMount">
+                <div id="swingTempoControl" class="metricWidgetHost" aria-label="Swing tempo"></div>
+              </div>
+              <div class="metricCard__footer" id="tempoFooter">
+                <div class="metricCard__hint" id="swingTempoPct">0%</div>
+              </div>
+            </div>
+
+            <div class="metricCard metricCard--path" data-widget="path">
+              <div class="metricCard__title">PATH</div>
+              <div class="metricCard__body" id="pathMount">
+                <div id="pathPixi" aria-hidden="true"></div>
+              </div>
+              <div class="metricCard__footer" id="pathFooter">
+                <div class="metricCard__value">—</div>
+              </div>
+            </div>
+
+            <div class="metricCard metricCard--attack" data-widget="attack">
+              <div class="metricCard__title">ATTACK</div>
+              <div class="metricCard__body" id="attackMount">
+                <div id="attackAngle" class="metricWidgetHost" aria-label="Attack angle"></div>
+              </div>
+              <div class="metricCard__footer" id="attackFooter">
+                <div class="metricCard__value" id="attackAngleValueLabel">
+                  <span id="attackAngleReadout">+0.0°</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

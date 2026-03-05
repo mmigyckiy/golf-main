@@ -642,3 +642,159 @@ header#appHeader .top-right .gc-segmented__btn--active {
   letter-spacing: 0.08em !important;
   vertical-align: 2px !important;
 }
+
+
+/* =========================================================
+   SWING METRICS in sidebar — compact card  v2
+   ========================================================= */
+
+/* Card shell */
+.metrics-card {
+  padding:  10px 10px 12px !important;
+  overflow: hidden !important;
+}
+.metrics-card .gc-card__kicker {
+  font-size:      10px !important;
+  letter-spacing: 0.16em !important;
+  color:          var(--kicker-text) !important;
+  margin-bottom:  8px !important;
+  display:        block !important;
+  opacity:        1 !important;
+}
+
+/* Compact 3-column row */
+#sidePanel #swingMetricsRow {
+  display:               grid !important;
+  grid-template-columns: 1fr 1fr 1fr !important;
+  gap:                   0 4px !important;
+  min-height:            0 !important;
+  padding:               0 !important;
+  background:            none !important;
+  border:                none !important;
+  box-shadow:            none !important;
+}
+
+/* Each metric card: no decoration, compact, clip overflow */
+#sidePanel .metricCard {
+  min-height:  0 !important;
+  height:      auto !important;
+  background:  transparent !important;
+  border:      none !important;
+  box-shadow:  none !important;
+  padding:     0 !important;
+  overflow:    hidden !important;
+  display:     flex !important;
+  flex-direction: column !important;
+}
+
+/* Title: tiny label */
+#sidePanel .metricCard__title {
+  font-size:      9px !important;
+  min-height:     0 !important;
+  padding:        0 2px 4px !important;
+  text-align:     center !important;
+  letter-spacing: 0.14em !important;
+  color:          rgba(255,255,255,0.50) !important;
+  border:         none !important;
+  background:     none !important;
+  white-space:    nowrap !important;
+  /* remove decorative lines that overflow in narrow columns */
+}
+#sidePanel .metricCard__title::before,
+#sidePanel .metricCard__title::after {
+  display: none !important;
+}
+
+/* Body: fixed height so SVGs have room to render */
+#sidePanel .metricCard__body {
+  padding:    0 !important;
+  height:     72px !important;
+  min-height: 72px !important;
+  max-height: 72px !important;
+  flex:       0 0 72px !important;
+  overflow:   hidden !important;
+  display:    flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Footer: compact value */
+#sidePanel .metricCard__footer {
+  padding:    3px 2px 0 !important;
+  text-align: center !important;
+  border:     none !important;
+  flex:       0 0 auto !important;
+}
+#sidePanel .metricCard__footer :is(.metricCard__value, .metricCard__hint) {
+  font-size:   10px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  color:       rgba(255,255,255,0.80) !important;
+  white-space: nowrap !important;
+}
+
+/* ── Tempo widget ────────────────────────────────────────── */
+#sidePanel [data-widget="tempo"] .tempoWedge__svg {
+  display:    block !important;
+  width:      100% !important;
+  height:     68px !important;
+  max-height: 68px !important;
+  overflow:   hidden !important;
+}
+#sidePanel [data-widget="tempo"] .tempoWedge,
+#sidePanel [data-widget="tempo"] #swingTempoControl,
+#sidePanel [data-widget="tempo"] #tempoMount {
+  width:   100% !important;
+  height:  68px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* ── Path widget ─────────────────────────────────────────── */
+/* Hide overflow scale labels (+6, 0, -6) — too wide for column */
+#sidePanel [data-widget="path"] .path-sector__scale {
+  display: none !important;
+}
+#sidePanel [data-widget="path"] #alignmentRing,
+#sidePanel [data-widget="path"] .path-sector {
+  width:     70px !important;
+  max-width: 70px !important;
+  overflow:  hidden !important;
+}
+#sidePanel [data-widget="path"] .path-sector__svg {
+  width:      100% !important;
+  height:     auto !important;
+  max-height: 68px !important;
+  overflow:   hidden !important;
+}
+
+/* ── Attack angle widget ─────────────────────────────────── */
+/* Attack SVG viewBox is 120×90. Stage defaults to clamp(140px,22vw,190px).
+   At 190px stage → SVG renders 190×142px, arc endpoints at y=113px →
+   clipped by our 72px body. Fix: shrink --arc-size to 88px → SVG 88×66px,
+   endpoints at 53px, ball at neutral 15px — all visible. */
+#sidePanel [data-widget="attack"],
+#sidePanel .metricCard--attack {
+  --arc-size:       88px !important;
+  --aa-stage-w:     88px !important;
+  --arc-outer-w:    5px !important;
+  --arc-inner-w:    4px !important;
+  --golf-ball-size: 13px !important;
+}
+#sidePanel [data-widget="attack"] .tubeArc__stage {
+  width:  88px !important;
+  margin: 0 auto !important;
+}
+#sidePanel [data-widget="attack"] .tubeArc__scale {
+  display: none !important;
+}
+#sidePanel [data-widget="attack"] #attackAngle {
+  width:    88px !important;
+  overflow: visible !important;
+  margin:   0 auto !important;
+}
+#sidePanel [data-widget="attack"] .tubeArc__svg {
+  width:  100% !important;
+  height: auto !important;
+}
