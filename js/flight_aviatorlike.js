@@ -205,6 +205,54 @@
     let didFreezeOnStop = false;
     let lastCompositeLog = 0;
 
+    // ── Rain particles ────────────────────────────────────────
+    const RAIN_MAX = 90;
+    const rainDrops = [];
+    let rainInited = false;
+    function initRain() {
+      rainDrops.length = 0;
+      for (let i = 0; i < RAIN_MAX; i++) {
+        rainDrops.push({
+          x: Math.random(),    // normalized 0–1
+          y: Math.random(),    // normalized 0–1
+          spd: 0.28 + Math.random() * 0.32,
+          len: 0.012 + Math.random() * 0.018,
+          a:   0.06 + Math.random() * 0.10,
+        });
+      }
+      rainInited = true;
+    }
+    function tickRain(dt) {
+      if (!rainInited) initRain();
+      for (const d of rainDrops) {
+        d.y += d.spd * dt;
+        if (d.y > 1) { d.y -= 1; d.x = Math.random(); }
+      }
+    }
+    function drawRain(intensity) {
+      if (intensity <= 0.01) return;
+      const count = Math.floor(intensity * RAIN_MAX);
+      ctx.save();
+      ctx.lineCap = 'round';
+      for (let i = 0; i < count; i++) {
+        const d = rainDrops[i];
+        const px = d.x * w, py = d.y * h;
+        const lenPx = d.len * h;
+        ctx.strokeStyle = `rgba(180,210,240,${d.a * intensity})`;
+        ctx.lineWidth = 0.7;
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + lenPx * 0.18, py + lenPx);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // ── Multiplier history (live graph) ──────────────────────
+    const xHistory = [];
+    const X_HIST_MAX = 180;
+    let xHistRoundKey = null;
+
     function resize(){
       w = canvas.clientWidth || canvas.width || 640;
       h = canvas.clientHeight || canvas.height || 360;
@@ -429,23 +477,34 @@
       const EPS = 0.001;
       const usable = trail.filter(p => (p.p ?? 0) <= (progress + EPS));
       if(!usable.length) return;
-      const trimmed = usable.slice(-24);
-      const alignedBoost = lastState?.round?.faceAlignedAtRelease ? 0.05 : 0;
+      const trimmed = usable.slice(-32);
+      const alignedBoost = lastState?.round?.faceAlignedAtRelease ? 0.06 : 0;
       ctx.save();
       ctx.lineCap = "round";
+
+      // ── Comet glow layers ─────────────────────────────────
       for(let i=1;i<trimmed.length;i++){
         const a = trimmed[i-1];
         const b = trimmed[i];
         const age = now - b.t;
         const t = clamp01(age / TRAIL_MAX_AGE);
-        const fade = Math.pow(1 - t, 2);
-        const width = lerp(1.2, 2.4, i / trimmed.length);
-        ctx.strokeStyle = `rgba(230,236,242,${(0.28 + alignedBoost) * fade})`;
-        ctx.lineWidth = width;
-        ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
-        ctx.stroke();
+        const fade = Math.pow(1 - t, 2.2);
+        const frac = i / trimmed.length;
+
+        // Wide outer glow
+        ctx.strokeStyle = `rgba(216,200,150,${(0.10 + alignedBoost) * fade * frac})`;
+        ctx.lineWidth = lerp(1, 9, frac);
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+
+        // Mid layer
+        ctx.strokeStyle = `rgba(230,220,180,${(0.22 + alignedBoost) * fade * frac})`;
+        ctx.lineWidth = lerp(0.8, 4.5, frac);
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+
+        // Bright core
+        ctx.strokeStyle = `rgba(255,248,220,${(0.55 + alignedBoost) * fade * frac})`;
+        ctx.lineWidth = lerp(0.4, 1.8, frac);
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
       }
       ctx.restore();
     }
@@ -575,15 +634,137 @@
     function drawFlash(){
       if(!flash.active) return;
       const age = performance.now() - flash.start;
-      const p = clamp01(age / flash.duration);
-      const alpha = (1 - p) * 0.25;
-      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      const dur = Math.max(flash.duration, 420);
+      const p   = clamp01(age / dur);
+
+      // 1. Screen-wide champagne flash (fast fade)
+      const flashP = clamp01(age / 180);
+      const flashA = (1 - flashP) * 0.45;
+      ctx.fillStyle = `rgba(216,200,150,${flashA})`;
       ctx.fillRect(0, 0, w, h);
+
+      // 2. Shockwave ring expanding from impact point
+      const impX = landing.x || w * 0.5;
+      const impY = h * 0.86;
+      const maxR  = Math.max(w, h) * 0.7;
+      const ringR = p * maxR;
+      const ringA = Math.pow(1 - p, 1.6) * 0.55;
+      ctx.save();
+      ctx.strokeStyle = `rgba(216,200,140,${ringA})`;
+      ctx.lineWidth = Math.max(1, (1 - p) * 8);
+      ctx.shadowColor = `rgba(216,200,100,${ringA * 0.8})`;
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.arc(impX, impY, ringR, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+
+      // 3. Inner bright ring
+      const ring2R = p * maxR * 0.4;
+      const ring2A = Math.pow(1 - p, 2.2) * 0.70;
+      ctx.strokeStyle = `rgba(255,248,200,${ring2A})`;
+      ctx.lineWidth = Math.max(0.5, (1 - p) * 4);
+      ctx.beginPath();
+      ctx.arc(impX, impY, ring2R, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+
       if(p >= 1) flash.active = false;
       ctx.globalCompositeOperation = "source-over";
       ctx.globalAlpha = 1;
       ctx.filter = "none";
       ctx.shadowBlur = 0;
+    }
+
+    // ── Multiplier live graph (Aviator-style) ─────────────────
+    function drawMultiplierGraph(now) {
+      if (xHistory.length < 2) return;
+      const gx = w * 0.03,  gy = h * 0.04;
+      const gw = w * 0.28,  gh = h * 0.32;
+      const pad = 6;
+
+      // Background pill
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.32)';
+      ctx.beginPath();
+      const r8 = 8;
+      ctx.moveTo(gx + r8, gy);
+      ctx.lineTo(gx + gw - r8, gy);
+      ctx.arcTo(gx + gw, gy,       gx + gw, gy + r8,      r8);
+      ctx.lineTo(gx + gw, gy + gh - r8);
+      ctx.arcTo(gx + gw, gy + gh,  gx + gw - r8, gy + gh, r8);
+      ctx.lineTo(gx + r8, gy + gh);
+      ctx.arcTo(gx,       gy + gh, gx, gy + gh - r8,       r8);
+      ctx.lineTo(gx, gy + r8);
+      ctx.arcTo(gx,       gy,      gx + r8, gy,             r8);
+      ctx.closePath();
+      ctx.fill();
+
+      // Grid lines (subtle)
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 4]);
+      for (let gLine = 0; gLine < 3; gLine++) {
+        const ly = gy + pad + (gh - pad * 2) * (1 - gLine / 2);
+        ctx.beginPath(); ctx.moveTo(gx + pad, ly); ctx.lineTo(gx + gw - pad, ly); ctx.stroke();
+      }
+      ctx.setLineDash([]);
+
+      const maxX = Math.max(1.5, ...xHistory.map(p => p.x));
+      const minX = 1.0;
+      const scaleX = (gw - pad * 2) / Math.max(1, xHistory.length - 1);
+      const scaleY = (gh - pad * 2) / (maxX - minX);
+
+      const ptX = (i) => gx + pad + i * scaleX;
+      const ptY = (v) => gy + gh - pad - (v - minX) * scaleY;
+
+      // Filled area gradient
+      const fillGrad = ctx.createLinearGradient(0, gy + pad, 0, gy + gh - pad);
+      fillGrad.addColorStop(0,   'rgba(216,200,166,0.22)');
+      fillGrad.addColorStop(1,   'rgba(216,200,166,0.02)');
+      ctx.fillStyle = fillGrad;
+      ctx.beginPath();
+      ctx.moveTo(ptX(0), gy + gh - pad);
+      for (let i = 0; i < xHistory.length; i++) ctx.lineTo(ptX(i), ptY(xHistory[i].x));
+      ctx.lineTo(ptX(xHistory.length - 1), gy + gh - pad);
+      ctx.closePath();
+      ctx.fill();
+
+      // Glow line
+      ctx.beginPath();
+      for (let i = 0; i < xHistory.length; i++) {
+        i === 0 ? ctx.moveTo(ptX(i), ptY(xHistory[i].x)) : ctx.lineTo(ptX(i), ptY(xHistory[i].x));
+      }
+      ctx.strokeStyle = 'rgba(216,200,166,0.18)';
+      ctx.lineWidth = 5; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.stroke();
+
+      // Main line
+      ctx.strokeStyle = 'rgba(230,220,190,0.85)';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      // Live dot
+      const lastPt = xHistory[xHistory.length - 1];
+      const lx = ptX(xHistory.length - 1), ly2 = ptY(lastPt.x);
+      ctx.fillStyle = 'rgba(255,248,220,0.95)';
+      ctx.shadowColor = 'rgba(216,200,166,0.9)'; ctx.shadowBlur = 8;
+      ctx.beginPath(); ctx.arc(lx, ly2, 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+
+      // Current X label
+      const currentX = lastPt.x;
+      const fs = Math.max(10, Math.round(w * 0.034));
+      const fsS = Math.max(7,  Math.round(w * 0.020));
+      ctx.fillStyle = 'rgba(255,248,220,0.96)';
+      ctx.font = `700 ${fs}px -apple-system, sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.fillText(`x${currentX.toFixed(2)}`, gx + pad + 2, gy + gh - pad - 4);
+      ctx.fillStyle = 'rgba(216,200,166,0.60)';
+      ctx.font = `500 ${fsS}px -apple-system, sans-serif`;
+      ctx.fillText('POWER', gx + pad + 2, gy + pad + fsS);
+
+      ctx.restore();
     }
 
     function draw(gameState){
@@ -658,6 +839,21 @@
         const liveDist = Math.round(500 * clamp01(pRender));
         window.__DRIVIX_LIVE_DIST__ = liveDist;
       }
+      // ── Rain: intensity 0→1 as X grows from 1→4 ───────────
+      const currentX = gameState?.currentX ?? lastState?.currentX ?? 1;
+      const rainIntensity = Math.min(1, Math.max(0, (currentX - 1) / 3));
+      const dt = 0.016; // approx frame delta
+      tickRain(dt);
+      drawRain(rainIntensity);
+
+      // ── xHistory for live graph ──────────────────────────
+      const roundKey2 = gameState?.round?.id || gameState?.round?.startTs || null;
+      if (roundKey2 !== xHistRoundKey) { xHistory.length = 0; xHistRoundKey = roundKey2; }
+      if (roundState === 'RUNNING' && !hardStop && pRaw > 0.01) {
+        xHistory.push({ x: Math.max(1, currentX) });
+        if (xHistory.length > X_HIST_MAX) xHistory.shift();
+      }
+
       if(!ended && !pos.exit && !exit.active && !trailFade.freeze){
         trail.push({ x: posForRender.x, y: posForRender.y, t: now, p: pRender });
         while(trail.length > TRAIL_MAX) trail.shift();
@@ -666,6 +862,7 @@
       drawCurve(pDraw, ended || crash.active || exit.active || pos.exit);
       if(!ended) drawTrail(now, pRender);
       drawBall(posForRender);
+      if(roundState === 'RUNNING' && !ended && !crash.active) drawMultiplierGraph(now);
       drawHudOverlay(now);
       if(fxAllowed){
         drawDust();

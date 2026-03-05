@@ -1648,7 +1648,17 @@ function setDistanceUI(distance){
     best3Avg
   });
   const hudX = document.getElementById("hudX");
-  if(hudX) hudX.textContent = fmtX(displayX);
+  if(hudX){
+    const nextTxt = fmtX(displayX);
+    if(hudX.dataset.lastX !== nextTxt){
+      hudX.dataset.lastX = nextTxt;
+      hudX.textContent = nextTxt;
+      // Pulse animation on change
+      hudX.classList.remove('x-pulse');
+      void hudX.offsetWidth; // reflow
+      hudX.classList.add('x-pulse');
+    }
+  }
   updateModeUI();
   sendFlightHUD();
 }
@@ -1685,7 +1695,27 @@ function recordFlight({distance, x, crashed, perfect}){
   renderFlights();
   saveToStorage();
   renderStats(profile);
+  // ── Shot history chip ──────────────────────────────────
+  pushShotChip(distRounded, crashed);
   return { wasBest };
+}
+
+function pushShotChip(yd, crashed) {
+  const strip = document.getElementById('shotHistory');
+  if (!strip) return;
+  let cls = 'shot-chip--miss', label = `${yd}yd`;
+  if (!crashed) {
+    if      (yd >= 400) { cls = 'shot-chip--legend'; label = `◆ ${yd}yd`; }
+    else if (yd >= 350) { cls = 'shot-chip--epic';   label = `▲ ${yd}yd`; }
+    else if (yd >= 300) { cls = 'shot-chip--great';  label = `${yd}yd`; }
+    else if (yd >= 260) { cls = 'shot-chip--good';   label = `${yd}yd`; }
+  }
+  const chip = document.createElement('span');
+  chip.className = `shot-chip ${cls}`;
+  chip.textContent = label;
+  strip.appendChild(chip);
+  // Keep max 10 chips
+  while (strip.children.length > 10) strip.removeChild(strip.firstChild);
 }
 
 function updateAnalytics(finalDistance, finalX){

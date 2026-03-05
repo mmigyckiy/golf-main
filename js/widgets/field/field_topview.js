@@ -120,6 +120,73 @@ export function createFieldTopView() {
     ctx.stroke();
   }
 
+  // ── Risk zones ─────────────────────────────────────────────
+
+  function drawRiskZones(W, H, l) {
+    const zones = [
+      { from: 0,   to: 250, r: 80,  g: 200, b: 100, a: 0.055 },
+      { from: 250, to: 320, r: 220, g: 180, b: 40,  a: 0.085 },
+      { from: 320, to: 450, r: 220, g: 60,  b: 40,  a: 0.105 },
+    ];
+    for (const z of zones) {
+      const x1   = l.teeX + (z.from / FIELD_YD) * l.fieldW;
+      const x2   = Math.min(W, l.teeX + (z.to / FIELD_YD) * l.fieldW);
+      const grad = ctx.createLinearGradient(0, l.groundY - H * 0.04, 0, H);
+      grad.addColorStop(0,    `rgba(${z.r},${z.g},${z.b},0)`);
+      grad.addColorStop(0.35, `rgba(${z.r},${z.g},${z.b},${z.a})`);
+      grad.addColorStop(1,    `rgba(${z.r},${z.g},${z.b},${z.a * 1.5})`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(x1, l.groundY - H * 0.04, x2 - x1, H - l.groundY + H * 0.04);
+    }
+  }
+
+  // ── Milestone markers ──────────────────────────────────────
+
+  function drawMilestoneMarkers(W, H, l) {
+    const milestones = [
+      { yd: 260, label: 'GOOD',   color: [100, 220, 120], a: 0.82 },
+      { yd: 300, label: 'GREAT',  color: [216, 200,  90], a: 0.88 },
+      { yd: 350, label: 'EPIC',   color: [255, 140,  60], a: 0.88 },
+      { yd: 400, label: 'LEGEND', color: [220,  60,  60], a: 0.90 },
+    ];
+    const fSize = Math.max(6, Math.round(l.S * 0.027));
+    const ds    = Math.max(3, l.S * 0.020);
+
+    for (const m of milestones) {
+      const x    = l.teeX + (m.yd / FIELD_YD) * l.fieldW;
+      const gy   = l.groundY;
+      const topY = gy - ds * 5.5;
+      const [r, g, b] = m.color;
+      const colFull = `rgba(${r},${g},${b},${m.a})`;
+      const colDim  = `rgba(${r},${g},${b},0.22)`;
+
+      // Dashed vertical line
+      ctx.strokeStyle = colDim;
+      ctx.lineWidth   = 1;
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath(); ctx.moveTo(x, topY + ds * 2); ctx.lineTo(x, gy); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Diamond ◆
+      ctx.fillStyle = colFull;
+      ctx.shadowColor = colFull; ctx.shadowBlur = 6;
+      ctx.beginPath();
+      ctx.moveTo(x,      topY - ds);
+      ctx.lineTo(x + ds, topY);
+      ctx.lineTo(x,      topY + ds);
+      ctx.lineTo(x - ds, topY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+
+      // Label
+      ctx.fillStyle = colFull;
+      ctx.font      = `600 ${fSize}px -apple-system, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(m.label, x, topY - ds - 3);
+    }
+  }
+
   // ── Distance markers ──────────────────────────────────────
 
   function drawDistanceMarkers(W, H, l) {
@@ -449,7 +516,9 @@ export function createFieldTopView() {
     const finalLiveYd = liveYd > 0 ? liveYd * (landingX / currentX) : 0;
 
     drawBackground(W, H, l);
+    drawRiskZones(W, H, l);
     drawDistanceMarkers(W, H, l);
+    drawMilestoneMarkers(W, H, l);
     drawTee(W, H, l);
 
     // Local `phase` (set by onCashout / onCrash) takes priority over rState so
