@@ -291,18 +291,17 @@ aside#sidePanel > .gc-card:first-child{
 
 
 /* =========================================================
-   COCKPIT LAYOUT v3 — grid: header full-width + [main | side]
-   WHY: sidePanel pinned to right column; gc-field fixed size.
-        Nothing grows during gameplay.
+   COCKPIT LAYOUT v4 — 3-column grid:
+   [leaderboard 148px] [game field 1fr] [stats+metrics 280px]
    ========================================================= */
 
-/* 1. App body: 2-column grid, header spans both columns */
+/* 1. App body: 3-column grid, header spans all */
 #appBody.appBody.gc-layout {
   display:               grid !important;
-  grid-template-columns: 1fr 300px !important;
+  grid-template-columns: 148px 1fr 280px !important;
   grid-template-rows:    auto auto !important;
   align-items:           start !important;
-  gap:                   12px !important;
+  gap:                   10px !important;
 }
 
 header#appHeader {
@@ -311,18 +310,29 @@ header#appHeader {
   margin-bottom: 0 !important;
 }
 
-/* 2. mainPanel: left column, flex-column */
-main#mainPanel,
-main#mainPanel.mainPanel.gc-main {
+/* 2. Left panel (leaderboard) — column 1 */
+aside#leftPanel.leftPanel {
+  grid-column:    1 !important;
   display:        flex !important;
   flex-direction: column !important;
+  align-self:     start !important;
+  min-width:      0 !important;
+}
+
+/* 3. mainPanel: center column, flex-column */
+main#mainPanel,
+main#mainPanel.mainPanel.gc-main {
+  grid-column:    2 !important;
+  display:        flex !important;
+  flex-direction: column !important;
+  gap:            10px !important;
   flex:           none !important;
   min-width:      0 !important;
   width:          auto !important;
-  overflow:       hidden !important;
+  overflow:       visible !important;
 }
 
-/* 3. powerCard: column, content-sized — no forced min-height */
+/* 4. powerCard: column, content-sized */
 #mainPanel .powerCard,
 #mainPanel .gc-card--primary.powerCard {
   display:        flex !important;
@@ -332,23 +342,23 @@ main#mainPanel.mainPanel.gc-main {
   flex:           none !important;
 }
 
-/* 4. powerCard__main: wraps gc-field, sized by field */
+/* 5. powerCard__main: wraps gc-field, sized by field */
 #mainPanel .powerCard__main {
   flex:       none !important;
   min-height: 0 !important;
   height:     auto !important;
 }
 
-/* 5. Flight canvas — FIXED height, never grows or shrinks */
+/* 6. Flight canvas — taller now that leaderboard moved out */
 #mainPanel .gc-field {
-  height:     clamp(260px, 36vh, 420px) !important;
-  min-height: clamp(260px, 36vh, 420px) !important;
-  max-height: clamp(260px, 36vh, 420px) !important;
+  height:     clamp(300px, 42vh, 460px) !important;
+  min-height: clamp(300px, 42vh, 460px) !important;
+  max-height: clamp(300px, 42vh, 460px) !important;
   flex:       none !important;
   overflow:   hidden !important;
 }
 
-/* 6. Controls section: contains metric widgets, content-sized */
+/* 7. Controls section (empty now, just uiRoot) */
 #mainPanel .powerCard__controls {
   flex:           none !important;
   min-height:     0 !important;
@@ -356,22 +366,153 @@ main#mainPanel.mainPanel.gc-main {
   padding-bottom: 0 !important;
 }
 
-/* 7. Metric row: fixed height, no flex-grow */
-#mainPanel .gc-swingControl,
-#mainPanel #swingMetricsRow {
-  flex:       none !important;
-  min-height: 0 !important;
-  height:     auto !important;
-}
-
 /* 8. Side panel: right column, cards stacked vertically */
 aside#sidePanel.sidePanel.gc-sidepanel {
+  grid-column:    3 !important;
   display:        flex !important;
   flex-direction: column !important;
-  gap:            12px !important;
+  gap:            10px !important;
   width:          auto !important;
   align-self:     start !important;
   height:         auto !important;
+}
+
+/* ── LEFT PANEL: Leaderboard card ───────────────────────── */
+#leftPanel .leaderboard-card {
+  padding: 10px 10px 8px !important;
+}
+#leftPanel .leaderboard-card .gc-card__kicker {
+  font-size:      9px !important;
+  letter-spacing: 0.18em !important;
+  color:          var(--kicker-text) !important;
+  margin-bottom:  8px !important;
+  display:        block !important;
+  opacity:        1 !important;
+}
+/* Entries: rank auto-counter, name + score in one row */
+#leftPanel .gc-leaderboard {
+  display:        flex !important;
+  flex-direction: column !important;
+  gap:            4px !important;
+  margin:         0 !important;
+  padding:        0 !important;
+  list-style:     none !important;
+  counter-reset:  lb-rank !important;
+}
+#leftPanel .gc-leaderboard li {
+  display:         flex !important;
+  align-items:     center !important;
+  gap:             5px !important;
+  counter-increment: lb-rank !important;
+  font-size:       11px !important;
+  line-height:     1.3 !important;
+  padding:         2px 0 !important;
+  border-bottom:   1px solid rgba(255,255,255,0.05) !important;
+}
+#leftPanel .gc-leaderboard li::before {
+  content:     counter(lb-rank) !important;
+  font-size:   9px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  color:       rgba(255,255,255,0.28) !important;
+  min-width:   12px !important;
+  text-align:  right !important;
+  flex-shrink: 0 !important;
+}
+#leftPanel .gc-leaderboard .name {
+  flex:          1 1 auto !important;
+  overflow:      hidden !important;
+  text-overflow: ellipsis !important;
+  white-space:   nowrap !important;
+  font-size:     11px !important;
+  opacity:       0.82 !important;
+  letter-spacing: 0.02em !important;
+}
+#leftPanel .gc-leaderboard .val {
+  font-size:   11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+  flex-shrink: 0 !important;
+  opacity:     0.90 !important;
+}
+#leftPanel .gc-leaderboard li.you .name,
+#leftPanel .gc-leaderboard li.you .val {
+  color:       var(--accent, rgba(216,200,166,1)) !important;
+  font-weight: 700 !important;
+  opacity:     1 !important;
+}
+/* "You" minirow at bottom */
+#leftPanel .gc-minirow {
+  display:         flex !important;
+  justify-content: space-between !important;
+  align-items:     center !important;
+  margin-top:      6px !important;
+  padding-top:     5px !important;
+  border-top:      1px solid rgba(255,255,255,0.10) !important;
+  font-size:       10px !important;
+}
+#leftPanel .gc-minirow .muted {
+  opacity:        0.45 !important;
+  letter-spacing: 0.08em !important;
+}
+#leftPanel .gc-minirow .val {
+  font-weight:    600 !important;
+  color:          var(--accent, rgba(216,200,166,1)) !important;
+  opacity:        1 !important;
+}
+
+/* ── DAILY CHALLENGE: one-line strip below game field ───── */
+#mainPanel .daily-card--inline {
+  display:        flex !important;
+  flex-direction: row !important;
+  align-items:    center !important;
+  gap:            14px !important;
+  padding:        9px 16px !important;
+  min-height:     0 !important;
+}
+/* Left: kicker + title stacked */
+#mainPanel .daily-card--inline .daily-inline__left {
+  flex:       0 0 auto !important;
+  display:    flex !important;
+  flex-direction: column !important;
+  gap:        2px !important;
+}
+#mainPanel .daily-card--inline .daily-inline__left .gc-card__kicker {
+  font-size:      9px !important;
+  letter-spacing: 0.18em !important;
+  color:          var(--kicker-text) !important;
+  display:        block !important;
+  line-height:    1 !important;
+}
+#mainPanel .daily-card--inline .daily-inline__left .gc-card__title {
+  font-size:   14px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+}
+/* Right: description (one line, truncated) + badges */
+#mainPanel .daily-card--inline .daily-inline__right {
+  flex:        1 1 auto !important;
+  display:     flex !important;
+  align-items: center !important;
+  gap:         12px !important;
+  min-width:   0 !important;
+}
+#mainPanel .daily-card--inline .daily-inline__right .gc-card__text {
+  flex:          1 1 auto !important;
+  font-size:     11px !important;
+  line-height:   1.3 !important;
+  opacity:       0.55 !important;
+  margin:        0 !important;
+  white-space:   nowrap !important;
+  overflow:      hidden !important;
+  text-overflow: ellipsis !important;
+}
+#mainPanel .daily-card--inline .gc-badges {
+  flex-shrink: 0 !important;
+  display:     flex !important;
+  gap:         6px !important;
+  align-items: center !important;
 }
 
 /* Debug breakdown panel (JS-rendered content) */
@@ -578,14 +719,6 @@ header#appHeader .top-right .gc-segmented__btn--active {
   background: rgba(216,200,166,0.14) !important;
   color: rgba(216,200,166,0.95) !important;
   box-shadow: 0 1px 4px rgba(0,0,0,0.35) !important;
-}
-
-
-/* ── Canvas taller ─────────────────────────────────────── */
-#mainPanel .gc-field {
-  height:     clamp(310px, 42vh, 460px) !important;
-  min-height: clamp(310px, 42vh, 460px) !important;
-  max-height: clamp(310px, 42vh, 460px) !important;
 }
 
 

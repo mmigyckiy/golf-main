@@ -102,7 +102,22 @@
     </header>
 
     <div id="appBody" class="appBody gc-layout">
-      <!-- Main layout -->
+
+      <!-- LEFT: Compact Leaderboard -->
+      <aside id="leftPanel" class="leftPanel" aria-label="Leaderboard">
+        <div class="gc-card drivix-card leaderboard-card">
+          <div class="gc-card__kicker">TODAY</div>
+          <ol class="gc-leaderboard">
+            <!-- populated dynamically by js/leaderboard.js -->
+          </ol>
+          <div class="gc-minirow">
+            <span class="muted">You</span>
+            <span class="val" id="youBestInline">—</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- CENTER: Game field -->
       <main id="mainPanel" class="mainPanel gc-main">
         <!-- Left column: Tee Shot / Field / Controls -->
         <section class="gc-card gc-card--primary gc-panel gc-panel--hero drivix-card powerCard">
@@ -163,6 +178,21 @@
             <div id="uiRoot"></div>
           </div>
         </section>
+
+        <!-- Daily Challenge — below the game field -->
+        <div class="gc-card drivix-card daily-card daily-card--inline">
+          <div class="daily-inline__left">
+            <div class="gc-card__kicker">DAILY CHALLENGE</div>
+            <div class="gc-card__title">Fairway Precision</div>
+          </div>
+          <div class="daily-inline__right">
+            <div class="gc-card__text">Land a drive within the long-drive zone (≥ 260 yd) without crashing.</div>
+            <div class="gc-badges">
+              <span class="gc-badge">Today</span>
+              <span class="gc-badge gc-badge--gold">260+ yd</span>
+            </div>
+          </div>
+        </div>
       </main>
 
       <aside id="sidePanel" class="sidePanel gc-sidepanel" aria-label="Club Panel">
@@ -228,26 +258,6 @@
           </div>
         </div>
 
-        <div class="gc-card gc-sidecard drivix-card daily-card">
-          <div class="gc-card__kicker">DAILY CHALLENGE</div>
-          <div class="gc-card__title">Fairway Precision</div>
-          <div class="gc-card__text">Land a drive within the long-drive zone (≥ 260 yd) without crashing.</div>
-          <div class="gc-badges">
-            <span class="gc-badge">Today</span>
-            <span class="gc-badge gc-badge--gold">260+ yd</span>
-          </div>
-        </div>
-
-        <div class="gc-card gc-sidecard drivix-card leaderboard-card">
-          <div class="gc-card__kicker">LEADERBOARD TODAY</div>
-          <ol class="gc-leaderboard">
-            <!-- populated dynamically by js/leaderboard.js -->
-          </ol>
-          <div class="gc-minirow">
-            <span class="muted">You</span>
-            <span class="val" id="youBestInline">—</span>
-          </div>
-        </div>
       </aside>
     </div>
 
