@@ -120,26 +120,6 @@ export function createFieldTopView() {
     ctx.stroke();
   }
 
-  // ── Risk zones ─────────────────────────────────────────────
-
-  function drawRiskZones(W, H, l) {
-    const zones = [
-      { from: 0,   to: 250, r: 80,  g: 200, b: 100, a: 0.055 },
-      { from: 250, to: 320, r: 220, g: 180, b: 40,  a: 0.085 },
-      { from: 320, to: 450, r: 220, g: 60,  b: 40,  a: 0.105 },
-    ];
-    for (const z of zones) {
-      const x1   = l.teeX + (z.from / FIELD_YD) * l.fieldW;
-      const x2   = Math.min(W, l.teeX + (z.to / FIELD_YD) * l.fieldW);
-      const grad = ctx.createLinearGradient(0, l.groundY - H * 0.04, 0, H);
-      grad.addColorStop(0,    `rgba(${z.r},${z.g},${z.b},0)`);
-      grad.addColorStop(0.35, `rgba(${z.r},${z.g},${z.b},${z.a})`);
-      grad.addColorStop(1,    `rgba(${z.r},${z.g},${z.b},${z.a * 1.5})`);
-      ctx.fillStyle = grad;
-      ctx.fillRect(x1, l.groundY - H * 0.04, x2 - x1, H - l.groundY + H * 0.04);
-    }
-  }
-
   // ── Milestone markers ──────────────────────────────────────
 
   function drawMilestoneMarkers(W, H, l) {
@@ -516,7 +496,6 @@ export function createFieldTopView() {
     const finalLiveYd = liveYd > 0 ? liveYd * (landingX / currentX) : 0;
 
     drawBackground(W, H, l);
-    drawRiskZones(W, H, l);
     drawDistanceMarkers(W, H, l);
     drawMilestoneMarkers(W, H, l);
     drawTee(W, H, l);
