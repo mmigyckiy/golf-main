@@ -413,6 +413,117 @@ export function createFieldTopView() {
     }
   }
 
+  // ── Round-rect path helper ────────────────────────────────
+  function _rrect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);  ctx.arcTo(x + w, y,     x + w, y + r,     r);
+    ctx.lineTo(x + w, y + h - r);  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);  ctx.arcTo(x,     y + h, x,     y + h - r, r);
+    ctx.lineTo(x, y + r);      ctx.arcTo(x,     y,     x + r, y,          r);
+    ctx.closePath();
+  }
+
+  // ── Exit glow at right edge (ball beyond FIELD_YD, still in flight) ─
+  function drawExitGlow(l, progress) {
+    const ex  = l.teeX + l.fieldW;
+    const ey  = l.groundY - l.maxArcH * 4 * progress * (1 - progress);
+    const t   = (performance.now() % 1100) / 1100;
+    const p   = 0.5 + 0.5 * Math.sin(t * Math.PI * 2);
+
+    const hr = l.R * (5.5 + p * 2.5);
+    const hg = ctx.createRadialGradient(ex, ey, 0, ex, ey, hr);
+    hg.addColorStop(0,   `rgba(216,200,166,${(0.50 + p * 0.18).toFixed(2)})`);
+    hg.addColorStop(0.4, `rgba(216,200,166,${(0.18 + p * 0.08).toFixed(2)})`);
+    hg.addColorStop(1,   'rgba(216,200,166,0)');
+    ctx.fillStyle = hg;
+    ctx.beginPath(); ctx.arc(ex, ey, hr, 0, Math.PI * 2); ctx.fill();
+
+    const fSize = Math.max(11, Math.round(l.S * 0.050));
+    ctx.shadowColor = 'rgba(216,200,166,0.90)';
+    ctx.shadowBlur  = 10 + p * 8;
+    ctx.fillStyle   = `rgba(255,248,220,${(0.72 + p * 0.28).toFixed(2)})`;
+    ctx.font        = `700 ${fSize}px -apple-system, sans-serif`;
+    ctx.textAlign   = 'left';
+    ctx.fillText('›', ex + 4, ey + fSize * 0.40);
+    ctx.shadowBlur  = 0; ctx.shadowColor = 'transparent';
+  }
+
+  // ── Overflow badge (ball landed past FIELD_YD) ────────────
+  function drawOverflowMarker(W, H, l, yd) {
+    const ex = l.teeX + l.fieldW;
+    ctx.setLineDash([]);
+
+    // Fan glow from right wall
+    const glW = l.fieldW * 0.30;
+    const eg  = ctx.createLinearGradient(ex - glW, 0, ex, 0);
+    eg.addColorStop(0, 'rgba(216,200,166,0)');
+    eg.addColorStop(1, 'rgba(216,200,166,0.14)');
+    ctx.fillStyle = eg;
+    ctx.fillRect(ex - glW, 0, glW, l.groundY);
+
+    // Glowing vertical edge line
+    ctx.shadowColor = 'rgba(216,200,166,0.65)';
+    ctx.shadowBlur  = 16;
+    ctx.strokeStyle = 'rgba(216,200,166,0.72)';
+    ctx.lineWidth   = 1.5;
+    ctx.beginPath(); ctx.moveTo(ex, 8); ctx.lineTo(ex, l.groundY); ctx.stroke();
+    ctx.shadowBlur  = 0; ctx.shadowColor = 'transparent';
+
+    // Exit arrows pointing right (just outside edge)
+    const arrowY = l.groundY - l.maxArcH * 0.52;
+    const fa = Math.max(13, Math.round(l.S * 0.058));
+    ctx.shadowColor = 'rgba(216,200,166,0.80)';
+    ctx.shadowBlur  = 12;
+    ctx.fillStyle   = 'rgba(255,248,220,0.92)';
+    ctx.font        = `700 ${fa}px -apple-system, sans-serif`;
+    ctx.textAlign   = 'left';
+    ctx.fillText('›', ex + 3,         arrowY + fa * 0.38);
+    ctx.fillStyle   = 'rgba(255,248,220,0.50)';
+    ctx.fillText('›', ex + fa * 0.58, arrowY + fa * 0.38);
+    ctx.shadowBlur  = 0; ctx.shadowColor = 'transparent';
+
+    // Floating badge — "◆ Xyd / BEYOND THE FIELD"
+    const cx  = ex;
+    const cy  = l.groundY - l.maxArcH * 0.88;
+    const fs1 = Math.max(14, Math.round(l.S * 0.064));
+    const fs2 = Math.max(8,  Math.round(l.S * 0.034));
+    const line1 = `\u25C6  ${Math.round(yd)} YD`;
+    const line2 = 'BEYOND THE FIELD';
+
+    ctx.font = `700 ${fs1}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    const tw1 = ctx.measureText(line1).width;
+    ctx.font = `500 ${fs2}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    const tw2 = ctx.measureText(line2).width;
+
+    const padX = 14, padY = 10, gap = 5;
+    const bw = Math.max(tw1, tw2) + padX * 2;
+    const bh = fs1 + gap + fs2 + padY * 2;
+    const bxRaw = cx - bw / 2;
+    const bx = Math.min(bxRaw, W - bw - 6);   // keep badge inside canvas
+    const by = cy - bh / 2;
+
+    ctx.fillStyle = 'rgba(6,10,16,0.84)';
+    _rrect(bx, by, bw, bh, 8); ctx.fill();
+    ctx.strokeStyle = 'rgba(216,200,166,0.38)';
+    ctx.lineWidth   = 1;
+    _rrect(bx, by, bw, bh, 8); ctx.stroke();
+
+    const badgeCX = bx + bw / 2;  // actual center after clamping
+    ctx.textAlign   = 'center';
+    ctx.shadowColor = 'rgba(216,200,166,0.88)';
+    ctx.shadowBlur  = 18;
+    ctx.fillStyle   = 'rgba(255,252,240,0.97)';
+    ctx.font        = `700 ${fs1}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.fillText(line1, badgeCX, by + padY + fs1);
+
+    ctx.shadowBlur  = 4;
+    ctx.fillStyle   = 'rgba(216,200,166,0.60)';
+    ctx.font        = `500 ${fs2}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.fillText(line2, badgeCX, by + padY + fs1 + gap + fs2);
+    ctx.shadowBlur  = 0; ctx.shadowColor = 'transparent';
+  }
+
   // ── Main render ───────────────────────────────────────────
 
   function renderFrame() {
@@ -466,19 +577,30 @@ export function createFieldTopView() {
 
       if (landProgress >= 1.0) {
         // Fully settled — show static landing state
-        const gp = groundPos(l, landYd);
-        drawArcPath(l, 1.0, landYd);
-        drawLandingZone(gp.x, gp.y, landYd, l);
-        drawBall(gp.x, gp.y, 'ENDED', l);
+        if (landYd > FIELD_YD) {
+          // Ball landed beyond field — arc to edge, then overflow badge
+          drawArcPath(l, FIELD_YD / landYd, landYd);
+          drawOverflowMarker(W, H, l, landYd);
+        } else {
+          const gp = groundPos(l, landYd);
+          drawArcPath(l, 1.0, landYd);
+          drawLandingZone(gp.x, gp.y, landYd, l);
+          drawBall(gp.x, gp.y, 'ENDED', l);
+        }
       } else {
         // Still animating — ball travels the remaining arc
-        const xFrac   = Math.min(1, (landYd * landProgress) / FIELD_YD);
-        const animPos = {
-          x: l.teeX + xFrac * l.fieldW,
-          y: l.groundY - l.maxArcH * 4 * landProgress * (1 - landProgress)
-        };
+        const xFrac = Math.min(1, (landYd * landProgress) / FIELD_YD);
         drawArcPath(l, landProgress, landYd);
-        drawBall(animPos.x, animPos.y, 'RUNNING', l);
+        if (landYd > FIELD_YD && xFrac >= 1.0) {
+          // Ball has passed the field edge mid-animation — show exit glow
+          drawExitGlow(l, landProgress);
+        } else {
+          const animPos = {
+            x: l.teeX + xFrac * l.fieldW,
+            y: l.groundY - l.maxArcH * 4 * landProgress * (1 - landProgress)
+          };
+          drawBall(animPos.x, animPos.y, 'RUNNING', l);
+        }
       }
 
     } else if (phase === 'crashed') {
@@ -514,7 +636,12 @@ export function createFieldTopView() {
       };
 
       drawTrajectory(l, progress, finalLiveYd);
-      drawBall(pos.x, pos.y, 'RUNNING', l);
+      if (xFrac >= 1.0 && finalLiveYd > FIELD_YD) {
+        // Ball's projected distance exceeds field — show exit glow at right wall
+        drawExitGlow(l, progress);
+      } else {
+        drawBall(pos.x, pos.y, 'RUNNING', l);
+      }
       drawLiveCounter(W, H, liveYd, l);  // counter shows actual live yd, not final
     }
   }
