@@ -77,7 +77,12 @@
           </div>
         </div>
 
-        <div class="top-right"></div>
+        <div class="top-right">
+          <div class="gc-segmented" role="group" aria-label="Risk selection">
+            <button type="button" class="gc-segmented__btn gc-segmented__btn--active" data-risk="calm">Calm</button>
+            <button type="button" class="gc-segmented__btn" data-risk="aggressive">Aggressive</button>
+          </div>
+        </div>
       </div>
       <div id="gc-popovers">
         <div id="memberPopover" class="gc-popover gc-hidden" role="dialog" aria-modal="true" aria-label="Edit member name">
@@ -92,24 +97,8 @@
         </div>
       </div>
 
-      <div class="gc-identity gc-hide-duplicate-stats" aria-label="Member identity">
-        <div class="gc-identity__item">
-          <span class="gc-identity__label">MEMBER<span class="info-i" data-tip="Your player profile. Fatigue/pressure from recent swings can increase risk." data-tooltip="Your player profile. Fatigue/pressure from recent swings can increase risk.">i</span></span>
-          <span class="gc-identity__value" id="playerNameLabel">—</span>
-        </div>
-        <div class="gc-identity__item">
-          <span class="gc-identity__label">HANDICAP<span class="info-i" data-tip="Handicap shows how many yards you are behind the reference distance. Lower is better." data-tooltip="Handicap shows how many yards you are behind the reference distance. Lower is better.">i</span></span>
-          <span class="gc-identity__value"><span id="handicapValue">—</span> yd</span>
-        </div>
-        <div class="gc-identity__item">
-          <span class="gc-identity__label">PB<span class="info-i" data-tip="Your longest drive ever." data-tooltip="Your longest drive ever.">i</span></span>
-          <span class="gc-identity__value"><span id="pbValue">—</span> yd</span>
-        </div>
-        <div class="gc-identity__item">
-          <span class="gc-identity__label">BEST 3 AVG<span class="info-i" data-tip="Average distance of your 3 best drives from the last 20 attempts. This value determines your handicap." data-tooltip="Average distance of your 3 best drives from the last 20 attempts. This value determines your handicap.">i</span></span>
-          <span class="gc-identity__value"><span id="best3AvgValue">—</span> yd</span>
-        </div>
-      </div>
+      <!-- playerNameLabel kept for JS compatibility; moved stats to sidebar MY STATS card -->
+      <span id="playerNameLabel" hidden aria-hidden="true"></span>
     </header>
 
     <div id="appBody" class="appBody gc-layout">
@@ -133,15 +122,8 @@
               <div id="coef" class="gc-power__value">×1.00</div>
               <div class="gc-power__meta">
                 <span class="gc-pillStat"><span id="uiDistanceYd">0</span> yd</span>
-                <span class="gc-pillStat gc-pillStat--muted">Best: <span id="uiBestYd">0</span> yd</span>
               </div>
               <div class="powerCard__footer">
-                <div class="gc-controls__row gc-controls__row--segmented">
-                  <div class="gc-segmented" role="group" aria-label="Risk selection">
-                    <button type="button" class="gc-segmented__btn gc-segmented__btn--active" data-risk="calm">Calm</button>
-                    <button type="button" class="gc-segmented__btn" data-risk="aggressive">Aggressive</button>
-                  </div>
-                </div>
                 <div class="gc-controls__row gc-controls__row--meta">
                   <div id="perfectWindowLabel" class="gc-mutedSmall">SWEET SPOT: —</div>
                   <div class="swing-wind" id="swingWind">
@@ -221,6 +203,30 @@
       </main>
 
       <aside id="sidePanel" class="sidePanel gc-sidepanel" aria-label="Club Panel">
+
+        <!-- MY STATS card -->
+        <div class="gc-card gc-sidecard drivix-card stats-card" aria-label="My stats">
+          <div class="gc-card__kicker">MY STATS</div>
+          <div class="stats-card__grid">
+            <div class="stats-card__item">
+              <div class="stats-card__label">PERSONAL BEST</div>
+              <div class="stats-card__value"><span id="pbValue">—</span><span class="stats-card__unit"> YD</span></div>
+            </div>
+            <div class="stats-card__item">
+              <div class="stats-card__label">BEST TODAY</div>
+              <div class="stats-card__value"><span id="uiBestYd">—</span><span class="stats-card__unit"> YD</span></div>
+            </div>
+            <div class="stats-card__item">
+              <div class="stats-card__label">HANDICAP</div>
+              <div class="stats-card__value"><span id="handicapValue">—</span><span class="stats-card__unit"> YD</span></div>
+            </div>
+            <div class="stats-card__item">
+              <div class="stats-card__label">BEST 3 AVG</div>
+              <div class="stats-card__value"><span id="best3AvgValue">—</span><span class="stats-card__unit"> YD</span></div>
+            </div>
+          </div>
+        </div>
+
         <div class="gc-card gc-sidecard drivix-card daily-card">
           <div class="gc-card__kicker">DAILY CHALLENGE</div>
           <div class="gc-card__title">Fairway Precision</div>

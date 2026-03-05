@@ -504,3 +504,141 @@ body[data-debug="1"] #skillBreakdownDebug { display: block; }
   display: block;
   transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+
+/* =========================================================
+   LAYOUT V4 — Compact topbar + taller canvas + MY STATS
+   ========================================================= */
+
+/* ── Fix topbar height: remove gap caused by #gc-popovers ─ */
+header#appHeader {
+  gap:            0 !important;
+  padding:        7px 18px !important;
+  flex-direction: column !important;
+}
+
+/* Force top-banner-inner to flex row so profile doesn't wrap */
+header#appHeader .top-banner-inner {
+  display:        flex !important;
+  flex-direction: row !important;
+  align-items:    center !important;
+  gap:            12px !important;
+  width:          100% !important;
+}
+header#appHeader .top-left   { flex: 0 0 auto !important; }
+header#appHeader .top-center { flex: 1 1 auto !important; min-width: 0 !important; }
+header#appHeader .top-right  { flex: 0 0 auto !important; margin-left: auto !important; }
+
+/* popovers sit in normal flow but have 0 height — collapse them */
+header#appHeader #gc-popovers {
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+/* ── Compact brand ─────────────────────────────────────── */
+header#appHeader .drivix-brand  { gap: 10px !important; }
+header#appHeader .drivix-mark   { width: 26px !important; transform: none !important; }
+header#appHeader .gc-brand__title { font-size: 13px !important; letter-spacing: .20em !important; }
+header#appHeader .gc-brand__sub   { font-size: 8px !important;  letter-spacing: .16em !important; }
+
+/* ── Compact player profile ────────────────────────────── */
+header#appHeader .topbar-profile.compact { padding: 5px 12px !important; }
+header#appHeader .topbar-profile .tp-left { gap: 3px !important; min-width: 0 !important; }
+header#appHeader .topbar-profile .tp-kicker { font-size: 9px !important; letter-spacing: .22em !important; }
+header#appHeader .topbar-profile .tp-name  { font-size: 15px !important; }
+
+/* ── Risk buttons in top-right ─────────────────────────── */
+header#appHeader .top-right {
+  align-items: center !important;
+  gap: 8px !important;
+}
+header#appHeader .top-right .gc-segmented {
+  display: flex !important;
+  gap: 4px !important;
+  background: rgba(255,255,255,0.05) !important;
+  border-radius: 8px !important;
+  padding: 3px !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+}
+header#appHeader .top-right .gc-segmented__btn {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.10em !important;
+  padding: 4px 12px !important;
+  border-radius: 6px !important;
+  text-transform: uppercase !important;
+  color: rgba(255,255,255,0.50) !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background 160ms ease, color 160ms ease !important;
+}
+header#appHeader .top-right .gc-segmented__btn--active {
+  background: rgba(216,200,166,0.14) !important;
+  color: rgba(216,200,166,0.95) !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.35) !important;
+}
+
+
+/* ── Canvas taller ─────────────────────────────────────── */
+#mainPanel .gc-field {
+  height:     clamp(310px, 42vh, 460px) !important;
+  min-height: clamp(310px, 42vh, 460px) !important;
+  max-height: clamp(310px, 42vh, 460px) !important;
+}
+
+
+/* ── Shot chips: slightly bigger ───────────────────────── */
+.shot-history {
+  min-height: 30px !important;
+  padding: 4px 12px !important;
+}
+.shot-chip {
+  font-size: 11px !important;
+  padding: 3px 8px !important;
+}
+
+
+/* ── MY STATS card ─────────────────────────────────────── */
+.stats-card {
+  padding: 12px 14px !important;
+}
+.stats-card .gc-card__kicker {
+  font-size:      10px !important;
+  letter-spacing: 0.16em !important;
+  color: var(--kicker-text) !important;
+  margin-bottom:  10px !important;
+  display: block !important;
+  opacity: 1 !important;
+}
+.stats-card__grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px 8px !important;
+}
+.stats-card__item {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+}
+.stats-card__label {
+  font-size:      9px !important;
+  font-weight:    600 !important;
+  letter-spacing: 0.12em !important;
+  color:          rgba(255,255,255,0.38) !important;
+  text-transform: uppercase !important;
+}
+.stats-card__value {
+  font-size:   16px !important;
+  font-weight: 700 !important;
+  color:       rgba(255,255,255,0.90) !important;
+  line-height: 1.1 !important;
+}
+.stats-card__unit {
+  font-size:      9px !important;
+  font-weight:    600 !important;
+  color:          rgba(255,255,255,0.42) !important;
+  letter-spacing: 0.08em !important;
+  vertical-align: 2px !important;
+}
