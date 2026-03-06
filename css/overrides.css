@@ -295,13 +295,49 @@ aside#sidePanel > .gc-card:first-child{
    [leaderboard 148px] [game field 1fr] [stats+metrics 280px]
    ========================================================= */
 
-/* 1. App body: 3-column grid, header spans all */
+/* 1. App body: 3-column grid, header spans all.
+   Centre uses minmax so the game field never shrinks below 380px —
+   side panels collapse via the media queries below instead. */
 #appBody.appBody.gc-layout {
   display:               grid !important;
-  grid-template-columns: 148px 1fr 310px !important;
+  grid-template-columns: 148px minmax(380px, 1fr) 310px !important;
   grid-template-rows:    auto auto !important;
   align-items:           start !important;
   gap:                   10px !important;
+}
+
+/* ── Responsive: hide left leaderboard ≤ 980px ────────────── */
+/* Adding #appBody as ancestor gives (0,2,x,x) specificity,
+   beating the base rules at (0,1,x,x) — wins within same layer. */
+@media (max-width: 980px) {
+  #appBody.appBody.gc-layout {
+    grid-template-columns: minmax(380px, 1fr) 310px !important;
+  }
+  #appBody aside#leftPanel.leftPanel {
+    display: none !important;
+  }
+  #appBody main#mainPanel,
+  #appBody main#mainPanel.mainPanel.gc-main {
+    grid-column: 1 !important;
+  }
+  #appBody aside#sidePanel.sidePanel.gc-sidepanel {
+    grid-column: 2 !important;
+  }
+}
+
+/* ── Responsive: hide right sidebar ≤ 720px ───────────────── */
+@media (max-width: 720px) {
+  #appBody.appBody.gc-layout {
+    grid-template-columns: minmax(320px, 1fr) !important;
+  }
+  #appBody aside#sidePanel.sidePanel.gc-sidepanel {
+    display: none !important;
+    grid-column: 1 !important;
+  }
+  #appBody main#mainPanel,
+  #appBody main#mainPanel.mainPanel.gc-main {
+    grid-column: 1 !important;
+  }
 }
 
 header#appHeader {
@@ -1160,4 +1196,9 @@ header#appHeader .top-right .gc-segmented__btn--active {
   display:         flex !important;
   align-items:     center !important;
   justify-content: center !important;
+}
+
+/* ── Remove MY STATS block — not useful for a crash game ─── */
+#sidePanel .stats-card {
+  display: none !important;
 }
