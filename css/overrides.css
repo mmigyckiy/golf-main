@@ -995,3 +995,170 @@ header#appHeader .top-right .gc-segmented__btn--active {
   text-align:  left !important;
   padding-left: 4px !important;
 }
+
+
+/* =========================================================
+   SWING METRICS v3 — TEMPO full-width bottom
+   Layout: [ATTACK | PATH] top row · [TEMPO ─────────] bottom
+   All widgets scaled up vs v2 compact.
+   (These rules come last → win over v2 + ATTACK-fullwidth block)
+   ========================================================= */
+
+/* ── Grid: 2-col top row + TEMPO full-width bottom ───────── */
+#sidePanel #swingMetricsRow {
+  grid-template-columns: 1fr 1fr !important;
+  grid-template-rows:    auto auto !important;
+  gap:                   8px 8px !important;
+}
+
+/* DOM order: TEMPO(1) PATH(2) ATTACK(3)
+   We use explicit placement to get: ATTACK left, PATH right, TEMPO bottom */
+#sidePanel .metricCard--attack {
+  grid-column: 1 !important;
+  grid-row:    1 !important;
+  /* reset full-width styles from v2 */
+  border-top:  none !important;
+  padding-top: 0 !important;
+  overflow:    hidden !important;
+}
+#sidePanel .metricCard--path {
+  grid-column: 2 !important;
+  grid-row:    1 !important;
+}
+#sidePanel .metricCard--tempo {
+  grid-column: 1 / -1 !important;
+  grid-row:    2 !important;
+  border-top:  1px solid rgba(255,255,255,0.07) !important;
+  padding-top: 8px !important;
+  overflow:    visible !important;
+  /* shared.css caps tempo at --metric-side-max (140px) — remove that cap */
+  max-width:   none !important;
+  width:       100% !important;
+}
+
+/* ── Top row body height: 90px (up from 72px) ────────────── */
+#sidePanel .metricCard--attack .metricCard__body,
+#sidePanel .metricCard--path .metricCard__body {
+  height:     90px !important;
+  min-height: 90px !important;
+  max-height: 90px !important;
+  flex:       0 0 90px !important;
+  overflow:   hidden !important;
+}
+
+/* ── ATTACK (top-left, ~127px col): arc-size 108px ───────── */
+/* arc viewBox 120×90 · stage 108px → SVG 108×81px
+   endpoints y=72 → rendered 64.8px ≤ 90px body ✓ */
+#sidePanel .metricCard--attack {
+  --arc-size:       108px !important;
+  --aa-stage-w:     108px !important;
+  --arc-outer-w:    8px !important;
+  --arc-inner-w:    6px !important;
+  --golf-ball-size: 16px !important;
+}
+#sidePanel [data-widget="attack"] .tubeArc__stage {
+  width:  108px !important;
+  margin: 0 auto !important;
+}
+#sidePanel [data-widget="attack"] #attackAngle {
+  width:    108px !important;
+  margin:   0 auto !important;
+  overflow: visible !important;
+}
+/* Hide scale strip — too narrow in top-left column */
+#sidePanel [data-widget="attack"] .tubeArc__scale {
+  display: none !important;
+}
+/* Readout size for compact top-left slot */
+#sidePanel .metricCard--attack #attackAngleReadout,
+#sidePanel .metricCard--attack .metricCard__footer .metricCard__value {
+  font-size:   14px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+}
+#sidePanel .metricCard--attack .metricCard__footer {
+  padding: 4px 0 2px !important;
+}
+#sidePanel .metricCard--attack .metricCard__title {
+  text-align:  center !important;
+  padding-left: 0 !important;
+}
+
+/* ── PATH (top-right, ~127px col): wider sector ──────────── */
+#sidePanel [data-widget="path"] #alignmentRing,
+#sidePanel [data-widget="path"] .path-sector {
+  width:     96px !important;
+  max-width: 96px !important;
+}
+#sidePanel [data-widget="path"] .path-sector__svg {
+  max-height: 86px !important;
+}
+
+/* ── TEMPO (full-width bottom): grid layout inside card ─────
+   Turns card into a 2-col grid:
+   [SVG wedge ~130px] │ [big % readout fills rest]
+   ──────────────────────────────────────────────────────── */
+#sidePanel .metricCard--tempo {
+  display:               grid !important;
+  grid-template-columns: 130px 1fr !important;
+  grid-template-rows:    auto 1fr !important;
+  align-items:           center !important;
+  flex-direction:        unset !important;  /* cancel flex from base */
+  gap:                   0 12px !important;
+}
+/* Title row: spans both cols */
+#sidePanel .metricCard--tempo .metricCard__title {
+  grid-column:  1 / -1 !important;
+  grid-row:     1 !important;
+  text-align:   left !important;
+  padding:      0 0 6px !important;
+}
+/* Body (SVG) — left col, row 2 */
+#sidePanel .metricCard--tempo .metricCard__body {
+  grid-column:     1 !important;
+  grid-row:        2 !important;
+  width:           130px !important;
+  height:          112px !important;
+  min-height:      112px !important;
+  max-height:      112px !important;
+  flex:            none !important;
+  justify-content: flex-start !important;
+  align-items:     center !important;
+  overflow:        visible !important;
+}
+/* Footer (% readout) — right col, row 2 */
+#sidePanel .metricCard--tempo .metricCard__footer {
+  grid-column:     2 !important;
+  grid-row:        2 !important;
+  display:         flex !important;
+  align-items:     center !important;
+  justify-content: center !important;
+  padding:         0 !important;
+  border-left:     1px solid rgba(255,255,255,0.08) !important;
+}
+/* Big % number */
+#sidePanel .metricCard--tempo #swingTempoPct,
+#sidePanel .metricCard--tempo .metricCard__hint {
+  font-size:      42px !important;
+  font-weight:    700 !important;
+  line-height:    1 !important;
+  letter-spacing: -0.03em !important;
+  color:          rgba(255,255,255,0.88) !important;
+}
+/* TEMPO SVG: fill the 130px body naturally */
+#sidePanel [data-widget="tempo"] .tempoWedge__svg {
+  height:     104px !important;
+  width:      auto !important;
+  max-height: 104px !important;
+  display:    block !important;
+  overflow:   visible !important;
+}
+#sidePanel [data-widget="tempo"] .tempoWedge,
+#sidePanel [data-widget="tempo"] #swingTempoControl,
+#sidePanel [data-widget="tempo"] #tempoMount {
+  width:           130px !important;
+  height:          112px !important;
+  display:         flex !important;
+  align-items:     center !important;
+  justify-content: center !important;
+}
