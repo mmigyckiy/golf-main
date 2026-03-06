@@ -155,3 +155,80 @@
   white-space: nowrap;
   letter-spacing: 0.05em;
 }
+
+/* =========================================================
+   Option D — Neon Arc Ring elements
+   ========================================================= */
+
+/* Background track (full 270° dim ring) */
+#swingMetricsRow [data-widget="tempo"] .tempoRing__track {
+  fill: none;
+  stroke: rgba(0, 245, 255, 0.10);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+/* Sweet zone arc (60%–80%) */
+#swingMetricsRow [data-widget="tempo"] .tempoRing__sweet {
+  fill: none;
+  stroke: rgba(0, 245, 255, 0.22);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+/* Dynamic fill arc */
+#swingMetricsRow [data-widget="tempo"] .tempoRing__fill {
+  fill: none;
+  stroke: url(#twFillGrad);
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+/* Tip dot */
+#swingMetricsRow [data-widget="tempo"] .tempoRing__tip {
+  fill: #00F5FF;
+  filter:
+    drop-shadow(0 0 4px rgba(0, 245, 255, 0.80))
+    drop-shadow(0 0 10px rgba(0, 245, 255, 0.40));
+}
+
+/* Hold FX — ring fill and tip pulse */
+#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-hold .tempoRing__fill {
+  animation: tempoRingFillHold 1100ms ease-in-out infinite alternate;
+}
+#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-hold .tempoRing__tip {
+  animation: tempoRingTipHold 1100ms ease-in-out infinite alternate;
+}
+
+@keyframes tempoRingFillHold {
+  from { filter: none; }
+  to   { filter: drop-shadow(0 0 6px rgba(0, 245, 255, 0.55)); }
+}
+@keyframes tempoRingTipHold {
+  from {
+    filter:
+      drop-shadow(0 0 4px rgba(0, 245, 255, 0.80))
+      drop-shadow(0 0 10px rgba(0, 245, 255, 0.40));
+  }
+  to {
+    filter:
+      drop-shadow(0 0 8px rgba(0, 245, 255, 1.00))
+      drop-shadow(0 0 18px rgba(0, 245, 255, 0.60));
+  }
+}
+
+/* Locked state — sustained bright glow */
+#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-locked .tempoRing__fill {
+  filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.70));
+}
+#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-locked .tempoRing__tip {
+  filter:
+    drop-shadow(0 0 10px rgba(0, 245, 255, 1.00))
+    drop-shadow(0 0 22px rgba(0, 245, 255, 0.55));
+}
+
+/* Value % label — neon */
+#swingMetricsRow .metricCard--tempo #swingTempoPct {
+  color: #00F5FF !important;
+  text-shadow: 0 0 10px rgba(0, 245, 255, 0.50) !important;
+}

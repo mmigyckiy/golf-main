@@ -1,0 +1,648 @@
+/* ============================================================
+   ATTACK · PATH COMBINED WIDGET — CROSSHAIR / SCOPE VIEW
+   ============================================================
+   Owns: everything inside [data-widget="attackPath"]
+         .apView wrapper + .apView__svg
+         Crosshair elements (.xhAxis__*, .xhDot*, .xhScope__*, .xhTarget__*)
+         Footer (.apFooter__*)
+
+   Touch this file when:
+     → changing crosshair colours or glow
+     → adjusting card layout or footer
+     → tweaking hold/locked animations
+   ============================================================ */
+
+/* -------------------------
+   Grid slot & sizing
+   ------------------------- */
+#swingMetricsRow > [data-widget="attackPath"],
+#swingMetricsRow .metricCard--attack-path {
+  grid-area: attackPath;
+  max-width: 240px;
+  width: 100%;
+  position: relative;  /* anchor for absolute title */
+}
+
+/* Fixed height on sidePanel — spans BOTH columns of row 1 (right col was PATH, now free) */
+#sidePanel #swingMetricsRow .metricCard--attack-path {
+  grid-column: 1 / -1  !important;   /* span full row width */
+  grid-row:    1       !important;
+  max-width:   none    !important;
+  width:       100%    !important;
+  height:      120px   !important;
+  min-height:  120px   !important;
+  max-height:  120px   !important;
+  overflow:    hidden  !important;
+}
+
+/* Stretch to row height (main panel) */
+#mainPanel #swingMetricsRow [data-widget="attackPath"],
+#mainPanel #swingMetricsRow .metricCard--attack-path {
+  align-self: stretch;
+  min-height: 0 !important;
+}
+
+/* -------------------------
+   Title — floats over SVG at top, no longer takes up layout space
+   ------------------------- */
+#swingMetricsRow .metricCard--attack-path .metricCard__title {
+  position: absolute;
+  top: 5px;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  text-align: center;
+  white-space: nowrap;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+  font-size: 0.62rem;
+  opacity: 0.55;
+}
+
+/* -------------------------
+   Card body — fills FULL card height (title overlaid above it)
+   Overrides the generic #sidePanel .metricCard__body { height: 72px !important }
+   ------------------------- */
+#swingMetricsRow .metricCard--attack-path .metricCard__body {
+  display:    flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  padding:    0 !important;
+  width:      100% !important;
+  height:     100% !important;
+  min-height: 0    !important;
+  max-height: none !important;
+  flex:       1 1 0 !important;
+  overflow:   visible !important;
+}
+
+/* -------------------------
+   SVG wrapper — fills full body
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .apView {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  width: 100%;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* -------------------------
+   SVG canvas — fills all available space
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;  /* clip slice overflow at SVG boundary */
+}
+
+/* -------------------------
+   Footer — two values side by side
+   ------------------------- */
+#swingMetricsRow .metricCard--attack-path .metricCard__footer {
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 12px;
+}
+
+#swingMetricsRow .apFooter__attack,
+#swingMetricsRow .apFooter__path {
+  font-size: clamp(11px, 1.1vw, 14px);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  line-height: 1;
+  white-space: nowrap;
+  color: #00F5FF !important;
+  text-shadow: 0 0 10px rgba(0, 245, 255, 0.50);
+}
+
+#swingMetricsRow .apFooter__sep {
+  font-size: clamp(11px, 1.1vw, 14px);
+  color: rgba(255, 255, 255, 0.22);
+  line-height: 1;
+}
+
+/* =========================================================
+   CROSSHAIR / SCOPE ELEMENTS
+   ========================================================= */
+
+/* -------------------------
+   Background scope rings (decorative)
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .xhScope__ring {
+  fill: none;
+  pointer-events: none;
+}
+
+/* -------------------------
+   Axis labels
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .xhAxis__label {
+  font-family: inherit;
+  font-size: 6.5px;
+  letter-spacing: 0.04em;
+  fill: rgba(216, 200, 166, 0.28);
+  pointer-events: none;
+}
+
+/* -------------------------
+   Target outer ring
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .xhTarget__outer {
+  fill: none;
+  stroke: rgba(0, 245, 255, 0.08);
+  stroke-width: 0.7;
+}
+
+/* -------------------------
+   Sweet zone inner ellipse
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .xhTarget__inner {
+  fill: rgba(0, 245, 255, 0.07);
+  stroke: rgba(0, 245, 255, 0.40);
+  stroke-width: 1.2;
+  transition: stroke 140ms ease, fill 140ms ease, filter 140ms ease;
+}
+
+/* -------------------------
+   H-line (attack, dashed)
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .xhAxis__h {
+  stroke: rgba(0, 245, 255, 0.50);
+  stroke-width: 0.9;
+  stroke-dasharray: 5 4;
+}
+
+/* -------------------------
+   V-line (path, dashed)
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .xhAxis__v {
+  stroke: rgba(0, 245, 255, 0.50);
+  stroke-width: 0.9;
+  stroke-dasharray: 5 4;
+}
+
+/* -------------------------
+   Center reference ticks
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .xhScope__tick {
+  stroke: rgba(0, 245, 255, 0.35);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+/* -------------------------
+   Sync ring (hidden by default)
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .xhDot__ring {
+  fill: none;
+  stroke: rgba(0, 245, 255, 0);
+  stroke-width: 1.5;
+  transition: stroke 120ms ease;
+}
+
+/* -------------------------
+   Moving golf ball (the indicator that sweeps left-right)
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .xhBall {
+  filter:
+    drop-shadow(0 0 4px rgba(255, 255, 255, 0.75))
+    drop-shadow(0 0 9px rgba(255, 255, 255, 0.30));
+}
+
+/* Ball pulses during ARMING (it's the active moving element) */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-holding .xhBall {
+  animation: xhBallHold 1100ms ease-in-out infinite alternate;
+}
+
+/* Ball flares cyan when over the center (is-sync) */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-sync .xhBall {
+  filter:
+    drop-shadow(0 0 6px rgba(255, 255, 255, 1.00))
+    drop-shadow(0 0 14px rgba(0, 245, 255, 0.70));
+  animation: xhBallSync 500ms ease-in-out infinite alternate;
+}
+
+/* Ball glows on lock (frozen in place) */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-locked .xhBall {
+  filter:
+    drop-shadow(0 0 8px rgba(255, 255, 255, 0.95))
+    drop-shadow(0 0 18px rgba(0, 245, 255, 0.55));
+}
+
+/* Ball burst on perfect lock */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-perfect .xhBall {
+  animation: xhBallPerfect 700ms cubic-bezier(0.22, 0.86, 0.2, 1) 1 both;
+}
+
+@keyframes xhBallHold {
+  from { filter: drop-shadow(0 0 4px rgba(255,255,255,0.75)) drop-shadow(0 0 9px rgba(255,255,255,0.30)); }
+  to   { filter: drop-shadow(0 0 7px rgba(255,255,255,0.95)) drop-shadow(0 0 16px rgba(255,255,255,0.50)); }
+}
+
+/* -------------------------
+   Fixed cyan scope-center dot (the aiming reference)
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .xhDot {
+  filter:
+    drop-shadow(0 0 5px rgba(0, 245, 255, 0.80))
+    drop-shadow(0 0 12px rgba(0, 245, 255, 0.40));
+}
+
+/* Center dot brightens when ball is aligned (is-sync) */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-sync .xhDot {
+  filter:
+    drop-shadow(0 0 10px rgba(0, 245, 255, 1.00))
+    drop-shadow(0 0 22px rgba(0, 245, 255, 0.70));
+}
+
+/* -------------------------
+   Hold FX — crosshair lines gently pulse (fixed reference)
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-holding .xhAxis__h,
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-holding .xhAxis__v {
+  animation: xhLineHold 1100ms ease-in-out infinite alternate;
+}
+
+@keyframes xhLineHold {
+  from { stroke: rgba(0, 245, 255, 0.50); }
+  to   { stroke: rgba(0, 245, 255, 0.80); }
+}
+
+/* -------------------------
+   Locked — lines solid (snapped to ball position in JS), center dot glows
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-locked .xhDot {
+  filter:
+    drop-shadow(0 0 10px rgba(0, 245, 255, 1.00))
+    drop-shadow(0 0 24px rgba(0, 245, 255, 0.55));
+}
+
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-locked .xhAxis__h,
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-locked .xhAxis__v {
+  stroke: rgba(0, 245, 255, 0.85);
+  stroke-dasharray: none;
+}
+
+/* =========================================================
+   GOLF CLASH: SYNC STATE
+   Intersection dot is inside the sweet zone ellipse.
+   ========================================================= */
+
+/* Target inner ellipse brightens */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-sync .xhTarget__inner {
+  fill: rgba(0, 245, 255, 0.20);
+  stroke: rgba(0, 245, 255, 0.80);
+  filter: drop-shadow(0 0 6px rgba(0, 245, 255, 0.65));
+  animation: xhTargetPulse 600ms ease-in-out infinite alternate;
+}
+
+/* Dot max glow */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-sync .xhDot {
+  filter:
+    drop-shadow(0 0 10px rgba(0, 245, 255, 1.00))
+    drop-shadow(0 0 22px rgba(0, 245, 255, 0.70));
+  animation: xhDotSync 600ms ease-in-out infinite alternate;
+}
+
+/* Sync ring appears + expands */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-sync .xhDot__ring {
+  stroke: rgba(0, 245, 255, 0.55);
+  animation: xhRingSync 600ms ease-in-out infinite alternate;
+}
+
+/* Lines pulse brighter */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-sync .xhAxis__h,
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-sync .xhAxis__v {
+  animation: xhLineSync 600ms ease-in-out infinite alternate;
+}
+
+@keyframes xhTargetPulse {
+  from { fill: rgba(0,245,255,0.14); stroke: rgba(0,245,255,0.60); filter: none; }
+  to   { fill: rgba(0,245,255,0.28); stroke: rgba(0,245,255,0.90); filter: drop-shadow(0 0 8px rgba(0,245,255,0.70)); }
+}
+
+@keyframes xhDotSync {
+  from { filter: drop-shadow(0 0 8px rgba(0,245,255,0.85)) drop-shadow(0 0 18px rgba(0,245,255,0.50)); }
+  to   { filter: drop-shadow(0 0 14px rgba(0,245,255,1.00)) drop-shadow(0 0 30px rgba(0,245,255,0.75)); }
+}
+
+@keyframes xhRingSync {
+  from { stroke: rgba(0,245,255,0.35); r: 11; }
+  to   { stroke: rgba(0,245,255,0.70); r: 15; }
+}
+
+@keyframes xhLineSync {
+  from { stroke: rgba(0,245,255,0.55); }
+  to   { stroke: rgba(0,245,255,0.90); }
+}
+
+/* =========================================================
+   GOLF CLASH: PERFECT LOCK FLASH
+   ========================================================= */
+
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-perfect .xhDot {
+  animation: xhDotPerfect 700ms cubic-bezier(0.22, 0.86, 0.2, 1) 1 both;
+}
+
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-perfect .xhTarget__inner {
+  animation: xhTargetPerfect 700ms cubic-bezier(0.22, 0.86, 0.2, 1) 1 both;
+}
+
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-perfect .xhAxis__h,
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-perfect .xhAxis__v {
+  animation: xhLinePerfect 700ms cubic-bezier(0.22, 0.86, 0.2, 1) 1 both;
+}
+
+@keyframes xhDotPerfect {
+  0%   { filter: drop-shadow(0 0 5px rgba(0,245,255,0.80)) drop-shadow(0 0 12px rgba(0,245,255,0.40)); }
+  25%  { filter: drop-shadow(0 0 22px rgba(255,255,255,1.00)) drop-shadow(0 0 44px rgba(0,245,255,0.90)); }
+  60%  { filter: drop-shadow(0 0 14px rgba(0,245,255,1.00)) drop-shadow(0 0 28px rgba(0,245,255,0.65)); }
+  100% { filter: drop-shadow(0 0 10px rgba(0,245,255,1.00)) drop-shadow(0 0 24px rgba(0,245,255,0.55)); }
+}
+
+@keyframes xhTargetPerfect {
+  0%   { stroke: rgba(0,245,255,0.40); fill: rgba(0,245,255,0.07); }
+  25%  { stroke: rgba(255,255,255,0.95); fill: rgba(255,255,255,0.20); filter: drop-shadow(0 0 10px rgba(255,255,255,0.80)); }
+  100% { stroke: rgba(0,245,255,0.65); fill: rgba(0,245,255,0.12); filter: drop-shadow(0 0 4px rgba(0,245,255,0.50)); }
+}
+
+@keyframes xhLinePerfect {
+  0%   { stroke: rgba(0,245,255,0.50); }
+  25%  { stroke: rgba(255,255,255,0.90); filter: drop-shadow(0 0 8px rgba(255,255,255,0.70)); }
+  100% { stroke: rgba(0,245,255,0.70); filter: none; }
+}
+
+/* Golf ball sync/perfect keyframes */
+@keyframes xhBallSync {
+  from { filter: drop-shadow(0 0 6px rgba(255,255,255,1.00)) drop-shadow(0 0 14px rgba(0,245,255,0.60)); }
+  to   { filter: drop-shadow(0 0 10px rgba(255,255,255,1.00)) drop-shadow(0 0 22px rgba(0,245,255,0.90)); }
+}
+
+@keyframes xhBallPerfect {
+  0%   { filter: drop-shadow(0 0 4px rgba(255,255,255,0.75)) drop-shadow(0 0 9px rgba(255,255,255,0.30)); }
+  20%  { filter: drop-shadow(0 0 18px rgba(255,255,255,1.00)) drop-shadow(0 0 36px rgba(0,245,255,1.00)); r: 7; }
+  70%  { filter: drop-shadow(0 0 10px rgba(255,255,255,0.90)) drop-shadow(0 0 20px rgba(0,245,255,0.70)); }
+  100% { filter: drop-shadow(0 0 6px rgba(255,255,255,0.80)) drop-shadow(0 0 12px rgba(255,255,255,0.35)); }
+}
+
+/* ---- dead code below this line (old arc/needle) — kept for reference only ---- */
+/* -------------------------
+   Arc track (neon, dim) — DEPRECATED (crosshair replaced this)
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .apArc__track {
+  fill: none;
+  stroke: rgba(0, 245, 255, 0.14);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+/* -------------------------
+   Attack sweet zone arc (±2° segment near apex)
+   Brighter stripe that lights up during sync
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .apArc__sweet {
+  fill: none;
+  stroke: rgba(0, 245, 255, 0.30);
+  stroke-width: 7;
+  stroke-linecap: round;
+  transition: stroke 140ms ease, filter 140ms ease;
+}
+
+/* -------------------------
+   Sync ring — expands around runner on is-sync
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .apArc__syncRing {
+  fill: none;
+  stroke: rgba(0, 245, 255, 0);   /* invisible by default */
+  stroke-width: 1.5;
+  transition: stroke 120ms ease;
+}
+
+/* -------------------------
+   Arc scale labels
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .apArc__label {
+  font-family: inherit;
+  font-size: 7.5px;
+  letter-spacing: 0.04em;
+  fill: rgba(216, 200, 166, 0.32);
+}
+
+/* -------------------------
+   Attack runner (neon orb)
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .apArc__runner {
+  filter:
+    drop-shadow(0 0 6px rgba(0, 245, 255, 0.80))
+    drop-shadow(0 0 14px rgba(0, 245, 255, 0.40));
+}
+
+/* -------------------------
+   Path needle
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .apPath__needle {
+  stroke: #00F5FF;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* -------------------------
+   Path needle tip
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .apPath__tip {
+  fill: #00F5FF;
+  filter:
+    drop-shadow(0 0 4px rgba(0, 245, 255, 0.80))
+    drop-shadow(0 0 10px rgba(0, 245, 255, 0.35));
+}
+
+/* -------------------------
+   Hold FX — runner and tip pulse
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-holding .apArc__runner {
+  animation: apRunnerHold 1100ms ease-in-out infinite alternate;
+}
+
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-holding .apPath__tip {
+  animation: apTipHold 1100ms ease-in-out infinite alternate;
+}
+
+@keyframes apRunnerHold {
+  from {
+    filter:
+      drop-shadow(0 0 6px rgba(0, 245, 255, 0.80))
+      drop-shadow(0 0 14px rgba(0, 245, 255, 0.40));
+  }
+  to {
+    filter:
+      drop-shadow(0 0 10px rgba(0, 245, 255, 1.00))
+      drop-shadow(0 0 22px rgba(0, 245, 255, 0.60));
+  }
+}
+
+@keyframes apTipHold {
+  from {
+    filter:
+      drop-shadow(0 0 4px rgba(0, 245, 255, 0.80))
+      drop-shadow(0 0 10px rgba(0, 245, 255, 0.35));
+  }
+  to {
+    filter:
+      drop-shadow(0 0 8px rgba(0, 245, 255, 1.00))
+      drop-shadow(0 0 18px rgba(0, 245, 255, 0.60));
+  }
+}
+
+/* -------------------------
+   Locked — sustained bright glow
+   ------------------------- */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-locked .apArc__runner {
+  filter:
+    drop-shadow(0 0 10px rgba(0, 245, 255, 1.00))
+    drop-shadow(0 0 24px rgba(0, 245, 255, 0.55));
+}
+
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-locked .apPath__tip {
+  filter:
+    drop-shadow(0 0 8px rgba(0, 245, 255, 0.90))
+    drop-shadow(0 0 20px rgba(0, 245, 255, 0.45));
+}
+
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-locked .apPath__needle {
+  filter: drop-shadow(0 0 5px rgba(0, 245, 255, 0.65));
+}
+
+/* =========================================================
+   GOLF CLASH: SYNC STATE
+   Both attack AND path are inside their sweet zones.
+   ========================================================= */
+
+/* Attack sweet zone arc brightens */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-sync .apArc__sweet {
+  stroke: rgba(0, 245, 255, 0.75);
+  filter: drop-shadow(0 0 5px rgba(0, 245, 255, 0.60));
+  animation: apSweetPulse 600ms ease-in-out infinite alternate;
+}
+
+/* Path sweet zone sector brightens */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-sync .apPath__sweet {
+  fill: rgba(0, 245, 255, 0.22);
+  animation: apPathSweetPulse 600ms ease-in-out infinite alternate;
+}
+
+/* Runner orb max glow */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-sync .apArc__runner {
+  filter:
+    drop-shadow(0 0 10px rgba(0, 245, 255, 1.00))
+    drop-shadow(0 0 22px rgba(0, 245, 255, 0.65));
+  animation: apRunnerSync 600ms ease-in-out infinite alternate;
+}
+
+/* Sync ring appears + pulses */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-sync .apArc__syncRing {
+  stroke: rgba(0, 245, 255, 0.55);
+  animation: apSyncRing 600ms ease-in-out infinite alternate;
+}
+
+/* Needle tip max glow */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-sync .apPath__tip {
+  filter:
+    drop-shadow(0 0 8px rgba(0, 245, 255, 1.00))
+    drop-shadow(0 0 18px rgba(0, 245, 255, 0.65));
+  animation: apTipSync 600ms ease-in-out infinite alternate;
+}
+
+@keyframes apSweetPulse {
+  from { stroke: rgba(0, 245, 255, 0.55); filter: none; }
+  to   { stroke: rgba(0, 245, 255, 0.90); filter: drop-shadow(0 0 6px rgba(0, 245, 255, 0.70)); }
+}
+
+@keyframes apPathSweetPulse {
+  from { fill: rgba(0, 245, 255, 0.14); }
+  to   { fill: rgba(0, 245, 255, 0.28); }
+}
+
+@keyframes apRunnerSync {
+  from {
+    filter:
+      drop-shadow(0 0 8px rgba(0, 245, 255, 0.85))
+      drop-shadow(0 0 18px rgba(0, 245, 255, 0.50));
+  }
+  to {
+    filter:
+      drop-shadow(0 0 14px rgba(0, 245, 255, 1.00))
+      drop-shadow(0 0 30px rgba(0, 245, 255, 0.70));
+  }
+}
+
+@keyframes apSyncRing {
+  from { stroke: rgba(0, 245, 255, 0.35); r: 13; }
+  to   { stroke: rgba(0, 245, 255, 0.70); r: 16; }
+}
+
+@keyframes apTipSync {
+  from {
+    filter:
+      drop-shadow(0 0 5px rgba(0, 245, 255, 0.80))
+      drop-shadow(0 0 12px rgba(0, 245, 255, 0.45));
+  }
+  to {
+    filter:
+      drop-shadow(0 0 10px rgba(0, 245, 255, 1.00))
+      drop-shadow(0 0 22px rgba(0, 245, 255, 0.65));
+  }
+}
+
+/* =========================================================
+   GOLF CLASH: PERFECT LOCK FLASH
+   Triggered once when locked while is-sync was active.
+   ========================================================= */
+
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-perfect .apArc__runner {
+  animation: apRunnerPerfect 700ms cubic-bezier(0.22, 0.86, 0.2, 1) 1 both;
+}
+
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-perfect .apPath__tip {
+  animation: apTipPerfect 700ms cubic-bezier(0.22, 0.86, 0.2, 1) 1 both;
+}
+
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-perfect .apArc__sweet {
+  animation: apArcSweetPerfect 700ms cubic-bezier(0.22, 0.86, 0.2, 1) 1 both;
+}
+
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-perfect .apPath__needle {
+  animation: apNeedlePerfect 700ms cubic-bezier(0.22, 0.86, 0.2, 1) 1 both;
+}
+
+@keyframes apRunnerPerfect {
+  0%   { filter: drop-shadow(0 0 6px rgba(0,245,255,0.80)) drop-shadow(0 0 14px rgba(0,245,255,0.40)); }
+  25%  { filter: drop-shadow(0 0 20px rgba(255,255,255,1.00)) drop-shadow(0 0 40px rgba(0,245,255,0.90)); }
+  60%  { filter: drop-shadow(0 0 14px rgba(0,245,255,1.00)) drop-shadow(0 0 28px rgba(0,245,255,0.65)); }
+  100% { filter: drop-shadow(0 0 10px rgba(0,245,255,1.00)) drop-shadow(0 0 24px rgba(0,245,255,0.55)); }
+}
+
+@keyframes apTipPerfect {
+  0%   { r: 3.5; filter: drop-shadow(0 0 4px rgba(0,245,255,0.80)); }
+  25%  { r: 6.0; filter: drop-shadow(0 0 16px rgba(255,255,255,1.00)) drop-shadow(0 0 32px rgba(0,245,255,0.80)); }
+  60%  { r: 4.5; filter: drop-shadow(0 0 10px rgba(0,245,255,1.00)) drop-shadow(0 0 22px rgba(0,245,255,0.50)); }
+  100% { r: 4.5; filter: drop-shadow(0 0 8px rgba(0,245,255,0.90)) drop-shadow(0 0 20px rgba(0,245,255,0.45)); }
+}
+
+@keyframes apArcSweetPerfect {
+  0%   { stroke: rgba(0,245,255,0.30); }
+  25%  { stroke: rgba(255,255,255,0.95); filter: drop-shadow(0 0 8px rgba(255,255,255,0.80)); }
+  100% { stroke: rgba(0,245,255,0.65); filter: drop-shadow(0 0 4px rgba(0,245,255,0.50)); }
+}
+
+@keyframes apNeedlePerfect {
+  0%   { filter: none; }
+  25%  { filter: drop-shadow(0 0 10px rgba(255,255,255,0.90)) drop-shadow(0 0 20px rgba(0,245,255,0.70)); }
+  100% { filter: drop-shadow(0 0 5px rgba(0,245,255,0.65)); }
+}

@@ -1,6 +1,5 @@
-import { createTempoWidget } from "./tempo/tempo_widget.js";
-import { createPathWidget } from "./path/path_widget.js";
-import { createAttackWidget } from "./attack/attack_widget.js";
+import { createTempoWidget }       from "./tempo/tempo_widget.js";
+import { createAttackPathWidget }  from "./attack_path/attack_path_widget.js";
 
 function safeCall(fn, label) {
   try {
@@ -21,11 +20,10 @@ function buildSnapshot(state) {
 
 export function createWidgetManager({ getState, ui }) {
   const registry = {
-    tempo: createTempoWidget(),
-    path: createPathWidget(),
-    attack: createAttackWidget()
+    tempo:      createTempoWidget(),
+    attackPath: createAttackPathWidget()
   };
-  const order = ["tempo", "path", "attack"];
+  const order = ["tempo", "attackPath"];
   let mounted = false;
   let pathPixiActive = false;
 
@@ -40,9 +38,7 @@ export function createWidgetManager({ getState, ui }) {
         () => widget.mount?.({ rootEl: slot || null, getState, ui, usePixiPreferred: true }),
         `${key}.mount`
       );
-      if (key === "path" && res && typeof res.usePixi === "boolean") {
-        pathPixiActive = res.usePixi;
-      }
+      // (legacy pixi path check — removed)
     });
 
     const state = getState?.();

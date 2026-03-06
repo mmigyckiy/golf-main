@@ -43,8 +43,8 @@
   --golf-ball-dimple2: rgba(0, 0, 0, 0.12);
 
   display: grid;
-  grid-template-columns: 1fr 1.4fr 1fr;
-  grid-template-areas: "attack path tempo";
+  grid-template-columns: 1.7fr 1fr;
+  grid-template-areas: "attackPath tempo";
   column-gap: var(--sm-col-gap);
   row-gap: 0;
   padding: var(--sm-surface-pad);
@@ -109,18 +109,11 @@
   transition: transform 220ms ease, filter 220ms ease, opacity 180ms ease;
 }
 
-#swingMetricsRow > [data-widget="attack"],
-#swingMetricsRow .metricCard--attack[data-widget="attack"] {
-  max-width: var(--metric-side-max);
+#swingMetricsRow > [data-widget="attackPath"],
+#swingMetricsRow .metricCard--attack-path[data-widget="attackPath"] {
+  max-width: 240px;
   width: 100%;
-  grid-area: attack;
-}
-
-#swingMetricsRow > [data-widget="path"],
-#swingMetricsRow .metricCard--path[data-widget="path"] {
-  --path-size: var(--arc-size);
-  max-width: var(--metric-hero-max);
-  grid-area: path;
+  grid-area: attackPath;
 }
 
 #swingMetricsRow > [data-widget="tempo"],
@@ -130,8 +123,7 @@
   grid-area: tempo;
 }
 
-/* Column dividers */
-#swingMetricsRow > [data-widget="path"]::before,
+/* Column divider — only tempo needs one now */
 #swingMetricsRow > [data-widget="tempo"]::before {
   content: "";
   position: absolute;
@@ -151,22 +143,16 @@ body[data-ui-phase="hold"] #swingMetricsRow > [data-widget="tempo"] {
   transform: scale(1.02);
   filter: drop-shadow(0 0 22px rgba(216, 200, 166, 0.28));
 }
-body[data-ui-phase="hold"] #swingMetricsRow > [data-widget="path"] {
-  opacity: 0.75;
-}
-body[data-ui-phase="hold"] #swingMetricsRow > [data-widget="attack"] {
-  opacity: 0.58;
+body[data-ui-phase="hold"] #swingMetricsRow > [data-widget="attackPath"] {
+  opacity: 0.65;
 }
 
-body[data-ui-phase="flight"] #swingMetricsRow > [data-widget="path"] {
+body[data-ui-phase="flight"] #swingMetricsRow > [data-widget="attackPath"] {
   opacity: 1;
   transform: scale(1.02);
 }
 body[data-ui-phase="flight"] #swingMetricsRow > [data-widget="tempo"] {
   opacity: 0.55;
-}
-body[data-ui-phase="flight"] #swingMetricsRow > [data-widget="attack"] {
-  opacity: 0.72;
 }
 
 body[data-ui-phase="idle"] #swingMetricsRow > [data-widget],
@@ -538,53 +524,10 @@ body[data-ui-phase="end"] #swingMetricsRow > [data-widget] {
   background: rgba(216, 200, 166, 0.34);
 }
 
-/* Shared arc stage reset for attack + path */
-#swingMetricsRow :is(.metricCard--attack, .metricCard--path) .tubeArc__stage,
-#swingMetricsRow :is([data-widget="attack"], [data-widget="path"]) :is(.tubeArc, .tubeArc__stage) {
-  width: 100%;
-  max-width: none;
-}
-
-/* Shared arc stroke tokens */
-#swingMetricsRow :is(.alignment-ring__base, .tubeArc__outer, .aa-arcTrack--outer) {
-  stroke-width: var(--arc-stroke-outer);
-  opacity: var(--arc-track-opacity);
-}
-
-#swingMetricsRow :is(.alignment-ring__sweet, .tubeArc__inner, .aa-arcTrack--inner, [data-aa-arc="1"]) {
-  stroke-width: var(--arc-stroke-inner);
-  stroke: var(--arc-inner-stroke);
-}
-
-/* Shared arc/runner SVG sizing for attack + path */
-#swingMetricsRow [data-widget="path"] .alignment-ring__svg,
-#swingMetricsRow [data-widget="attack"] .tubeArc__svg {
-  width: 100%;
-  height: auto;
-  display: block;
-  max-width: none;
-  transform: none !important;
-}
-
 /* -------------------------
    Sizing design system
    (keeps arc/tube sizes token-driven)
    ------------------------- */
-#swingMetricsRow [data-widget="path"] {
-  --path-size: var(--arc-size);
-}
-
-#swingMetricsRow [data-widget="attack"],
-#swingMetricsRow .metricCard--attack {
-  --attack-size: var(--arc-size);
-  --aa-stage-w: var(--attack-size);
-}
-
-#swingMetricsRow [data-widget="path"] .metricCard__body,
-#swingMetricsRow [data-widget="attack"] .metricCard__body {
-  max-width: var(--arc-size);
-  margin-inline: auto;
-}
 
 #swingMetricsRow [data-widget="tempo"] .tubeV,
 #swingMetricsRow [data-widget="tempo"] .tubeView {
@@ -661,8 +604,8 @@ body[data-ui-phase="end"] #swingMetricsRow > [data-widget] {
    ------------------------- */
 @media (max-width: 980px) {
   #swingMetricsRow {
-    grid-template-columns: 1fr 1.3fr 1fr;
-    grid-template-areas: "attack path tempo";
+    grid-template-columns: 1.7fr 1fr;
+    grid-template-areas: "attackPath tempo";
     column-gap: 24px;
     max-width: 600px;
   }
@@ -677,12 +620,11 @@ body[data-ui-phase="end"] #swingMetricsRow > [data-widget] {
 
   #swingMetricsRow {
     grid-template-columns: 1fr;
-    grid-template-areas: "path" "tempo" "attack";
+    grid-template-areas: "attackPath" "tempo";
     padding: 16px;
     max-width: 320px;
   }
 
-  #swingMetricsRow > [data-widget="path"]::before,
   #swingMetricsRow > [data-widget="tempo"]::before {
     content: none;
   }
@@ -691,10 +633,6 @@ body[data-ui-phase="end"] #swingMetricsRow > [data-widget] {
     border-top: 1px solid var(--sm-divider);
     margin-top: 14px;
     padding-top: 14px;
-  }
-
-  #swingMetricsRow > [data-widget="path"] {
-    order: -1;
   }
 }
 

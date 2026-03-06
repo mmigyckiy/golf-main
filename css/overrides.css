@@ -1204,3 +1204,16 @@ header#appHeader .top-right .gc-segmented__btn--active {
   display: none !important;
 }
 
+/* =========================================================
+   OPTION-D: NEON GLOW — Swing Metrics row
+   Attack + Path are now merged → css/widgets/attack_path.css
+   Only row-level variable overrides remain here.
+   ========================================================= */
+
+/* ── CSS variable overrides at row scope ─── */
+#swingMetricsRow {
+  --arc-inner-stroke: #00F5FF;
+  --accent:           #00F5FF;
+  --accent-soft:      rgba(0, 245, 255, 0.22);
+}
+

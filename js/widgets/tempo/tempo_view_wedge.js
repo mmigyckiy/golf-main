@@ -1,57 +1,77 @@
 // ============================================================
-// Swing Tempo — Wedge View (↗ ramp)
+// Swing Tempo — Ring View (Option D: Neon Arc Ring)
 // ============================================================
-// A right-angle triangle that fills from the acute bottom-left
-// corner rightward and upward as tempo increases 0 → 1.
+// A 270° circular arc that fills clockwise as tempo increases
+// 0 → 1. Start: bottom-left (225° from 12 o'clock), sweeps up
+// through the top, ending at bottom-right (135°).
 //
-// tempo01 = 0.0 → empty (acute angle at bottom-left)
-// tempo01 = 1.0 → full triangle filled (top-right reached)
+// tempo01 = 0.0 → empty ring (tip hidden)
+// tempo01 = 1.0 → full 270° arc lit
 //
-// Geometry (SVG user units, viewBox 0 0 120 110):
-//   P_acute    = (L, B) = (4, 106)  ← bottom-left (acute angle, 0%)
-//   P_botright = (R, B) = (90, 106) ← bottom-right (right angle)
-//   P_topright = (R, T) = (90, 4)   ← top-right (100%)
-//   Hypotenuse: P_acute → P_topright ← fill boundary
+// Geometry (SVG user units, viewBox 0 0 140 110):
+//   Center   = (CX=70, CY=58)
+//   Radius   = 46
+//   Start    = 225° clockwise from top → (37.47, 90.53)
+//   End      = 135° clockwise from top → (102.53, 90.53)
+//   Sweet    = 60%–80% of arc
+//
+// Public API (unchanged): mount / setProgress01 / setRunner01 /
+//                         setState / reset / destroy
 // ============================================================
 
-const SVG_NS   = "http://www.w3.org/2000/svg";
-const VB_W     = 120;
-const VB_H     = 110;
-const L        = 4;    // left x  (acute angle)
-const R        = 90;   // right x (right angle + top corner share this column)
-const T        = 4;    // top y
-const B        = 106;  // bottom y
-const SWEET_LO = 0.60;
-const SWEET_HI = 0.80;
+const SVG_NS    = "http://www.w3.org/2000/svg";
+const VB_W      = 140;
+const VB_H      = 110;
+const CX        = 70;
+const CY        = 58;
+const RING_R    = 46;
+const START_DEG = 225;   // start angle clockwise from 12 o'clock
+const SWEEP_DEG = 270;   // total sweep (→ ends at 135°)
+const SWEET_LO  = 0.60;
+const SWEET_HI  = 0.80;
 
 // ── geometry helpers ─────────────────────────────────────────
 
+function toRad(deg) { return deg * Math.PI / 180; }
+
 /**
- * Point on hypotenuse at progress t.
- * t=0 → P_acute (L,B) bottom-left   (0%  — sharp tip)
- * t=1 → P_topright (R,T) top-right  (100% — wide end)
+ * SVG coordinate on the ring at progress t (0 = start, 1 = end).
+ * Angles measured clockwise from 12 o'clock (top).
  */
-function hypAt(t) {
-  return [L + t * (R - L), B + t * (T - B)];
-  // = [4 + 86t,  106 - 102t]
+function ptAtT(t) {
+  const a = START_DEG + t * SWEEP_DEG;
+  return [
+    CX + RING_R * Math.sin(toRad(a)),
+    CY - RING_R * Math.cos(toRad(a))
+  ];
 }
 
 /**
- * Fill path at progress t.
- * Triangle: P_acute → bottom-edge-to-hx → hyp-point → close.
+ * SVG arc path string from ring start to progress t.
+ * Returns "" when t ≤ 0.
  */
 function fillPath(t) {
   if (t <= 0.001) return "";
-  const [hx, hy] = hypAt(t);
-  return `M ${L} ${B} L ${hx.toFixed(2)} ${B} L ${hx.toFixed(2)} ${hy.toFixed(2)} Z`;
+  const [sx, sy] = ptAtT(0);
+  const [ex, ey] = ptAtT(t);
+  const large = (t * SWEEP_DEG > 180) ? 1 : 0;
+  return `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${RING_R} ${RING_R} 0 ${large} 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`;
 }
 
-/** Sweet zone polygon between two progress values */
-function sweetPath(t0, t1) {
-  const [x0, y0] = hypAt(t0);
-  const [x1, y1] = hypAt(t1);
-  // Band bounded by hyp on top, bottom edge on bottom, verticals on sides
-  return `M ${x0.toFixed(2)} ${y0.toFixed(2)} L ${x0.toFixed(2)} ${B} L ${x1.toFixed(2)} ${B} L ${x1.toFixed(2)} ${y1.toFixed(2)} Z`;
+/** Full 270° track arc (background ring). */
+function trackPath() {
+  const [sx, sy] = ptAtT(0);
+  const [ex, ey] = ptAtT(1);
+  // 270° > 180° → large-arc-flag = 1
+  return `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${RING_R} ${RING_R} 0 1 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`;
+}
+
+/** Sweet zone arc segment between t0 and t1. */
+function sweetArcPath(t0, t1) {
+  const [sx, sy] = ptAtT(t0);
+  const [ex, ey] = ptAtT(t1);
+  const large = ((t1 - t0) * SWEEP_DEG > 180) ? 1 : 0;
+  return `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${RING_R} ${RING_R} 0 ${large} 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`;
 }
 
 function mkSvg(tag, attrs) {
@@ -66,12 +86,19 @@ export function createTempoViewWedge() {
   let wrapEl  = null;
   let svgRoot = null;
   let fillEl  = null;
+  let tipEl   = null;
   let _t = 0;
 
   function _render(t) {
     _t = Math.max(0, Math.min(1, t));
     if (!svgRoot) return;
     fillEl.setAttribute("d", fillPath(_t));
+    if (tipEl) {
+      const [tx, ty] = ptAtT(_t);
+      tipEl.setAttribute("cx", tx.toFixed(2));
+      tipEl.setAttribute("cy", ty.toFixed(2));
+      tipEl.style.display = _t <= 0.005 ? "none" : "";
+    }
   }
 
   // ── mount ───────────────────────────────────────────────────
@@ -79,7 +106,7 @@ export function createTempoViewWedge() {
     if (!container || wrapEl) return;
 
     wrapEl = document.createElement("div");
-    wrapEl.className = "tempoWedge";
+    wrapEl.className = "tempoWedge";   // reused — CSS wrapper rules still apply
 
     const svg = mkSvg("svg", {
       viewBox: `0 0 ${VB_W} ${VB_H}`,
@@ -90,80 +117,76 @@ export function createTempoViewWedge() {
     });
     svgRoot = svg;
 
-    // ── defs: fill gradient (bottom → top = dim → bright) ──
+    // ── defs: linear gradient dim-bottom → bright-top ──
     const defs = document.createElementNS(SVG_NS, "defs");
     const grad = mkSvg("linearGradient", {
       id: "twFillGrad", x1: "0", y1: "1", x2: "0", y2: "0",
       gradientUnits: "objectBoundingBox"
     });
-    grad.appendChild(mkSvg("stop", { offset: "0%",   "stop-color": "rgba(216,200,166,0.10)"  }));
-    grad.appendChild(mkSvg("stop", { offset: "60%",  "stop-color": "rgba(216,200,166,0.28)" }));
-    grad.appendChild(mkSvg("stop", { offset: "100%", "stop-color": "rgba(216,200,166,0.50)" }));
+    grad.appendChild(mkSvg("stop", { offset: "0%",   "stop-color": "rgba(0,245,255,0.30)" }));
+    grad.appendChild(mkSvg("stop", { offset: "60%",  "stop-color": "rgba(0,245,255,0.70)" }));
+    grad.appendChild(mkSvg("stop", { offset: "100%", "stop-color": "#00F5FF" }));
     defs.appendChild(grad);
     svg.appendChild(defs);
 
-    // ── background triangle (full wedge outline) ──
-    // Vertices: P_acute(L,B) — P_botright(R,B) — P_topright(R,T)
-    svg.appendChild(mkSvg("polygon", {
-      points: `${L},${B} ${R},${B} ${R},${T}`,
-      class:  "tempoWedge__bg",
-      fill:   "rgba(216,200,166,0.04)",
-      stroke: "rgba(216,200,166,0.30)",
-      "stroke-width":    "0.9",
-      "stroke-linejoin": "round"
-    }));
-
-    // ── sweet zone fill (60–80%) ──
+    // ── background track (full 270° dim ring) ──
     svg.appendChild(mkSvg("path", {
-      d:      sweetPath(SWEET_LO, SWEET_HI),
-      class:  "tempoWedge__sweet",
-      fill:   "rgba(216,200,166,0.12)",
-      stroke: "none"
-    }));
-
-    // ── sweet zone dashed boundary lines (vertical) ──
-    [SWEET_LO, SWEET_HI].forEach(t => {
-      const [hx, hy] = hypAt(t);
-      svg.appendChild(mkSvg("line", {
-        x1: hx.toFixed(2), y1: B,
-        x2: hx.toFixed(2), y2: hy.toFixed(2),
-        class:              "tempoWedge__sweetEdge",
-        stroke:             "rgba(216,200,166,0.32)",
-        "stroke-width":     "0.7",
-        "stroke-dasharray": "2.5 2"
-      }));
-    });
-
-    // ── dynamic fill ──
-    fillEl = mkSvg("path", {
-      d:      "",
-      class:  "tempoWedge__fill",
-      fill:   "url(#twFillGrad)",
-      stroke: "none"
-    });
-    svg.appendChild(fillEl);
-
-    // ── hypotenuse edge (crisp diagonal, drawn over fill) ──
-    svg.appendChild(mkSvg("line", {
-      x1: L, y1: B, x2: R, y2: T,
-      class:            "tempoWedge__hyp",
-      stroke:           "rgba(216,200,166,0.88)",
-      "stroke-width":   "1.6",
+      d:                trackPath(),
+      class:            "tempoRing__track",
+      fill:             "none",
+      stroke:           "rgba(0,245,255,0.10)",
+      "stroke-width":   "7",
       "stroke-linecap": "round"
     }));
 
-    // ── scale labels (right side) ──
-    [["100", 1], ["50", 0.5], ["0", 0]].forEach(([text, t]) => {
-      const y = B + t * (T - B);
-      const labelEl = mkSvg("text", {
-        x:               R + 4,
-        y:               (y + 3.5).toFixed(1),
-        class:           "tempoWedge__label",
-        "font-size":     "9",
+    // ── sweet zone arc (60%–80%) ──
+    svg.appendChild(mkSvg("path", {
+      d:                sweetArcPath(SWEET_LO, SWEET_HI),
+      class:            "tempoRing__sweet",
+      fill:             "none",
+      stroke:           "rgba(0,245,255,0.22)",
+      "stroke-width":   "7",
+      "stroke-linecap": "round"
+    }));
+
+    // ── dynamic fill arc ──
+    fillEl = mkSvg("path", {
+      d:                "",
+      class:            "tempoRing__fill",
+      fill:             "none",
+      stroke:           "url(#twFillGrad)",
+      "stroke-width":   "8",
+      "stroke-linecap": "round"
+    });
+    svg.appendChild(fillEl);
+
+    // ── tip dot (follows progress along ring) ──
+    tipEl = mkSvg("circle", {
+      cx: "0", cy: "0", r: "5",
+      class:   "tempoRing__tip",
+      fill:    "#00F5FF",
+      stroke:  "none",
+      display: "none"
+    });
+    svg.appendChild(tipEl);
+
+    // ── scale labels: 0 / 50 / 100 at start, top, end ──
+    const labelDefs = [[0, "0"], [0.5, "50"], [1, "100"]];
+    labelDefs.forEach(([t, text]) => {
+      const [lx, ly] = ptAtT(t);
+      // Nudge labels away from the arc ends / off the top
+      const offX = t === 0 ? -10 : t === 1 ? 6 : 0;
+      const offY = (t === 0 || t === 1) ? 4 : -6;
+      const label = mkSvg("text", {
+        x:                (lx + offX).toFixed(1),
+        y:                (ly + offY).toFixed(1),
+        class:            "tempoWedge__label",
+        "font-size":      "9",
+        "text-anchor":    t === 0 ? "end" : t === 1 ? "start" : "middle",
         "letter-spacing": "0.08em"
       });
-      labelEl.textContent = text;
-      svg.appendChild(labelEl);
+      label.textContent = text;
+      svg.appendChild(label);
     });
 
     wrapEl.appendChild(svg);
@@ -189,7 +212,7 @@ export function createTempoViewWedge() {
 
   function destroy() {
     if (wrapEl?.parentElement) wrapEl.remove();
-    wrapEl = null; svgRoot = null; fillEl = null;
+    wrapEl = null; svgRoot = null; fillEl = null; tipEl = null;
   }
 
   return { mount, setProgress01, setRunner01, setState, reset, destroy };

@@ -146,36 +146,125 @@ export function createFieldTopView() {
 
   // ── Tee ───────────────────────────────────────────────────
 
-  function drawTee(W, H, l) {
-    const x    = l.teeX, y = l.groundY;
-    const pegH = Math.max(8,   l.S * 0.043);
-    const capW = Math.max(3,   l.S * 0.019);
-    const capH = Math.max(1.5, l.S * 0.010);
-    const glR  = Math.max(12,  l.S * 0.070);
-    const lw   = Math.max(1.5, l.S * 0.008);
-    const fSize = Math.max(7,  Math.round(l.S * 0.031));
+  function drawTee(W, H, l, showBall = true) {
+    const x     = l.teeX, y = l.groundY;
+    const S     = l.S;
+    const pegH  = Math.max(8,   S * 0.035);    // total height ground → head (slimmed)
+    const headW = Math.max(3.5, S * 0.020);    // disc half-width (T shape, slimmed)
+    const headH = Math.max(1.5, S * 0.007);    // disc half-height (flat ellipse, slimmed)
+    const shW   = Math.max(0.8, S * 0.004);    // shaft half-width (very thin)
+    const ballR = Math.max(2.8, S * 0.014);    // golf ball radius (slimmed)
+    const glR   = Math.max(12,  S * 0.065);    // glow radius (slimmed)
+    const fSize = Math.max(7,   Math.round(S * 0.031));
+
+    const topY  = y - pegH;                    // disc center Y
+    const ballY = topY - headH - ballR * 0.10; // ball sits on top of disc
 
     ctx.setLineDash([]);
-    ctx.strokeStyle = 'rgba(216,200,166,0.65)';
-    ctx.lineWidth   = lw; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - pegH); ctx.stroke();
 
-    ctx.strokeStyle = 'rgba(216,200,166,0.70)';
-    ctx.lineWidth   = lw;
-    ctx.beginPath(); ctx.ellipse(x, y - pegH, capW, capH, 0, 0, Math.PI * 2); ctx.stroke();
+    // 1 ── Ground halo: soft elliptical spotlight
+    const gh = ctx.createRadialGradient(x, y, 0, x, y, glR);
+    gh.addColorStop(0,    'rgba(216,200,166,0.16)');
+    gh.addColorStop(0.50, 'rgba(216,200,166,0.05)');
+    gh.addColorStop(1,    'rgba(216,200,166,0)');
+    ctx.fillStyle = gh;
+    ctx.beginPath();
+    ctx.ellipse(x, y, glR, glR * 0.34, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-    const cy = y - pegH * 0.9;
-    const g  = ctx.createRadialGradient(x, cy, 0, x, cy, glR);
-    g.addColorStop(0, 'rgba(216,200,166,0.14)');
-    g.addColorStop(1, 'rgba(216,200,166,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.arc(x, cy, glR, 0, Math.PI * 2); ctx.fill();
+    // 2 ── Shaft (thin peg from ground up to underside of disc)
+    ctx.strokeStyle = 'rgba(232,214,180,0.84)';
+    ctx.lineWidth   = shW * 2;
+    ctx.lineCap     = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, topY + headH);
+    ctx.stroke();
 
-    ctx.fillStyle = 'rgba(216,200,166,0.32)';
+    // 3 ── Disc shadow (bottom rim — gives thickness/depth to the head)
+    ctx.fillStyle = 'rgba(175,152,105,0.55)';
+    ctx.beginPath();
+    ctx.ellipse(x, topY + headH * 0.55, headW, headH, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 4 ── Disc face (top surface, warm gradient for 3-D roundness)
+    const dg = ctx.createRadialGradient(
+      x - headW * 0.22, topY - headH * 0.4, 0,
+      x, topY, headW * 1.15
+    );
+    dg.addColorStop(0,    'rgba(252,234,198,0.97)');
+    dg.addColorStop(0.55, 'rgba(236,216,174,0.93)');
+    dg.addColorStop(1,    'rgba(212,190,144,0.85)');
+    ctx.fillStyle = dg;
+    ctx.beginPath();
+    ctx.ellipse(x, topY, headW, headH, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 5 ── Disc rim (thin outline for crisp edge)
+    ctx.strokeStyle = 'rgba(195,170,120,0.50)';
+    ctx.lineWidth   = shW * 1.2;
+    ctx.beginPath();
+    ctx.ellipse(x, topY, headW, headH, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 6 ── Ball (only when not in flight)
+    if (showBall) {
+      // Soft glow under ball
+      const bg = ctx.createRadialGradient(x, ballY, 0, x, ballY, glR * 0.75);
+      bg.addColorStop(0,    'rgba(238,222,198,0.22)');
+      bg.addColorStop(0.42, 'rgba(216,200,166,0.07)');
+      bg.addColorStop(1,    'rgba(216,200,166,0)');
+      ctx.fillStyle = bg;
+      ctx.beginPath();
+      ctx.arc(x, ballY, glR * 0.75, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Ball body — warm off-white base (golf ball colour)
+      const ballGrad = ctx.createRadialGradient(
+        x - ballR * 0.30, ballY - ballR * 0.32, 0,
+        x, ballY, ballR
+      );
+      ballGrad.addColorStop(0,   'rgba(255,255,253,0.99)');
+      ballGrad.addColorStop(0.55,'rgba(242,238,228,0.97)');
+      ballGrad.addColorStop(1,   'rgba(216,208,190,0.92)');
+      ctx.fillStyle = ballGrad;
+      ctx.beginPath();
+      ctx.arc(x, ballY, ballR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // ── Golf ball dimples ──
+      // 6 outer dimples in a ring + 1 center dimple
+      const dimR    = Math.max(0.5, ballR * 0.20);
+      const dimDist = ballR * 0.48;
+      ctx.fillStyle = 'rgba(130,118,100,0.28)';
+      for (let i = 0; i < 6; i++) {
+        const a = (i * 60 - 15) * Math.PI / 180;
+        ctx.beginPath();
+        ctx.arc(x + dimDist * Math.cos(a), ballY + dimDist * Math.sin(a), dimR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.beginPath();                           // center dimple
+      ctx.arc(x, ballY, dimR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Specular highlight (top-left gleam, drawn over dimples)
+      const sg = ctx.createRadialGradient(
+        x - ballR * 0.28, ballY - ballR * 0.30, 0,
+        x - ballR * 0.28, ballY - ballR * 0.30, ballR * 0.50
+      );
+      sg.addColorStop(0, 'rgba(255,255,255,0.82)');
+      sg.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = sg;
+      ctx.beginPath();
+      ctx.arc(x, ballY, ballR, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 7 ── TEE label
+    ctx.fillStyle = 'rgba(216,200,166,0.40)';
     ctx.font      = `${fSize}px -apple-system, sans-serif`;
     ctx.textAlign = 'center';
     ctx.fillText('TEE', x, y + fSize * 2 + 2);
-
   }
 
   // ── Live trajectory arc (RUNNING state) ───────────────────
@@ -216,17 +305,7 @@ export function createFieldTopView() {
     const endX   = xs[n - 1];
     const span   = Math.max(1, endX - startX);
 
-    // 1. Wide glow
-    tracePath(0, n - 1);
-    ctx.strokeStyle = 'rgba(216,200,166,0.22)';
-    ctx.lineWidth   = l.S * 0.040;
-    ctx.lineCap     = 'round'; ctx.lineJoin = 'round';
-    ctx.shadowColor = 'rgba(216,200,166,0.50)';
-    ctx.shadowBlur  = l.S * 0.022;
-    ctx.stroke();
-    ctx.shadowBlur  = 0; ctx.shadowColor = 'transparent';
-
-    // 2. Gradient main line
+    // 1. Gradient main line (glow removed)
     const grad = ctx.createLinearGradient(startX, 0, startX + span, 0);
     grad.addColorStop(0,    'rgba(230,220,195,0)');
     grad.addColorStop(0.12, 'rgba(230,220,195,0.25)');
@@ -268,15 +347,6 @@ export function createFieldTopView() {
       ctx.moveTo(xs[from], ys[from]);
       for (let i = from + 1; i <= to; i++) ctx.lineTo(xs[i], ys[i]);
     }
-
-    tracePath(0, STEPS);
-    ctx.strokeStyle = 'rgba(216,200,166,0.22)';
-    ctx.lineWidth   = l.S * 0.040;
-    ctx.lineCap     = 'round'; ctx.lineJoin = 'round';
-    ctx.shadowColor = 'rgba(216,200,166,0.50)';
-    ctx.shadowBlur  = l.S * 0.022;
-    ctx.stroke();
-    ctx.shadowBlur  = 0; ctx.shadowColor = 'transparent';
 
     const grad = ctx.createLinearGradient(xs[0], 0, xs[0] + span, 0);
     grad.addColorStop(0,    'rgba(230,220,195,0)');
@@ -561,7 +631,9 @@ export function createFieldTopView() {
 
     drawBackground(W, H, l);
     drawDistanceMarkers(W, H, l);
-    drawTee(W, H, l);
+    // Ball sits on tee only when round hasn't started yet
+    const ballOnTee = phase === 'idle' && rState !== 'RUNNING';
+    drawTee(W, H, l, ballOnTee);
 
     // Local `phase` (set by onCashout / onCrash) takes priority over rState so
     // the ball moves to its landing position immediately when the round ends —
@@ -642,7 +714,7 @@ export function createFieldTopView() {
       } else {
         drawBall(pos.x, pos.y, 'RUNNING', l);
       }
-      drawLiveCounter(W, H, liveYd, l);  // counter shows actual live yd, not final
+      // drawLiveCounter removed — shown in main UI header instead
     }
   }
 
