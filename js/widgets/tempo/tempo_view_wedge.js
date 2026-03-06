@@ -29,6 +29,9 @@ const START_DEG = 225;   // start angle clockwise from 12 o'clock
 const SWEEP_DEG = 270;   // total sweep (→ ends at 135°)
 const SWEET_LO  = 0.60;
 const SWEET_HI  = 0.80;
+const N_SEGS    = 10;    // number of power bar segments
+const SEG_DEG   = 23;    // arc degrees per segment
+const GAP_DEG   = 4;     // gap degrees between segments  (10×23 + 10×4 = 270 ✓)
 
 // ── geometry helpers ─────────────────────────────────────────
 
@@ -66,12 +69,14 @@ function trackPath() {
   return `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${RING_R} ${RING_R} 0 1 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`;
 }
 
-/** Sweet zone arc segment between t0 and t1. */
-function sweetArcPath(t0, t1) {
+/** Arc path for power-bar segment i (SEG_DEG wide, GAP_DEG spacing). */
+function segPath(i) {
+  const t0 = (i * (SEG_DEG + GAP_DEG)) / SWEEP_DEG;
+  const t1 = (i * (SEG_DEG + GAP_DEG) + SEG_DEG) / SWEEP_DEG;
   const [sx, sy] = ptAtT(t0);
   const [ex, ey] = ptAtT(t1);
-  const large = ((t1 - t0) * SWEEP_DEG > 180) ? 1 : 0;
-  return `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${RING_R} ${RING_R} 0 ${large} 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`;
+  // SEG_DEG=23 < 180 → large-arc-flag always 0
+  return `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${RING_R} ${RING_R} 0 0 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`;
 }
 
 function mkSvg(tag, attrs) {
@@ -85,20 +90,15 @@ function mkSvg(tag, attrs) {
 export function createTempoViewWedge() {
   let wrapEl  = null;
   let svgRoot = null;
-  let fillEl  = null;
-  let tipEl   = null;
+  let segEls  = [];
   let _t = 0;
 
   function _render(t) {
     _t = Math.max(0, Math.min(1, t));
     if (!svgRoot) return;
-    fillEl.setAttribute("d", fillPath(_t));
-    if (tipEl) {
-      const [tx, ty] = ptAtT(_t);
-      tipEl.setAttribute("cx", tx.toFixed(2));
-      tipEl.setAttribute("cy", ty.toFixed(2));
-      tipEl.style.display = _t <= 0.005 ? "none" : "";
-    }
+    segEls.forEach((el, i) => {
+      el.classList.toggle("is-active", i < _t * N_SEGS);
+    });
   }
 
   // ── mount ───────────────────────────────────────────────────
@@ -117,77 +117,58 @@ export function createTempoViewWedge() {
     });
     svgRoot = svg;
 
-    // ── defs: linear gradient dim-bottom → bright-top ──
-    const defs = document.createElementNS(SVG_NS, "defs");
-    const grad = mkSvg("linearGradient", {
-      id: "twFillGrad", x1: "0", y1: "1", x2: "0", y2: "0",
-      gradientUnits: "objectBoundingBox"
-    });
-    grad.appendChild(mkSvg("stop", { offset: "0%",   "stop-color": "rgba(0,245,255,0.30)" }));
-    grad.appendChild(mkSvg("stop", { offset: "60%",  "stop-color": "rgba(0,245,255,0.70)" }));
-    grad.appendChild(mkSvg("stop", { offset: "100%", "stop-color": "#00F5FF" }));
-    defs.appendChild(grad);
-    svg.appendChild(defs);
-
-    // ── background track (full 270° dim ring) ──
+    // ── background track (full 270° dim base — "empty bar") ──
     svg.appendChild(mkSvg("path", {
       d:                trackPath(),
       class:            "tempoRing__track",
       fill:             "none",
-      stroke:           "rgba(0,245,255,0.10)",
-      "stroke-width":   "7",
-      "stroke-linecap": "round"
-    }));
-
-    // ── sweet zone arc (60%–80%) ──
-    svg.appendChild(mkSvg("path", {
-      d:                sweetArcPath(SWEET_LO, SWEET_HI),
-      class:            "tempoRing__sweet",
-      fill:             "none",
-      stroke:           "rgba(0,245,255,0.22)",
-      "stroke-width":   "7",
-      "stroke-linecap": "round"
-    }));
-
-    // ── dynamic fill arc ──
-    fillEl = mkSvg("path", {
-      d:                "",
-      class:            "tempoRing__fill",
-      fill:             "none",
-      stroke:           "url(#twFillGrad)",
+      stroke:           "rgba(0,245,255,0.08)",
       "stroke-width":   "8",
-      "stroke-linecap": "round"
-    });
-    svg.appendChild(fillEl);
+      "stroke-linecap": "butt"
+    }));
 
-    // ── tip dot (follows progress along ring) ──
-    tipEl = mkSvg("circle", {
-      cx: "0", cy: "0", r: "5",
-      class:   "tempoRing__tip",
-      fill:    "#00F5FF",
-      stroke:  "none",
-      display: "none"
-    });
-    svg.appendChild(tipEl);
-
-    // ── scale labels: 0 / 50 / 100 at start, top, end ──
-    const labelDefs = [[0, "0"], [0.5, "50"], [1, "100"]];
-    labelDefs.forEach(([t, text]) => {
-      const [lx, ly] = ptAtT(t);
-      // Nudge labels away from the arc ends / off the top
-      const offX = t === 0 ? -10 : t === 1 ? 6 : 0;
-      const offY = (t === 0 || t === 1) ? 4 : -6;
-      const label = mkSvg("text", {
-        x:                (lx + offX).toFixed(1),
-        y:                (ly + offY).toFixed(1),
-        class:            "tempoWedge__label",
-        "font-size":      "9",
-        "text-anchor":    t === 0 ? "end" : t === 1 ? "start" : "middle",
-        "letter-spacing": "0.08em"
+    // ── power bar segments — flat ends so gaps read as dividers in the track ──
+    segEls = [];
+    for (let i = 0; i < N_SEGS; i++) {
+      const isSweet = (i >= 6 && i <= 7);
+      const seg = mkSvg("path", {
+        d:                segPath(i),
+        class:            "tempoRing__seg" + (isSweet ? " tempoRing__seg--sweet" : ""),
+        fill:             "none",
+        stroke:           "rgba(0,245,255,0.12)",
+        "stroke-width":   "8",
+        "stroke-linecap": "butt"
       });
-      label.textContent = text;
-      svg.appendChild(label);
-    });
+      svg.appendChild(seg);
+      segEls.push(seg);
+    }
+
+    // ── power button: background circle ──
+    svg.appendChild(mkSvg("circle", {
+      cx:    String(CX),
+      cy:    String(CY),
+      r:     "28",
+      class: "tempoBtn__bg"
+    }));
+
+    // ── golf club (driver): steep diagonal shaft + wide pill head ──
+    // Shaft at ~33° from vertical; icon scaled ~75% for inner padding inside r=28 button
+    // Head: asymmetric pill — heel left, toe extends right
+    svg.appendChild(mkSvg("path", {
+      d: [
+        // Shaft: grip upper-left → hosel at heel of head
+        `M ${CX-16} ${CY-11} L ${CX-7} ${CY+4}`,
+        // Head: asymmetric pill — heel left, toe extends right
+        `M ${CX-7} ${CY+4}`,
+        `L ${CX+12} ${CY+4}`,
+        `Q ${CX+17} ${CY+4} ${CX+17} ${CY+9}`,
+        `Q ${CX+17} ${CY+13} ${CX+12} ${CY+13}`,
+        `L ${CX-7} ${CY+13}`,
+        `Q ${CX-11} ${CY+13} ${CX-11} ${CY+9}`,
+        `Q ${CX-11} ${CY+4} ${CX-7} ${CY+4} Z`
+      ].join(" "),
+      class: "tempoBtn__symbol"
+    }));
 
     wrapEl.appendChild(svg);
     container.appendChild(wrapEl);
@@ -212,7 +193,7 @@ export function createTempoViewWedge() {
 
   function destroy() {
     if (wrapEl?.parentElement) wrapEl.remove();
-    wrapEl = null; svgRoot = null; fillEl = null; tipEl = null;
+    wrapEl = null; svgRoot = null; segEls = [];
   }
 
   return { mount, setProgress01, setRunner01, setState, reset, destroy };

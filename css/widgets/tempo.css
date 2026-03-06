@@ -134,6 +134,19 @@
 }
 
 /* -------------------------
+   Hold hint label
+   ------------------------- */
+#swingMetricsRow .metricCard--tempo .metricCard__holdHint {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(0, 245, 255, 0.45);
+  text-align: center;
+  margin-bottom: 2px;
+}
+
+/* -------------------------
    Value label (footer %) — colour matches shared.css rgba(255,255,255,0.72)
    ------------------------- */
 #swingMetricsRow .metricCard--tempo #tempoValueLabel {
@@ -157,78 +170,126 @@
 }
 
 /* =========================================================
-   Option D — Neon Arc Ring elements
+   Option D — Segmented power bar
    ========================================================= */
 
-/* Background track (full 270° dim ring) */
+/* Background track — full 270° "empty bar" base */
 #swingMetricsRow [data-widget="tempo"] .tempoRing__track {
   fill: none;
-  stroke: rgba(0, 245, 255, 0.10);
-  stroke-width: 7;
-  stroke-linecap: round;
-}
-
-/* Sweet zone arc (60%–80%) */
-#swingMetricsRow [data-widget="tempo"] .tempoRing__sweet {
-  fill: none;
-  stroke: rgba(0, 245, 255, 0.22);
-  stroke-width: 7;
-  stroke-linecap: round;
-}
-
-/* Dynamic fill arc */
-#swingMetricsRow [data-widget="tempo"] .tempoRing__fill {
-  fill: none;
-  stroke: url(#twFillGrad);
+  stroke: rgba(0, 245, 255, 0.08);
   stroke-width: 8;
-  stroke-linecap: round;
+  stroke-linecap: butt;
 }
 
-/* Tip dot */
-#swingMetricsRow [data-widget="tempo"] .tempoRing__tip {
-  fill: #00F5FF;
+/* Segment base (inactive) — flat ends so gaps = dividers */
+#swingMetricsRow [data-widget="tempo"] .tempoRing__seg {
+  fill: none;
+  stroke: rgba(0, 245, 255, 0.12);
+  stroke-width: 8;
+  stroke-linecap: butt;
+  transition: stroke 60ms ease, filter 60ms ease;
+}
+
+/* Active segment — regular */
+#swingMetricsRow [data-widget="tempo"] .tempoRing__seg.is-active {
+  stroke: #00F5FF;
+  filter: drop-shadow(0 0 3px rgba(0, 245, 255, 0.75));
+}
+
+/* Active segment — sweet zone (segs 6–7 = 60–80%) */
+#swingMetricsRow [data-widget="tempo"] .tempoRing__seg--sweet.is-active {
+  stroke: #00F5FF;
   filter:
-    drop-shadow(0 0 4px rgba(0, 245, 255, 0.80))
-    drop-shadow(0 0 10px rgba(0, 245, 255, 0.40));
+    drop-shadow(0 0 5px rgba(0, 245, 255, 0.95))
+    drop-shadow(0 0 12px rgba(0, 245, 255, 0.45));
 }
 
-/* Hold FX — ring fill and tip pulse */
-#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-hold .tempoRing__fill {
-  animation: tempoRingFillHold 1100ms ease-in-out infinite alternate;
+/* Hold FX — active segments pulse */
+#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-hold .tempoRing__seg.is-active {
+  animation: tempoSegHold 1100ms ease-in-out infinite alternate;
 }
-#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-hold .tempoRing__tip {
-  animation: tempoRingTipHold 1100ms ease-in-out infinite alternate;
-}
-
-@keyframes tempoRingFillHold {
-  from { filter: none; }
-  to   { filter: drop-shadow(0 0 6px rgba(0, 245, 255, 0.55)); }
-}
-@keyframes tempoRingTipHold {
-  from {
-    filter:
-      drop-shadow(0 0 4px rgba(0, 245, 255, 0.80))
-      drop-shadow(0 0 10px rgba(0, 245, 255, 0.40));
-  }
-  to {
-    filter:
-      drop-shadow(0 0 8px rgba(0, 245, 255, 1.00))
-      drop-shadow(0 0 18px rgba(0, 245, 255, 0.60));
-  }
+#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-hold .tempoRing__seg--sweet.is-active {
+  animation: tempoSegSweetHold 1100ms ease-in-out infinite alternate;
 }
 
-/* Locked state — sustained bright glow */
-#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-locked .tempoRing__fill {
-  filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.70));
+@keyframes tempoSegHold {
+  from { filter: drop-shadow(0 0 3px rgba(0, 245, 255, 0.75)); }
+  to   { filter: drop-shadow(0 0 6px rgba(0, 245, 255, 1.00))
+                 drop-shadow(0 0 14px rgba(0, 245, 255, 0.50)); }
 }
-#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-locked .tempoRing__tip {
+@keyframes tempoSegSweetHold {
+  from { filter: drop-shadow(0 0 5px rgba(0, 245, 255, 0.95))
+                 drop-shadow(0 0 12px rgba(0, 245, 255, 0.45)); }
+  to   { filter: drop-shadow(0 0 8px rgba(0, 245, 255, 1.00))
+                 drop-shadow(0 0 20px rgba(0, 245, 255, 0.65)); }
+}
+
+/* Locked state — all segments bright */
+#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-locked .tempoRing__seg.is-active {
   filter:
-    drop-shadow(0 0 10px rgba(0, 245, 255, 1.00))
-    drop-shadow(0 0 22px rgba(0, 245, 255, 0.55));
+    drop-shadow(0 0 6px rgba(0, 245, 255, 0.90))
+    drop-shadow(0 0 16px rgba(0, 245, 255, 0.45));
 }
 
-/* Value % label — neon */
+/* Force column layout in sidePanel so footer sits below ring, not beside it */
+#sidePanel .metricCard--tempo {
+  display:        flex !important;
+  flex-direction: column !important;
+}
+
+/* Value % label — small, below the ring */
 #swingMetricsRow .metricCard--tempo #swingTempoPct {
-  color: #00F5FF !important;
-  text-shadow: 0 0 10px rgba(0, 245, 255, 0.50) !important;
+  font-size:   var(--hint-size) !important;   /* ~10-12px — same as other widget values */
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  color:       #00F5FF !important;
+  text-shadow: 0 0 8px rgba(0, 245, 255, 0.50) !important;
+}
+
+/* =========================================================
+   Power button
+   ========================================================= */
+
+/* Background circle */
+#swingMetricsRow [data-widget="tempo"] .tempoBtn__bg {
+  fill:         rgba(0, 245, 255, 0.04);
+  stroke:       rgba(0, 245, 255, 0.22);
+  stroke-width: 1.5;
+}
+
+/* ⏻ symbol */
+#swingMetricsRow [data-widget="tempo"] .tempoBtn__symbol {
+  fill:             none;
+  stroke:           rgba(0, 245, 255, 0.55);
+  stroke-width:     2.2;
+  stroke-linecap:   round;
+  filter: drop-shadow(0 0 3px rgba(0, 245, 255, 0.35));
+}
+
+/* Hold — button pulses */
+#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-hold .tempoBtn__bg {
+  animation: tempoBtnBgHold 1100ms ease-in-out infinite alternate;
+}
+#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-hold .tempoBtn__symbol {
+  animation: tempoBtnSymHold 1100ms ease-in-out infinite alternate;
+}
+
+@keyframes tempoBtnBgHold {
+  from { fill: rgba(0, 245, 255, 0.04); stroke: rgba(0, 245, 255, 0.22); }
+  to   { fill: rgba(0, 245, 255, 0.14); stroke: rgba(0, 245, 255, 0.65); }
+}
+@keyframes tempoBtnSymHold {
+  from { stroke: rgba(0, 245, 255, 0.55); filter: drop-shadow(0 0 3px rgba(0, 245, 255, 0.35)); }
+  to   { stroke: #00F5FF;                 filter: drop-shadow(0 0 9px rgba(0, 245, 255, 1.00)); }
+}
+
+/* Locked — sustained bright glow */
+#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-locked .tempoBtn__bg {
+  fill:   rgba(0, 245, 255, 0.12);
+  stroke: rgba(0, 245, 255, 0.60);
+  filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.45));
+}
+#swingMetricsRow [data-widget="tempo"] .tempoWedge__svg.is-locked .tempoBtn__symbol {
+  stroke: #00F5FF;
+  filter: drop-shadow(0 0 7px rgba(0, 245, 255, 0.90));
 }
