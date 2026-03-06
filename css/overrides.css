@@ -298,7 +298,7 @@ aside#sidePanel > .gc-card:first-child{
 /* 1. App body: 3-column grid, header spans all */
 #appBody.appBody.gc-layout {
   display:               grid !important;
-  grid-template-columns: 148px 1fr 280px !important;
+  grid-template-columns: 148px 1fr 310px !important;
   grid-template-rows:    auto auto !important;
   align-items:           start !important;
   gap:                   10px !important;
@@ -1036,44 +1036,44 @@ header#appHeader .top-right .gc-segmented__btn--active {
   width:       100% !important;
 }
 
-/* ── Top row body height: 90px (up from 72px) ────────────── */
+/* ── Top row body height: 104px (scaled up) ─────────────── */
 #sidePanel .metricCard--attack .metricCard__body,
 #sidePanel .metricCard--path .metricCard__body {
-  height:     90px !important;
-  min-height: 90px !important;
-  max-height: 90px !important;
-  flex:       0 0 90px !important;
+  height:     104px !important;
+  min-height: 104px !important;
+  max-height: 104px !important;
+  flex:       0 0 104px !important;
   overflow:   hidden !important;
 }
 
-/* ── ATTACK (top-left, ~127px col): arc-size 108px ───────── */
-/* arc viewBox 120×90 · stage 108px → SVG 108×81px
-   endpoints y=72 → rendered 64.8px ≤ 90px body ✓ */
+/* ── ATTACK (top-left): arc-size 120px ──────────────────── */
+/* arc viewBox 120×90 · stage 120px → SVG 120×90px
+   endpoints y=72 → rendered 72px ≤ 104px body ✓ */
 #sidePanel .metricCard--attack {
-  --arc-size:       108px !important;
-  --aa-stage-w:     108px !important;
-  --arc-outer-w:    8px !important;
-  --arc-inner-w:    6px !important;
-  --golf-ball-size: 16px !important;
+  --arc-size:       120px !important;
+  --aa-stage-w:     120px !important;
+  --arc-outer-w:    9px !important;
+  --arc-inner-w:    7px !important;
+  --golf-ball-size: 18px !important;
 }
 #sidePanel [data-widget="attack"] .tubeArc__stage {
-  width:  108px !important;
+  width:  120px !important;
   margin: 0 auto !important;
 }
 #sidePanel [data-widget="attack"] #attackAngle {
-  width:    108px !important;
+  width:    120px !important;
   margin:   0 auto !important;
   overflow: visible !important;
 }
-/* Hide scale strip — too narrow in top-left column */
+/* Hide scale strip in narrow top column */
 #sidePanel [data-widget="attack"] .tubeArc__scale {
   display: none !important;
 }
-/* Readout size for compact top-left slot */
+/* Readout size */
 #sidePanel .metricCard--attack #attackAngleReadout,
 #sidePanel .metricCard--attack .metricCard__footer .metricCard__value {
-  font-size:   14px !important;
-  font-weight: 700 !important;
+  font-size:      16px !important;
+  font-weight:    700 !important;
   letter-spacing: 0 !important;
 }
 #sidePanel .metricCard--attack .metricCard__footer {
@@ -1084,27 +1084,26 @@ header#appHeader .top-right .gc-segmented__btn--active {
   padding-left: 0 !important;
 }
 
-/* ── PATH (top-right, ~127px col): wider sector ──────────── */
+/* ── PATH (top-right): wider sector ─────────────────────── */
 #sidePanel [data-widget="path"] #alignmentRing,
 #sidePanel [data-widget="path"] .path-sector {
-  width:     96px !important;
-  max-width: 96px !important;
+  width:     108px !important;
+  max-width: 108px !important;
 }
 #sidePanel [data-widget="path"] .path-sector__svg {
-  max-height: 86px !important;
+  max-height: 96px !important;
 }
 
 /* ── TEMPO (full-width bottom): grid layout inside card ─────
-   Turns card into a 2-col grid:
-   [SVG wedge ~130px] │ [big % readout fills rest]
+   [SVG wedge 160px] │ [big % readout fills rest]
    ──────────────────────────────────────────────────────── */
 #sidePanel .metricCard--tempo {
   display:               grid !important;
-  grid-template-columns: 130px 1fr !important;
+  grid-template-columns: 160px 1fr !important;
   grid-template-rows:    auto 1fr !important;
   align-items:           center !important;
-  flex-direction:        unset !important;  /* cancel flex from base */
-  gap:                   0 12px !important;
+  flex-direction:        unset !important;
+  gap:                   0 14px !important;
 }
 /* Title row: spans both cols */
 #sidePanel .metricCard--tempo .metricCard__title {
@@ -1117,10 +1116,10 @@ header#appHeader .top-right .gc-segmented__btn--active {
 #sidePanel .metricCard--tempo .metricCard__body {
   grid-column:     1 !important;
   grid-row:        2 !important;
-  width:           130px !important;
-  height:          112px !important;
-  min-height:      112px !important;
-  max-height:      112px !important;
+  width:           160px !important;
+  height:          124px !important;
+  min-height:      124px !important;
+  max-height:      124px !important;
   flex:            none !important;
   justify-content: flex-start !important;
   align-items:     center !important;
@@ -1136,28 +1135,28 @@ header#appHeader .top-right .gc-segmented__btn--active {
   padding:         0 !important;
   border-left:     1px solid rgba(255,255,255,0.08) !important;
 }
-/* Big % number */
+/* Big % number — scaled up */
 #sidePanel .metricCard--tempo #swingTempoPct,
 #sidePanel .metricCard--tempo .metricCard__hint {
-  font-size:      42px !important;
+  font-size:      48px !important;
   font-weight:    700 !important;
   line-height:    1 !important;
   letter-spacing: -0.03em !important;
   color:          rgba(255,255,255,0.88) !important;
 }
-/* TEMPO SVG: fill the 130px body naturally */
+/* TEMPO SVG: fill the 160px body */
 #sidePanel [data-widget="tempo"] .tempoWedge__svg {
-  height:     104px !important;
+  height:     118px !important;
   width:      auto !important;
-  max-height: 104px !important;
+  max-height: 118px !important;
   display:    block !important;
   overflow:   visible !important;
 }
 #sidePanel [data-widget="tempo"] .tempoWedge,
 #sidePanel [data-widget="tempo"] #swingTempoControl,
 #sidePanel [data-widget="tempo"] #tempoMount {
-  width:           130px !important;
-  height:          112px !important;
+  width:           160px !important;
+  height:          124px !important;
   display:         flex !important;
   align-items:     center !important;
   justify-content: center !important;
