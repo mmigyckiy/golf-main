@@ -210,8 +210,8 @@ header#appHeader{
 
 main#mainPanel,
 aside#sidePanel{
-  align-self: flex-start !important;
-  margin-top: 0 !important;
+  align-self:  stretch !important;  /* panels fill grid row height */
+  margin-top:  0 !important;
   padding-top: 0 !important;
 }
 
@@ -301,9 +301,11 @@ aside#sidePanel > .gc-card:first-child{
 #appBody.appBody.gc-layout {
   display:               grid !important;
   grid-template-columns: 148px minmax(380px, 1fr) 310px !important;
-  grid-template-rows:    auto auto !important;
-  align-items:           start !important;
+  grid-template-rows:    1fr !important;       /* single row, fills height */
+  align-items:           stretch !important;   /* panels fill grid row     */
   gap:                   10px !important;
+  flex:                  1 1 auto !important;  /* grow inside appShell flex-column */
+  min-height:            0 !important;
 }
 
 /* ── Responsive: hide left leaderboard ≤ 980px ────────────── */
@@ -346,51 +348,48 @@ header#appHeader {
   margin-bottom: 0 !important;
 }
 
-/* 2. Left panel (leaderboard) — column 1 */
+/* 2. Left panel (leaderboard) — column 1, content height */
 aside#leftPanel.leftPanel {
   grid-column:    1 !important;
   display:        flex !important;
   flex-direction: column !important;
-  align-self:     start !important;
+  align-self:     start !important;   /* content height — no empty stretch */
   min-width:      0 !important;
 }
 
-/* 3. mainPanel: center column, flex-column */
+/* 3. mainPanel: center column, flex-column, fills grid row */
 main#mainPanel,
 main#mainPanel.mainPanel.gc-main {
   grid-column:    2 !important;
   display:        flex !important;
   flex-direction: column !important;
   gap:            10px !important;
-  flex:           none !important;
+  align-self:     stretch !important;  /* fill grid row height */
   min-width:      0 !important;
   width:          auto !important;
   overflow:       visible !important;
 }
 
-/* 4. powerCard: column, content-sized */
+/* 4. powerCard: grows to fill mainPanel */
 #mainPanel .powerCard,
 #mainPanel .gc-card--primary.powerCard {
   display:        flex !important;
   flex-direction: column !important;
   min-height:     0 !important;
-  height:         auto !important;
-  flex:           none !important;
+  flex:           1 1 auto !important;  /* fill mainPanel height */
 }
 
-/* 5. powerCard__main: wraps gc-field, sized by field */
+/* 5. powerCard__main: grows inside powerCard */
 #mainPanel .powerCard__main {
-  flex:       none !important;
+  flex:       1 1 auto !important;
   min-height: 0 !important;
-  height:     auto !important;
 }
 
-/* 6. Flight canvas — taller now that leaderboard moved out */
+/* 6. Flight canvas — grows, capped at 640px */
 #mainPanel .gc-field {
-  height:     clamp(300px, 42vh, 460px) !important;
-  min-height: clamp(300px, 42vh, 460px) !important;
-  max-height: clamp(300px, 42vh, 460px) !important;
-  flex:       none !important;
+  flex:       1 1 auto !important;
+  min-height: 260px !important;
+  max-height: 640px !important;
   overflow:   hidden !important;
 }
 
@@ -402,20 +401,20 @@ main#mainPanel.mainPanel.gc-main {
   padding-bottom: 0 !important;
 }
 
-/* 8. Side panel: right column, cards stacked vertically */
+/* 8. Side panel: right column, fills grid row height */
 aside#sidePanel.sidePanel.gc-sidepanel {
   grid-column:    3 !important;
   display:        flex !important;
   flex-direction: column !important;
   gap:            10px !important;
   width:          auto !important;
-  align-self:     start !important;
-  height:         auto !important;
+  align-self:     stretch !important;  /* fill grid row height */
 }
 
 /* ── LEFT PANEL: Leaderboard card ───────────────────────── */
 #leftPanel .leaderboard-card {
-  padding: 10px 10px 8px !important;
+  padding:  10px 10px 8px !important;
+  overflow: hidden !important;
 }
 #leftPanel .leaderboard-card .gc-card__kicker {
   font-size:      9px !important;
@@ -817,10 +816,11 @@ header#appHeader .top-right .gc-segmented__btn--active {
    SWING METRICS in sidebar — compact card  v2
    ========================================================= */
 
-/* Card shell */
+/* Card shell — grows to fill remaining sidebar space */
 .metrics-card {
   padding:  10px 10px 12px !important;
   overflow: hidden !important;
+  flex:     1 1 auto !important;
 }
 .metrics-card .gc-card__kicker {
   font-size:      10px !important;
