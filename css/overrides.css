@@ -348,12 +348,12 @@ header#appHeader {
   margin-bottom: 0 !important;
 }
 
-/* 2. Left panel (leaderboard) — column 1, content height */
+/* 2. Left panel (leaderboard) — column 1, fills grid row height */
 aside#leftPanel.leftPanel {
   grid-column:    1 !important;
   display:        flex !important;
   flex-direction: column !important;
-  align-self:     start !important;   /* content height — no empty stretch */
+  align-self:     stretch !important;
   min-width:      0 !important;
 }
 
@@ -415,6 +415,7 @@ aside#sidePanel.sidePanel.gc-sidepanel {
 #leftPanel .leaderboard-card {
   padding:  10px 10px 8px !important;
   overflow: hidden !important;
+  flex:     1 1 auto !important;
 }
 #leftPanel .leaderboard-card .gc-card__kicker {
   font-size:      9px !important;
