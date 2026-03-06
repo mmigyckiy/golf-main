@@ -179,25 +179,22 @@
           </div>
         </section>
 
-        <!-- Daily Challenge — below the game field -->
-        <div class="gc-card drivix-card daily-card daily-card--inline">
-          <div class="daily-inline__left">
-            <div class="gc-card__kicker">DAILY CHALLENGE</div>
-            <div class="gc-card__title">Fairway Precision</div>
-          </div>
-          <div class="daily-inline__right">
-            <div class="gc-card__text">Land a drive within the long-drive zone (≥ 260 yd) without crashing.</div>
-            <div class="gc-badges">
-              <span class="gc-badge">Today</span>
-              <span class="gc-badge gc-badge--gold">260+ yd</span>
-            </div>
-          </div>
-        </div>
       </main>
 
       <aside id="sidePanel" class="sidePanel gc-sidepanel" aria-label="Club Panel">
 
-        <!-- MY STATS card -->
+        <!-- Daily Challenge — moved to sidebar (top slot) -->
+        <div class="gc-card gc-sidecard drivix-card daily-card">
+          <div class="gc-card__kicker">DAILY CHALLENGE</div>
+          <div class="gc-card__title">Fairway Precision</div>
+          <div class="gc-card__text">Land a drive within the long-drive zone (≥ 260 yd) without crashing.</div>
+          <div class="gc-badges">
+            <span class="gc-badge">Today</span>
+            <span class="gc-badge gc-badge--gold">260+ yd</span>
+          </div>
+        </div>
+
+        <!-- MY STATS card (hidden via overrides.css) -->
         <div class="gc-card gc-sidecard drivix-card stats-card" aria-label="My stats">
           <div class="gc-card__kicker">MY STATS</div>
           <div class="stats-card__grid">
