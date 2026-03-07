@@ -231,45 +231,49 @@
     drop-shadow(0 0 16px rgba(0, 245, 255, 0.45));
 }
 
-/* -------------------------
-   Power word (WEAK / GOOD / STRONG / MAX) — tier colour + glow
-   Default (idle / empty): dim white, no glow
-   Font size / weight / layout come from overrides.css
-   ------------------------- */
-#swingMetricsRow .metricCard--tempo #swingTempoPct,
-#sidePanel       .metricCard--tempo #swingTempoPct {
-  transition: color 220ms ease, text-shadow 220ms ease !important;
+/* =========================================================
+   Segment power-tier colours — keyed on data-power of #swingTempoControl
+   Active segments change colour based on swing intensity.
+   ========================================================= */
+
+/* Smooth colour transitions on all segments */
+#swingTempoControl .tempoRing__seg {
+  transition: stroke 280ms ease, filter 280ms ease;
 }
 
-/* WEAK — muted amber */
-#swingMetricsRow .metricCard--tempo #swingTempoPct[data-power="weak"],
-#sidePanel       .metricCard--tempo #swingTempoPct[data-power="weak"] {
-  color:       rgba(255, 180, 60, 0.85) !important;
-  text-shadow: 0 0 10px rgba(255, 180, 60, 0.40) !important;
+/* WEAK — warm amber */
+#swingTempoControl[data-power="weak"] .tempoRing__seg.is-active {
+  stroke: rgba(255, 155, 40, 0.90) !important;
+  filter: drop-shadow(0 0 3px rgba(255, 155, 40, 0.75)) !important;
+}
+#swingTempoControl[data-power="weak"] .tempoRing__seg--sweet.is-active {
+  stroke: rgba(255, 155, 40, 0.90) !important;
+  filter: drop-shadow(0 0 5px rgba(255, 155, 40, 0.95))
+          drop-shadow(0 0 12px rgba(255, 155, 40, 0.45)) !important;
 }
 
 /* GOOD — lime green */
-#swingMetricsRow .metricCard--tempo #swingTempoPct[data-power="good"],
-#sidePanel       .metricCard--tempo #swingTempoPct[data-power="good"] {
-  color:       rgba(100, 230, 100, 0.90) !important;
-  text-shadow: 0 0 10px rgba(100, 230, 100, 0.45) !important;
+#swingTempoControl[data-power="good"] .tempoRing__seg.is-active {
+  stroke: rgba(70, 210, 70, 0.90) !important;
+  filter: drop-shadow(0 0 3px rgba(70, 210, 70, 0.75)) !important;
+}
+#swingTempoControl[data-power="good"] .tempoRing__seg--sweet.is-active {
+  stroke: rgba(70, 210, 70, 0.90) !important;
+  filter: drop-shadow(0 0 5px rgba(70, 210, 70, 0.95))
+          drop-shadow(0 0 12px rgba(70, 210, 70, 0.45)) !important;
 }
 
-/* STRONG — neon cyan */
-#swingMetricsRow .metricCard--tempo #swingTempoPct[data-power="strong"],
-#sidePanel       .metricCard--tempo #swingTempoPct[data-power="strong"] {
-  color:       #00F5FF !important;
-  text-shadow: 0 0 10px rgba(0, 245, 255, 0.55),
-               0 0 22px rgba(0, 245, 255, 0.25) !important;
-}
+/* STRONG — default neon cyan (base style already correct, no override needed) */
 
-/* MAX — bright white with intense glow */
-#swingMetricsRow .metricCard--tempo #swingTempoPct[data-power="max"],
-#sidePanel       .metricCard--tempo #swingTempoPct[data-power="max"] {
-  color:       #ffffff !important;
-  text-shadow: 0 0 8px rgba(0, 245, 255, 0.70),
-               0 0 20px rgba(0, 245, 255, 0.40),
-               0 0 40px rgba(0, 245, 255, 0.20) !important;
+/* MAX — bright white + cyan corona */
+#swingTempoControl[data-power="max"] .tempoRing__seg.is-active {
+  stroke: rgba(255, 255, 255, 0.95) !important;
+  filter: drop-shadow(0 0 4px rgba(0, 245, 255, 0.80)) !important;
+}
+#swingTempoControl[data-power="max"] .tempoRing__seg--sweet.is-active {
+  stroke: #ffffff !important;
+  filter: drop-shadow(0 0 6px rgba(0, 245, 255, 0.90))
+          drop-shadow(0 0 16px rgba(0, 245, 255, 0.50)) !important;
 }
 
 /* =========================================================

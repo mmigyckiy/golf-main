@@ -1137,72 +1137,42 @@ header#appHeader .top-right .gc-segmented__btn--active {
   max-height: 96px !important;
 }
 
-/* ── TEMPO (full-width bottom): grid layout inside card ─────
-   [big % readout 1fr] │ [SVG ring 160px     ]
-   [                 ] │ [HOLD TO DRIVE label]
-   ──────────────────────────────────────────────────────── */
+/* ── TEMPO (full-width bottom): centred ring, power shown via arc colour ─
+   Power tier is communicated by the fill-arc colour (no text readout).
+   ─────────────────────────────────────────────────────────────────────── */
 #sidePanel .metricCard--tempo {
-  display:               grid !important;
-  grid-template-columns: 1fr 160px !important;
-  grid-template-rows:    auto 1fr auto !important;
-  align-items:           center !important;
-  flex-direction:        unset !important;
-  gap:                   0 14px !important;
+  display:        flex !important;
+  flex-direction: column !important;
+  align-items:    center !important;
+  gap:            0 !important;
 }
-/* Title row: spans both cols */
+/* Title: full-width, left-aligned */
 #sidePanel .metricCard--tempo .metricCard__title {
-  grid-column:  1 / -1 !important;
-  grid-row:     1 !important;
-  text-align:   left !important;
-  padding:      0 0 6px !important;
+  width:      100% !important;
+  text-align: left !important;
+  padding:    0 0 4px !important;
 }
-/* Footer (% readout) — LEFT col, spans rows 2-3, centred vertically */
+/* Hide text readout — power shown via arc colour */
 #sidePanel .metricCard--tempo .metricCard__footer {
-  grid-column:     1 !important;
-  grid-row:        2 / 4 !important;
-  display:         flex !important;
-  align-items:     center !important;
-  justify-content: center !important;
-  padding:         0 !important;
-  border-left:     none !important;
+  display: none !important;
 }
-/* Body (SVG ring) — RIGHT col, row 2 */
+/* Body (SVG ring): centred, fixed size */
 #sidePanel .metricCard--tempo .metricCard__body {
-  grid-column:     2 !important;
-  grid-row:        2 !important;
-  width:           160px !important;
-  height:          124px !important;
-  min-height:      124px !important;
-  max-height:      124px !important;
-  flex:            none !important;
-  justify-content: flex-start !important;
-  align-items:     center !important;
-  overflow:        visible !important;
+  width:    160px !important;
+  height:   120px !important;
+  flex:     none !important;
+  overflow: visible !important;
 }
-/* HOLD TO DRIVE hint — RIGHT col, row 3, under the ring */
+/* HOLD TO DRIVE hint: centred below ring */
 #sidePanel .metricCard--tempo .metricCard__holdHint {
-  grid-column:  2 !important;
-  grid-row:     3 !important;
-  text-align:   center !important;
-  padding:      4px 0 6px !important;
+  text-align: center !important;
+  padding:    4px 0 6px !important;
 }
-/* Power word (WEAK / GOOD / STRONG / MAX) — large centred label */
-#sidePanel .metricCard--tempo #swingTempoPct,
-#sidePanel .metricCard--tempo .metricCard__hint {
-  font-size:      30px !important;
-  font-weight:    800 !important;
-  line-height:    1 !important;
-  letter-spacing: 0.08em !important;
-  text-transform: uppercase !important;
-  white-space:    nowrap !important;
-  color:          rgba(255,255,255,0.88) !important;
-  transition:     color 200ms ease, text-shadow 200ms ease !important;
-}
-/* TEMPO SVG: fill the 160px body */
+/* TEMPO SVG */
 #sidePanel [data-widget="tempo"] .tempoWedge__svg {
-  height:     118px !important;
+  height:     114px !important;
   width:      auto !important;
-  max-height: 118px !important;
+  max-height: 114px !important;
   display:    block !important;
   overflow:   visible !important;
 }
@@ -1210,7 +1180,7 @@ header#appHeader .top-right .gc-segmented__btn--active {
 #sidePanel [data-widget="tempo"] #swingTempoControl,
 #sidePanel [data-widget="tempo"] #tempoMount {
   width:           160px !important;
-  height:          124px !important;
+  height:          120px !important;
   display:         flex !important;
   align-items:     center !important;
   justify-content: center !important;

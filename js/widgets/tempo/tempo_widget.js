@@ -40,11 +40,10 @@ export function createTempoWidget() {
 
     const pct = `${Math.round(v * 100)}%`;
     if (valueEl) valueEl.textContent = pct;
-    if (pctEl) {
-      const { word, tier } = tempoLabel(v);
-      pctEl.textContent = word;
-      pctEl.dataset.power = tier;
-    }
+
+    // Drive arc colour via data-power on the host container
+    const { tier } = tempoLabel(v);
+    if (hostEl) hostEl.dataset.power = tier;
   }
 
   function resolveHost(rootEl, ui) {
