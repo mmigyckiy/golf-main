@@ -1146,11 +1146,12 @@ header#appHeader .top-right .gc-segmented__btn--active {
   align-items:    center !important;
   gap:            0 !important;
 }
-/* Title: full-width, left-aligned */
+/* Title: full-width, left-aligned, with bottom gap before ring */
 #sidePanel .metricCard--tempo .metricCard__title {
-  width:      100% !important;
-  text-align: left !important;
-  padding:    0 0 4px !important;
+  width:         100% !important;
+  text-align:    left !important;
+  padding:       0 !important;
+  margin-bottom: 6px !important;
 }
 /* Hide text readout — power shown via arc colour */
 #sidePanel .metricCard--tempo .metricCard__footer {
