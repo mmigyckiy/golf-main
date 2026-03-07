@@ -265,15 +265,15 @@
 
 /* STRONG — default neon cyan (base style already correct, no override needed) */
 
-/* MAX — bright white + cyan corona */
+/* MAX — red warning (player pushing past safe zone) */
 #swingTempoControl[data-power="max"] .tempoRing__seg.is-active {
-  stroke: rgba(255, 255, 255, 0.95) !important;
-  filter: drop-shadow(0 0 4px rgba(0, 245, 255, 0.80)) !important;
+  stroke: rgba(255, 55, 55, 0.95) !important;
+  filter: drop-shadow(0 0 4px rgba(255, 55, 55, 0.80)) !important;
 }
 #swingTempoControl[data-power="max"] .tempoRing__seg--sweet.is-active {
-  stroke: #ffffff !important;
-  filter: drop-shadow(0 0 6px rgba(0, 245, 255, 0.90))
-          drop-shadow(0 0 16px rgba(0, 245, 255, 0.50)) !important;
+  stroke: #ff3737 !important;
+  filter: drop-shadow(0 0 6px rgba(255, 55, 55, 0.95))
+          drop-shadow(0 0 16px rgba(255, 55, 55, 0.50)) !important;
 }
 
 /* =========================================================
