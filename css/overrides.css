@@ -703,7 +703,7 @@ header#appHeader .top-banner-inner {
   width:          100% !important;
 }
 header#appHeader .top-left   { flex: 0 0 auto !important; }
-header#appHeader .top-center { flex: 1 1 auto !important; min-width: 0 !important; }
+header#appHeader .top-center { flex: 1 1 auto !important; min-width: 0 !important; overflow: hidden !important; }
 header#appHeader .top-right  { flex: 0 0 auto !important; margin-left: auto !important; }
 
 /* popovers sit in normal flow but have 0 height — collapse them */
@@ -757,6 +757,12 @@ header#appHeader .top-right .gc-segmented__btn--active {
   box-shadow: 0 1px 4px rgba(0,0,0,0.35) !important;
 }
 
+
+/* ── Narrow header: hide profile below 560px so buttons never get squeezed ── */
+@media (max-width: 560px) {
+  header#appHeader .top-center { display: none !important; }
+  header#appHeader .top-right  { margin-left: 0 !important; }
+}
 
 /* ── Shot chips: slightly bigger ───────────────────────── */
 .shot-history {

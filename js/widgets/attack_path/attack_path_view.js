@@ -251,13 +251,15 @@ export function createAttackPathView() {
       svg.appendChild(t);
     });
 
-    // Path labels (top edge, for V-line range)
+    // Path labels (horizontal range ±60°).
+    // y=36: SVG body = 103px (card 120px − footer 17px), scale=1.80, cropY=47.5px
+    // → baseline screen-y from SVG top = 36×1.80−47.5 = 17.3px → glyph top ≈12.8px ✓
     [
       { dx: -48, text: "−60°", anchor: "middle" },
       { dx: +48, text: "+60°", anchor: "middle" }
     ].forEach(({ dx, text, anchor }) => {
       const t = mkSvg("text", {
-        x: (CX + dx).toFixed(1), y: "5.5",
+        x: (CX + dx).toFixed(1), y: "36",
         class: "xhAxis__label",
         "font-size": "6.5", "text-anchor": anchor,
         fill: "rgba(216,200,166,0.28)", "letter-spacing": "0.04em"

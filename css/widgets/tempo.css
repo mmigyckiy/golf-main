@@ -231,19 +231,12 @@
     drop-shadow(0 0 16px rgba(0, 245, 255, 0.45));
 }
 
-/* Force column layout in sidePanel so footer sits below ring, not beside it */
-#sidePanel .metricCard--tempo {
-  display:        flex !important;
-  flex-direction: column !important;
-}
-
-/* Value % label — small, below the ring */
+/* Value % label — neon cyan glow.
+   Font size / weight / line-height come from the 48px rule in overrides.css
+   (sidePanel grid layout). Only colour + glow are set here. */
 #swingMetricsRow .metricCard--tempo #swingTempoPct {
-  font-size:   var(--hint-size) !important;   /* ~10-12px — same as other widget values */
-  font-weight: 600 !important;
-  line-height: 1.2 !important;
   color:       #00F5FF !important;
-  text-shadow: 0 0 8px rgba(0, 245, 255, 0.50) !important;
+  text-shadow: 0 0 10px rgba(0, 245, 255, 0.55) !important;
 }
 
 /* =========================================================
