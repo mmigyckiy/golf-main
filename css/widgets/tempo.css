@@ -289,36 +289,41 @@
    Power button — 3D press effect
    ========================================================= */
 
-/* Group wrapper: handles scale + shadow for 3D depth illusion */
+/* Group wrapper: scale only (no filter — group-level filter in SVG
+   with overflow:visible causes the whole widget to repaint) */
 #swingMetricsRow [data-widget="tempo"] .tempoBtn__group,
 #sidePanel       [data-widget="tempo"] .tempoBtn__group {
   cursor:           pointer;
   transform-box:    fill-box;
   transform-origin: center;
-  transition:       transform 70ms ease, filter 70ms ease;
-  /* Resting state: subtle drop-shadow below gives "raised button" feeling */
-  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.70))
-          drop-shadow(0 1px 2px rgba(0, 0, 0, 0.50))
-          drop-shadow(0 0 6px rgba(0, 245, 255, 0.12));
+  transition:       transform 70ms ease;
 }
 
-/* Pressed: scale in + shadow collapses → button "sinks" */
+/* Pressed: scale in — button "sinks" */
 #swingMetricsRow [data-widget="tempo"] .tempoBtn__group.is-pressed,
 #sidePanel       [data-widget="tempo"] .tempoBtn__group.is-pressed {
-  transform: scale(0.90);
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.40))
-          drop-shadow(0 0 4px rgba(0, 245, 255, 0.08));
+  transform: scale(0.88);
 }
 
-/* Background circle */
-#swingMetricsRow [data-widget="tempo"] .tempoBtn__bg {
+/* Background circle — shadow lives here (scoped to one element, no bleed) */
+#swingMetricsRow [data-widget="tempo"] .tempoBtn__bg,
+#sidePanel       [data-widget="tempo"] .tempoBtn__bg {
   fill:         rgba(0, 245, 255, 0.04);
   stroke:       rgba(0, 245, 255, 0.22);
   stroke-width: 1.5;
+  filter:       drop-shadow(0 3px 5px rgba(0, 0, 0, 0.65));
+  transition:   filter 70ms ease;
+}
+
+/* Pressed: shadow collapses on bg circle */
+#swingMetricsRow [data-widget="tempo"] .tempoBtn__group.is-pressed .tempoBtn__bg,
+#sidePanel       [data-widget="tempo"] .tempoBtn__group.is-pressed .tempoBtn__bg {
+  filter: drop-shadow(0 0px 1px rgba(0, 0, 0, 0.30));
 }
 
 /* Golf club symbol */
-#swingMetricsRow [data-widget="tempo"] .tempoBtn__symbol {
+#swingMetricsRow [data-widget="tempo"] .tempoBtn__symbol,
+#sidePanel       [data-widget="tempo"] .tempoBtn__symbol {
   fill:             none;
   stroke:           rgba(0, 245, 255, 0.55);
   stroke-width:     2.2;

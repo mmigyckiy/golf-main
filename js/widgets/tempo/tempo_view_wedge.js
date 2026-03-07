@@ -169,15 +169,17 @@ export function createTempoViewWedge() {
       class: "tempoBtn__symbol"
     }));
 
-    // 3D press events
-    const _press   = () => btnGroup.classList.add("is-pressed");
+    // 3D press events — release tracked on document so hold-drag doesn't flicker
     const _release = () => btnGroup.classList.remove("is-pressed");
-    btnGroup.addEventListener("mousedown",   _press);
-    btnGroup.addEventListener("touchstart",  _press,   { passive: true });
-    btnGroup.addEventListener("mouseup",     _release);
-    btnGroup.addEventListener("mouseleave",  _release);
-    btnGroup.addEventListener("touchend",    _release);
-    btnGroup.addEventListener("touchcancel", _release);
+    const _press   = () => {
+      btnGroup.classList.add("is-pressed");
+      // Release on next mouseup anywhere on the page
+      document.addEventListener("mouseup",     _release, { once: true });
+      document.addEventListener("touchend",    _release, { once: true });
+      document.addEventListener("touchcancel", _release, { once: true });
+    };
+    btnGroup.addEventListener("mousedown",  _press);
+    btnGroup.addEventListener("touchstart", _press, { passive: true });
 
     svg.appendChild(btnGroup);
 
