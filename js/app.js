@@ -977,8 +977,7 @@ function renderSwingTempo(headPos){
   const p = clamp01(Number.isFinite(headPos) ? headPos : (state.tempo?.headPos ?? 0));
   state.tempo = state.tempo || {};
   state.tempo.headPos = p;
-  const pct = document.getElementById("swingTempoPct");
-  if(pct) pct.textContent = `${Math.round(p * 100)}%`;
+  // DOM update handled by tempo_widget.js (displays power word instead of %)
 }
 
 function resetSwingTempoMeter(){

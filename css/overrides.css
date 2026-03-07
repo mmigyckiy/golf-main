@@ -1138,12 +1138,13 @@ header#appHeader .top-right .gc-segmented__btn--active {
 }
 
 /* ── TEMPO (full-width bottom): grid layout inside card ─────
-   [SVG wedge 160px] │ [big % readout fills rest]
+   [big % readout 1fr] │ [SVG ring 160px     ]
+   [                 ] │ [HOLD TO DRIVE label]
    ──────────────────────────────────────────────────────── */
 #sidePanel .metricCard--tempo {
   display:               grid !important;
-  grid-template-columns: 160px 1fr !important;
-  grid-template-rows:    auto 1fr !important;
+  grid-template-columns: 1fr 160px !important;
+  grid-template-rows:    auto 1fr auto !important;
   align-items:           center !important;
   flex-direction:        unset !important;
   gap:                   0 14px !important;
@@ -1155,9 +1156,19 @@ header#appHeader .top-right .gc-segmented__btn--active {
   text-align:   left !important;
   padding:      0 0 6px !important;
 }
-/* Body (SVG) — left col, row 2 */
-#sidePanel .metricCard--tempo .metricCard__body {
+/* Footer (% readout) — LEFT col, spans rows 2-3, centred vertically */
+#sidePanel .metricCard--tempo .metricCard__footer {
   grid-column:     1 !important;
+  grid-row:        2 / 4 !important;
+  display:         flex !important;
+  align-items:     center !important;
+  justify-content: center !important;
+  padding:         0 !important;
+  border-left:     none !important;
+}
+/* Body (SVG ring) — RIGHT col, row 2 */
+#sidePanel .metricCard--tempo .metricCard__body {
+  grid-column:     2 !important;
   grid-row:        2 !important;
   width:           160px !important;
   height:          124px !important;
@@ -1168,24 +1179,24 @@ header#appHeader .top-right .gc-segmented__btn--active {
   align-items:     center !important;
   overflow:        visible !important;
 }
-/* Footer (% readout) — right col, row 2 */
-#sidePanel .metricCard--tempo .metricCard__footer {
-  grid-column:     2 !important;
-  grid-row:        2 !important;
-  display:         flex !important;
-  align-items:     center !important;
-  justify-content: center !important;
-  padding:         0 !important;
-  border-left:     none !important;
+/* HOLD TO DRIVE hint — RIGHT col, row 3, under the ring */
+#sidePanel .metricCard--tempo .metricCard__holdHint {
+  grid-column:  2 !important;
+  grid-row:     3 !important;
+  text-align:   center !important;
+  padding:      4px 0 6px !important;
 }
-/* Big % number — scaled up */
+/* Power word (WEAK / GOOD / STRONG / MAX) — large centred label */
 #sidePanel .metricCard--tempo #swingTempoPct,
 #sidePanel .metricCard--tempo .metricCard__hint {
-  font-size:      48px !important;
-  font-weight:    700 !important;
+  font-size:      30px !important;
+  font-weight:    800 !important;
   line-height:    1 !important;
-  letter-spacing: -0.03em !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  white-space:    nowrap !important;
   color:          rgba(255,255,255,0.88) !important;
+  transition:     color 200ms ease, text-shadow 200ms ease !important;
 }
 /* TEMPO SVG: fill the 160px body */
 #sidePanel [data-widget="tempo"] .tempoWedge__svg {

@@ -231,12 +231,45 @@
     drop-shadow(0 0 16px rgba(0, 245, 255, 0.45));
 }
 
-/* Value % label — neon cyan glow.
-   Font size / weight / line-height come from the 48px rule in overrides.css
-   (sidePanel grid layout). Only colour + glow are set here. */
-#swingMetricsRow .metricCard--tempo #swingTempoPct {
+/* -------------------------
+   Power word (WEAK / GOOD / STRONG / MAX) — tier colour + glow
+   Default (idle / empty): dim white, no glow
+   Font size / weight / layout come from overrides.css
+   ------------------------- */
+#swingMetricsRow .metricCard--tempo #swingTempoPct,
+#sidePanel       .metricCard--tempo #swingTempoPct {
+  transition: color 220ms ease, text-shadow 220ms ease !important;
+}
+
+/* WEAK — muted amber */
+#swingMetricsRow .metricCard--tempo #swingTempoPct[data-power="weak"],
+#sidePanel       .metricCard--tempo #swingTempoPct[data-power="weak"] {
+  color:       rgba(255, 180, 60, 0.85) !important;
+  text-shadow: 0 0 10px rgba(255, 180, 60, 0.40) !important;
+}
+
+/* GOOD — lime green */
+#swingMetricsRow .metricCard--tempo #swingTempoPct[data-power="good"],
+#sidePanel       .metricCard--tempo #swingTempoPct[data-power="good"] {
+  color:       rgba(100, 230, 100, 0.90) !important;
+  text-shadow: 0 0 10px rgba(100, 230, 100, 0.45) !important;
+}
+
+/* STRONG — neon cyan */
+#swingMetricsRow .metricCard--tempo #swingTempoPct[data-power="strong"],
+#sidePanel       .metricCard--tempo #swingTempoPct[data-power="strong"] {
   color:       #00F5FF !important;
-  text-shadow: 0 0 10px rgba(0, 245, 255, 0.55) !important;
+  text-shadow: 0 0 10px rgba(0, 245, 255, 0.55),
+               0 0 22px rgba(0, 245, 255, 0.25) !important;
+}
+
+/* MAX — bright white with intense glow */
+#swingMetricsRow .metricCard--tempo #swingTempoPct[data-power="max"],
+#sidePanel       .metricCard--tempo #swingTempoPct[data-power="max"] {
+  color:       #ffffff !important;
+  text-shadow: 0 0 8px rgba(0, 245, 255, 0.70),
+               0 0 20px rgba(0, 245, 255, 0.40),
+               0 0 40px rgba(0, 245, 255, 0.20) !important;
 }
 
 /* =========================================================

@@ -4,6 +4,15 @@ function clamp01(v) {
   return Math.max(0, Math.min(1, Number(v) || 0));
 }
 
+/** Map tempo 0–1 to a display word + CSS tier name */
+function tempoLabel(v) {
+  if (v <= 0.005) return { word: "",       tier: "" };
+  if (v <  0.30)  return { word: "WEAK",   tier: "weak" };
+  if (v <  0.60)  return { word: "GOOD",   tier: "good" };
+  if (v <  0.80)  return { word: "STRONG", tier: "strong" };
+                  return { word: "MAX",    tier: "max" };
+}
+
 function tempoStateFromPhase({ phase, holdActive, locked }) {
   if (locked) return "locked";
   if (holdActive) return "hold";
@@ -31,7 +40,11 @@ export function createTempoWidget() {
 
     const pct = `${Math.round(v * 100)}%`;
     if (valueEl) valueEl.textContent = pct;
-    if (pctEl) pctEl.textContent = pct;
+    if (pctEl) {
+      const { word, tier } = tempoLabel(v);
+      pctEl.textContent = word;
+      pctEl.dataset.power = tier;
+    }
   }
 
   function resolveHost(rootEl, ui) {
