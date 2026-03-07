@@ -286,39 +286,15 @@
 }
 
 /* =========================================================
-   Power button — 3D press effect
+   Power button
    ========================================================= */
 
-/* Group wrapper: scale only (no filter — group-level filter in SVG
-   with overflow:visible causes the whole widget to repaint) */
-#swingMetricsRow [data-widget="tempo"] .tempoBtn__group,
-#sidePanel       [data-widget="tempo"] .tempoBtn__group {
-  cursor:           pointer;
-  transform-box:    fill-box;
-  transform-origin: center;
-  transition:       transform 70ms ease;
-}
-
-/* Pressed: scale in — button "sinks" */
-#swingMetricsRow [data-widget="tempo"] .tempoBtn__group.is-pressed,
-#sidePanel       [data-widget="tempo"] .tempoBtn__group.is-pressed {
-  transform: scale(0.88);
-}
-
-/* Background circle — shadow lives here (scoped to one element, no bleed) */
+/* Background circle */
 #swingMetricsRow [data-widget="tempo"] .tempoBtn__bg,
 #sidePanel       [data-widget="tempo"] .tempoBtn__bg {
   fill:         rgba(0, 245, 255, 0.04);
   stroke:       rgba(0, 245, 255, 0.22);
   stroke-width: 1.5;
-  filter:       drop-shadow(0 3px 5px rgba(0, 0, 0, 0.65));
-  transition:   filter 70ms ease;
-}
-
-/* Pressed: shadow collapses on bg circle */
-#swingMetricsRow [data-widget="tempo"] .tempoBtn__group.is-pressed .tempoBtn__bg,
-#sidePanel       [data-widget="tempo"] .tempoBtn__group.is-pressed .tempoBtn__bg {
-  filter: drop-shadow(0 0px 1px rgba(0, 0, 0, 0.30));
 }
 
 /* Golf club symbol */
