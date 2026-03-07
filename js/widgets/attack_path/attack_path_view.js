@@ -216,28 +216,58 @@ export function createAttackPathView() {
     });
 
     // ── Layer 7: Moving driver head silhouette (top-down, face pointing right) ──
+    // Modern 460cc driver: convex face, wide rounded crown, hosel at heel
     ballEl = mkSvg("g", {
       class: "xhBall",
       transform: `translate(${CX}, ${CY})`
     });
 
-    // Club head body — D-shape: face is flat right edge, crown curves back left
+    // Crown body — face (right) is convex cubic bezier, crown sweeps back wide
+    //   Toe = y-negative (top in SVG), Heel = y-positive (hosel side, bottom)
+    //   Face spans y ±3.5 and bulges to x=7; back deepest at x=-9.5
     ballEl.appendChild(mkSvg("path", {
-      d: "M 5,-3.5 L 5,3.5 Q 2,6 -2,6.5 Q -7,5.5 -9,0 Q -7,-5.5 -2,-6.5 Q 2,-6 5,-3.5 Z",
+      d: [
+        "M 5,-3.5",                        // face top  (toe)
+        "C 7,-1.5 7,1.5 5,3.5",           // face — convex curve (bulge & roll)
+        "C 3.5,6.2 0.5,7.8 -1.5,7.8",    // heel shoulder (shaft side)
+        "C -5,7.8 -8.5,5 -9.5,0",        // back-heel sweep
+        "C -8.5,-5 -5,-7.8 -1.5,-7.8",   // back-toe sweep
+        "C 0.5,-7.8 3.5,-6.2 5,-3.5 Z"   // toe shoulder → face
+      ].join(" "),
       class: "xhDriver__body",
-      fill: "rgba(28,42,55,0.90)",
-      stroke: "rgba(0,245,255,0.65)",
+      fill: "rgba(14,26,40,0.93)",
+      stroke: "rgba(0,245,255,0.68)",
       "stroke-width": "1.2",
       "stroke-linejoin": "round"
     }));
 
-    // Face highlight — bright vertical line on the right (strike face)
-    ballEl.appendChild(mkSvg("line", {
-      x1: "5", y1: "-3.5", x2: "5", y2: "3.5",
+    // Hosel indicator — small circle at heel-face junction (shaft attachment)
+    ballEl.appendChild(mkSvg("circle", {
+      cx: "4", cy: "3.2", r: "1.4",
+      class: "xhDriver__hosel",
+      fill: "rgba(0,245,255,0.20)",
+      stroke: "rgba(0,245,255,0.65)",
+      "stroke-width": "0.8"
+    }));
+
+    // Face insert highlight — follows the convex face curve
+    ballEl.appendChild(mkSvg("path", {
+      d: "M 5,-3.5 C 7,-1.5 7,1.5 5,3.5",
       class: "xhDriver__face",
-      stroke: "rgba(255,255,255,0.55)",
+      fill: "none",
+      stroke: "rgba(255,255,255,0.70)",
       "stroke-width": "1.5",
-      "stroke-linecap": "butt"
+      "stroke-linecap": "round"
+    }));
+
+    // Crown centerline — subtle depth/orientation cue
+    ballEl.appendChild(mkSvg("path", {
+      d: "M 3.5,0 L -7,0",
+      class: "xhDriver__crown",
+      fill: "none",
+      stroke: "rgba(0,245,255,0.18)",
+      "stroke-width": "0.7",
+      "stroke-linecap": "round"
     }));
 
     svg.appendChild(ballEl);
