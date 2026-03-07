@@ -173,6 +173,18 @@ export function createTempoViewWedge() {
 
     wrapEl.appendChild(svg);
     container.appendChild(wrapEl);
+
+    // Whole-widget press effect — tracked on document so hold-drag is stable
+    const _wRelease = () => wrapEl.classList.remove("is-pressed");
+    const _wPress   = () => {
+      wrapEl.classList.add("is-pressed");
+      document.addEventListener("mouseup",     _wRelease, { once: true });
+      document.addEventListener("touchend",    _wRelease, { once: true });
+      document.addEventListener("touchcancel", _wRelease, { once: true });
+    };
+    wrapEl.addEventListener("mousedown",  _wPress);
+    wrapEl.addEventListener("touchstart", _wPress, { passive: true });
+
     _render(0);
   }
 

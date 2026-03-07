@@ -63,13 +63,23 @@
 /* -------------------------
    Wedge wrapper — fills the host, centres the SVG
    ------------------------- */
-#swingMetricsRow [data-widget="tempo"] .tempoWedge {
+#swingMetricsRow [data-widget="tempo"] .tempoWedge,
+#sidePanel       [data-widget="tempo"] .tempoWedge {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   flex: 1 1 auto;
   min-height: 0;
+  transform-origin: center;
+  transition: transform 90ms ease;
+  will-change: transform;
+}
+
+/* Whole-widget press — clean HTML transform, no SVG compositing issues */
+#swingMetricsRow [data-widget="tempo"] .tempoWedge.is-pressed,
+#sidePanel       [data-widget="tempo"] .tempoWedge.is-pressed {
+  transform: scale(0.93);
 }
 
 /* -------------------------
