@@ -44,6 +44,7 @@ export function createAttackPathWidget() {
   let _lastPath01    = 0.5;
   let _inSync        = false;   // true while both in sweet zone
   let _prevPhase     = "IDLE";  // track phase transitions
+  let _armingStartTs = 0;       // ts when current ARMING cycle began
   let footerAttackEl = null;
   let footerPathEl   = null;
 
@@ -100,8 +101,9 @@ export function createAttackPathWidget() {
 
     if (locked) return;
 
-    // New ARMING cycle starting → softly return ball to center before sweep
+    // New ARMING cycle starting → record start time + snap ball to center
     if (holdActive && _prevPhase !== "ARMING") {
+      _armingStartTs = ts;
       view.setAttack(0);
       view.setPath01(0.5);
       model.update({ headPos01: 0.5 });
@@ -115,8 +117,11 @@ export function createAttackPathWidget() {
     }
 
     // ── Ball sweep simulation (ARMING only) ──────────────────
-    const sweepA  = ts / SWEEP_PERIOD_MS  * TWO_PI;
-    const tremorA = ts / TREMOR_PERIOD_MS * TWO_PI;
+    // Use time relative to when THIS hold started so the pendulum always
+    // begins at phase 0: sin(0)=0 (center) → moves slowly right first.
+    const holdTs  = ts - _armingStartTs;
+    const sweepA  = holdTs / SWEEP_PERIOD_MS  * TWO_PI;
+    const tremorA = holdTs / TREMOR_PERIOD_MS * TWO_PI;
 
     const sweepDeg = Math.sin(sweepA)          * SWEEP_MAX_DEG
                    + Math.sin(tremorA * 1.37)  * TREMOR_PATH_DEG;
@@ -167,6 +172,7 @@ export function createAttackPathWidget() {
     locked         = false;
     _inSync        = false;
     _prevPhase     = "IDLE";
+    _armingStartTs = 0;
     // Note: _lastAttackDeg / _lastPath01 intentionally NOT reset here —
     // ball stays frozen at its last position until next ARMING begins.
     model.reset?.();
