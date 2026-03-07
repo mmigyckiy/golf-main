@@ -1151,7 +1151,7 @@ header#appHeader .top-right .gc-segmented__btn--active {
   width:         100% !important;
   text-align:    left !important;
   padding:       0 !important;
-  margin-bottom: 6px !important;
+  margin-bottom: 14px !important;
 }
 /* Hide text readout — power shown via arc colour */
 #sidePanel .metricCard--tempo .metricCard__footer {
@@ -1160,7 +1160,7 @@ header#appHeader .top-right .gc-segmented__btn--active {
 /* Body (SVG ring): centred, fixed size */
 #sidePanel .metricCard--tempo .metricCard__body {
   width:    160px !important;
-  height:   120px !important;
+  height:   106px !important;
   flex:     none !important;
   overflow: visible !important;
 }
@@ -1171,9 +1171,9 @@ header#appHeader .top-right .gc-segmented__btn--active {
 }
 /* TEMPO SVG */
 #sidePanel [data-widget="tempo"] .tempoWedge__svg {
-  height:     114px !important;
+  height:     100px !important;
   width:      auto !important;
-  max-height: 114px !important;
+  max-height: 100px !important;
   display:    block !important;
   overflow:   visible !important;
 }
@@ -1181,7 +1181,7 @@ header#appHeader .top-right .gc-segmented__btn--active {
 #sidePanel [data-widget="tempo"] #swingTempoControl,
 #sidePanel [data-widget="tempo"] #tempoMount {
   width:           160px !important;
-  height:          120px !important;
+  height:          106px !important;
   display:         flex !important;
   align-items:     center !important;
   justify-content: center !important;
