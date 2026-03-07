@@ -241,22 +241,12 @@ export function createAttackPathView() {
       "stroke-linejoin": "round"
     }));
 
-    // Hosel indicator — small circle at heel-face junction (shaft attachment)
-    ballEl.appendChild(mkSvg("circle", {
-      cx: "4", cy: "3.2", r: "1.4",
-      class: "xhDriver__hosel",
-      fill: "rgba(0,245,255,0.20)",
-      stroke: "rgba(0,245,255,0.65)",
-      "stroke-width": "0.8"
-    }));
-
-    // Face insert highlight — follows the convex face curve
-    ballEl.appendChild(mkSvg("path", {
-      d: "M 5,-3.5 C 7,-1.5 7,1.5 5,3.5",
+    // Face highlight — clean straight line (driver face is nearly flat from above)
+    ballEl.appendChild(mkSvg("line", {
+      x1: "5", y1: "-3.5", x2: "5", y2: "3.5",
       class: "xhDriver__face",
-      fill: "none",
-      stroke: "rgba(255,255,255,0.70)",
-      "stroke-width": "1.5",
+      stroke: "rgba(255,255,255,0.72)",
+      "stroke-width": "1.8",
       "stroke-linecap": "round"
     }));
 
