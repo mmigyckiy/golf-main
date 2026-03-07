@@ -143,8 +143,11 @@ export function createTempoViewWedge() {
       segEls.push(seg);
     }
 
-    // ── power button: background circle ──
-    svg.appendChild(mkSvg("circle", {
+    // ── power button group (carries 3D press animation) ──────
+    const btnGroup = document.createElementNS(SVG_NS, "g");
+    btnGroup.setAttribute("class", "tempoBtn__group");
+
+    btnGroup.appendChild(mkSvg("circle", {
       cx:    String(CX),
       cy:    String(CY),
       r:     "28",
@@ -152,13 +155,9 @@ export function createTempoViewWedge() {
     }));
 
     // ── golf club (driver): steep diagonal shaft + wide pill head ──
-    // Shaft at ~33° from vertical; icon scaled ~75% for inner padding inside r=28 button
-    // Head: asymmetric pill — heel left, toe extends right
-    svg.appendChild(mkSvg("path", {
+    btnGroup.appendChild(mkSvg("path", {
       d: [
-        // Shaft: grip upper-left → hosel at heel of head
         `M ${CX-16} ${CY-11} L ${CX-7} ${CY+4}`,
-        // Head: asymmetric pill — heel left, toe extends right
         `M ${CX-7} ${CY+4}`,
         `L ${CX+12} ${CY+4}`,
         `Q ${CX+17} ${CY+4} ${CX+17} ${CY+9}`,
@@ -169,6 +168,18 @@ export function createTempoViewWedge() {
       ].join(" "),
       class: "tempoBtn__symbol"
     }));
+
+    // 3D press events
+    const _press   = () => btnGroup.classList.add("is-pressed");
+    const _release = () => btnGroup.classList.remove("is-pressed");
+    btnGroup.addEventListener("mousedown",   _press);
+    btnGroup.addEventListener("touchstart",  _press,   { passive: true });
+    btnGroup.addEventListener("mouseup",     _release);
+    btnGroup.addEventListener("mouseleave",  _release);
+    btnGroup.addEventListener("touchend",    _release);
+    btnGroup.addEventListener("touchcancel", _release);
+
+    svg.appendChild(btnGroup);
 
     wrapEl.appendChild(svg);
     container.appendChild(wrapEl);
