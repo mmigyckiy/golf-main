@@ -222,13 +222,13 @@ export function createAttackPathView() {
       transform: `translate(${CX}, ${CY})`
     });
 
-    // Crown body — face (right) is convex cubic bezier, crown sweeps back wide
-    //   Toe = y-negative (top in SVG), Heel = y-positive (hosel side, bottom)
-    //   Face spans y ±3.5 and bulges to x=7; back deepest at x=-9.5
+    // Crown body — flat face (straight line), wide rounded crown sweeps back
+    //   Toe = y-negative (top in SVG), Heel = y-positive (shaft side, bottom)
+    //   Face is a straight vertical line at x=5; back deepest at x=-9.5
     ballEl.appendChild(mkSvg("path", {
       d: [
         "M 5,-3.5",                        // face top  (toe)
-        "C 7,-1.5 7,1.5 5,3.5",           // face — convex curve (bulge & roll)
+        "L 5,3.5",                         // face — straight flat line
         "C 3.5,6.2 0.5,7.8 -1.5,7.8",    // heel shoulder (shaft side)
         "C -5,7.8 -8.5,5 -9.5,0",        // back-heel sweep
         "C -8.5,-5 -5,-7.8 -1.5,-7.8",   // back-toe sweep
@@ -239,15 +239,6 @@ export function createAttackPathView() {
       stroke: "rgba(0,245,255,0.68)",
       "stroke-width": "1.2",
       "stroke-linejoin": "round"
-    }));
-
-    // Face highlight — clean straight line (driver face is nearly flat from above)
-    ballEl.appendChild(mkSvg("line", {
-      x1: "5", y1: "-3.5", x2: "5", y2: "3.5",
-      class: "xhDriver__face",
-      stroke: "rgba(255,255,255,0.72)",
-      "stroke-width": "1.8",
-      "stroke-linecap": "round"
     }));
 
     // Crown centerline — subtle depth/orientation cue
