@@ -646,3 +646,35 @@
   25%  { filter: drop-shadow(0 0 10px rgba(255,255,255,0.90)) drop-shadow(0 0 20px rgba(0,245,255,0.70)); }
   100% { filter: drop-shadow(0 0 5px rgba(0,245,255,0.65)); }
 }
+
+/* =========================================================
+   DRIVER HEAD SILHOUETTE (replaces golf ball circle)
+   The <g class="xhBall"> group inherits existing filter
+   glow rules above. These rules refine the path elements.
+   ========================================================= */
+
+/* Proper transform-origin for SVG group animations */
+#swingMetricsRow [data-widget="attackPath"] .xhBall {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Driver body: locked — cyan outline intensifies */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-locked .xhDriver__body {
+  stroke: rgba(0, 245, 255, 0.92) !important;
+}
+
+/* Driver body: in-sync — bright cyan signals alignment */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-sync .xhDriver__body {
+  stroke: rgba(0, 245, 255, 0.88) !important;
+}
+
+/* Driver face: locked — white face highlight brightens */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-locked .xhDriver__face {
+  stroke: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Driver face: in-sync — cyan face signals sweet spot */
+#swingMetricsRow [data-widget="attackPath"] .apView__svg.is-sync .xhDriver__face {
+  stroke: rgba(180, 245, 255, 0.75) !important;
+}

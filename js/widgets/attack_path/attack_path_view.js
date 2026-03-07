@@ -62,7 +62,7 @@ export function createAttackPathView() {
   let vLineEl     = null;  // vertical crosshair line (path)
   let dotEl       = null;  // moving crosshair center dot
   let dotRingEl   = null;  // sync ring around dot
-  let ballEl      = null;  // fixed golf ball at center (target)
+  let ballEl      = null;  // driver head silhouette (moves with path/attack)
   let targetEl    = null;  // sweet-zone inner ellipse
 
   let _attackDeg  = 0;   // target attack (degrees ±6)
@@ -71,6 +71,7 @@ export function createAttackPathView() {
   let _curPathDeg = 0;   // lerp-smoothed
   let _rafId      = null;
   let _perfectTimer = null;
+  let _bx = CX, _by = CY;   // current rendered position (for setLocked line snap)
 
   // ── animation ─────────────────────────────────────────────
 
@@ -94,12 +95,17 @@ export function createAttackPathView() {
 
   function _renderNow() {
     if (!ballEl) return;
-    const dx = (CX + _curPathDeg * PATH_SCALE).toFixed(2);
-    const dy = (CY - _curAtkDeg  * ATK_SCALE).toFixed(2);
+    _bx = parseFloat((CX + _curPathDeg * PATH_SCALE).toFixed(2));
+    _by = parseFloat((CY - _curAtkDeg  * ATK_SCALE).toFixed(2));
 
-    // Only the ball moves — crosshair lines and center dot stay fixed
-    ballEl.setAttribute("cx", dx);
-    ballEl.setAttribute("cy", dy);
+    // Rotate driver face to always point toward the center crosshair (the ball)
+    const dx = CX - _bx;
+    const dy = CY - _by;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const angleDeg = dist > 0.5 ? (Math.atan2(dy, dx) * 180 / Math.PI).toFixed(1) : "0";
+
+    // Only the driver head moves — crosshair lines and center dot stay fixed
+    ballEl.setAttribute("transform", `translate(${_bx.toFixed(2)}, ${_by.toFixed(2)}) rotate(${angleDeg})`);
     // dotEl, dotRingEl, hLineEl, vLineEl stay at (CX, CY) — no updates
   }
 
@@ -205,14 +211,31 @@ export function createAttackPathView() {
       }));
     });
 
-    // ── Layer 7: Fixed golf ball at center (the target, never moves) ──
-    ballEl = mkSvg("circle", {
-      cx: CX, cy: CY, r: 4.5,
+    // ── Layer 7: Moving driver head silhouette (top-down, face pointing right) ──
+    ballEl = mkSvg("g", {
       class: "xhBall",
-      fill: "rgba(255,255,255,0.88)",
-      stroke: "rgba(255,255,255,0.25)",
-      "stroke-width": "1"
+      transform: `translate(${CX}, ${CY})`
     });
+
+    // Club head body — D-shape: face is flat right edge, crown curves back left
+    ballEl.appendChild(mkSvg("path", {
+      d: "M 5,-3.5 L 5,3.5 Q 2,6 -2,6.5 Q -7,5.5 -9,0 Q -7,-5.5 -2,-6.5 Q 2,-6 5,-3.5 Z",
+      class: "xhDriver__body",
+      fill: "rgba(28,42,55,0.90)",
+      stroke: "rgba(0,245,255,0.65)",
+      "stroke-width": "1.2",
+      "stroke-linejoin": "round"
+    }));
+
+    // Face highlight — bright vertical line on the right (strike face)
+    ballEl.appendChild(mkSvg("line", {
+      x1: "5", y1: "-3.5", x2: "5", y2: "3.5",
+      class: "xhDriver__face",
+      stroke: "rgba(255,255,255,0.55)",
+      "stroke-width": "1.5",
+      "stroke-linecap": "butt"
+    }));
+
     svg.appendChild(ballEl);
 
     // ── Layer 8: Sync ring (hidden by default, expands on is-sync) ──
@@ -319,22 +342,18 @@ export function createAttackPathView() {
   function setLocked(isDone) {
     if (!svgRoot) return;
     svgRoot.classList.toggle("is-locked", !!isDone);
-    if (isDone && ballEl && hLineEl && vLineEl) {
-      // Snap crosshair lines to wherever the ball was caught — satisfying lock-on
-      const cx = ballEl.getAttribute("cx");
-      const cy = ballEl.getAttribute("cy");
-      hLineEl.setAttribute("y1", cy);
-      hLineEl.setAttribute("y2", cy);
-      vLineEl.setAttribute("x1", cx);
-      vLineEl.setAttribute("x2", cx);
-      ballEl.setAttribute("r", "6");
-    } else if (!isDone && ballEl) {
-      // Reset lines to center, ball back to normal size
+    if (isDone && hLineEl && vLineEl) {
+      // Snap crosshair lines to wherever the driver head was caught — satisfying lock-on
+      hLineEl.setAttribute("y1", _by.toFixed(2));
+      hLineEl.setAttribute("y2", _by.toFixed(2));
+      vLineEl.setAttribute("x1", _bx.toFixed(2));
+      vLineEl.setAttribute("x2", _bx.toFixed(2));
+    } else if (!isDone) {
+      // Reset lines to center
       hLineEl?.setAttribute("y1", String(CY));
       hLineEl?.setAttribute("y2", String(CY));
       vLineEl?.setAttribute("x1", String(CX));
       vLineEl?.setAttribute("x2", String(CX));
-      ballEl.setAttribute("r", "4.5");
     }
   }
 
@@ -347,10 +366,10 @@ export function createAttackPathView() {
     // Reset lines to center and ball to normal size (bypassing setLocked logic)
     if (hLineEl) { hLineEl.setAttribute("y1", String(CY)); hLineEl.setAttribute("y2", String(CY)); }
     if (vLineEl) { vLineEl.setAttribute("x1", String(CX)); vLineEl.setAttribute("x2", String(CX)); }
-    if (ballEl)  ballEl.setAttribute("r", "4.5");
     svgRoot?.classList.remove("is-locked");
     _attackDeg = 0; _curAtkDeg  = 0;
     _pathDeg   = 0; _curPathDeg = 0;
+    _bx = CX; _by = CY;
     _renderSnap();
   }
 
