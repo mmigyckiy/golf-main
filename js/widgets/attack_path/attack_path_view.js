@@ -98,11 +98,15 @@ export function createAttackPathView() {
     _bx = parseFloat((CX + _curPathDeg * PATH_SCALE).toFixed(2));
     _by = parseFloat((CY - _curAtkDeg  * ATK_SCALE).toFixed(2));
 
-    // Rotate driver face to always point toward the center crosshair (the ball)
-    const dx = CX - _bx;
-    const dy = CY - _by;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const angleDeg = dist > 0.5 ? (Math.atan2(dy, dx) * 180 / Math.PI).toFixed(1) : "0";
+    // Face always points LEFT (swing direction) — never flips to face right.
+    // Force dx ≤ 0 so atan2 always yields an angle in the left-pointing range
+    // (90°–270°): on the right side the head faces toward center, on the left
+    // side it continues pointing forward, not backwards after impact.
+    const rawDx = CX - _bx;
+    const dy    = CY - _by;
+    const dx    = -Math.abs(rawDx);        // always ≤ 0
+    const dist  = Math.sqrt(dx * dx + dy * dy);
+    const angleDeg = dist > 0.5 ? (Math.atan2(dy, dx) * 180 / Math.PI).toFixed(1) : "180";
 
     // Only the driver head moves — crosshair lines and center dot stay fixed
     ballEl.setAttribute("transform", `translate(${_bx.toFixed(2)}, ${_by.toFixed(2)}) rotate(${angleDeg})`);
