@@ -241,15 +241,15 @@
   transition: stroke 280ms ease, filter 280ms ease;
 }
 
-/* WEAK — warm amber */
+/* WEAK — neon cyan */
 #swingTempoControl[data-power="weak"] .tempoRing__seg.is-active {
-  stroke: rgba(255, 155, 40, 0.90) !important;
-  filter: drop-shadow(0 0 3px rgba(255, 155, 40, 0.75)) !important;
+  stroke: #00F5FF !important;
+  filter: drop-shadow(0 0 3px rgba(0, 245, 255, 0.75)) !important;
 }
 #swingTempoControl[data-power="weak"] .tempoRing__seg--sweet.is-active {
-  stroke: rgba(255, 155, 40, 0.90) !important;
-  filter: drop-shadow(0 0 5px rgba(255, 155, 40, 0.95))
-          drop-shadow(0 0 12px rgba(255, 155, 40, 0.45)) !important;
+  stroke: #00F5FF !important;
+  filter: drop-shadow(0 0 5px rgba(0, 245, 255, 0.95))
+          drop-shadow(0 0 12px rgba(0, 245, 255, 0.45)) !important;
 }
 
 /* GOOD — lime green */
@@ -263,7 +263,16 @@
           drop-shadow(0 0 12px rgba(70, 210, 70, 0.45)) !important;
 }
 
-/* STRONG — default neon cyan (base style already correct, no override needed) */
+/* STRONG — warm amber */
+#swingTempoControl[data-power="strong"] .tempoRing__seg.is-active {
+  stroke: rgba(255, 155, 40, 0.90) !important;
+  filter: drop-shadow(0 0 3px rgba(255, 155, 40, 0.75)) !important;
+}
+#swingTempoControl[data-power="strong"] .tempoRing__seg--sweet.is-active {
+  stroke: rgba(255, 155, 40, 0.90) !important;
+  filter: drop-shadow(0 0 5px rgba(255, 155, 40, 0.95))
+          drop-shadow(0 0 12px rgba(255, 155, 40, 0.45)) !important;
+}
 
 /* MAX — red warning (player pushing past safe zone) */
 #swingTempoControl[data-power="max"] .tempoRing__seg.is-active {
